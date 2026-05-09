@@ -36,3 +36,14 @@ jar {
 test {
   useJUnitPlatform()
 }
+
+tasks.register('runDemo', JavaExec) {
+  group = 'application'
+  description = 'Run DataLoaderDemo CLI to verify all CSV/JSON load and FK refs are valid.'
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'com.trungbui.projectshadow.data.DataLoaderDemo'
+  workingDir = rootProject.projectDir
+  args 'assets/data'
+  standardOutput = System.out
+  errorOutput = System.err
+}
