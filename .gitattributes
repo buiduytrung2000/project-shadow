@@ -1,2 +1,63 @@
-* text=auto eol=lf
-*.bat text=auto eol=crlf
+# Auto-detect text files, normalize line endings
+* text=auto
+
+# ─── Java/Gradle source — luôn LF (Unix) ───
+*.java text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# ─── Windows scripts — CRLF ───
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# ─── Shell scripts — LF ───
+*.sh text eol=lf
+gradlew text eol=lf
+
+# ─── Binary files — không touch ───
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.tga binary
+*.webp binary
+*.ico binary
+
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.flac binary
+
+*.ttf binary
+*.otf binary
+
+*.zip binary
+*.jar binary
+*.war binary
+*.7z binary
+*.tar binary
+*.gz binary
+
+*.aseprite binary
+*.ase binary
+*.psd binary
+*.kra binary
+
+# ─── Game data ───
+*.csv text eol=lf
+*.tmx text eol=lf
+*.tsx text eol=lf
+
+# ─── Git LFS prep (chưa active, sẽ enable sau khi cài Git LFS) ───
+# *.png filter=lfs diff=lfs merge=lfs -text
+# *.aseprite filter=lfs diff=lfs merge=lfs -text
+# *.ogg filter=lfs diff=lfs merge=lfs -text
