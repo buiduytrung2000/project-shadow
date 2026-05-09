@@ -61,3 +61,5 @@ secrets/
 # Nếu muốn commit .ase, comment dòng dưới:
 # *.ase
 # *.aseprite
+# Claude Code internals (worktrees + local settings)
+.claude/
