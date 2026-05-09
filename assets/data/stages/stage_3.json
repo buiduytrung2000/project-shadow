@@ -1,0 +1,248 @@
+{
+  "id": "stage_3",
+  "name": "Vực Sâu — Trái Tim Đen",
+  "name_en": "The Abyss — Black Heart",
+  "act": 3,
+  "difficulty": 3,
+  "description": "Hồi 3 – Đối diện với Trái Tim Đen. Hành trình xuống vực sâu nhất, mọi bệnh tật và stress trở nên nghiêm trọng gấp đôi. Boss cuối là Trái Tim Đen — thực thể không hình dạng cố định, sao chép kỹ năng của chính party.",
+
+  "presentation": {
+    "background": "abyss_bg",
+    "music": "abyss_choral_horror",
+    "intro_text": "Bạn không còn cảm thấy bóng tối nữa — bạn đã ở trong nó. Trái Tim Đen đập từng nhịp, mỗi nhịp là một ký ức bạn quên.",
+    "outro_text_win": "Trái Tim Đen vỡ vụn. Sương Mù Đen tan dần. Bạn nhận ra một sự thật cay đắng: Người Dẫn Hồn ban đầu... chính là bạn.",
+    "outro_text_lose": "Bạn trở thành một phần của Trái Tim Đen. Sương Mù lan ra phủ kín thế giới."
+  },
+
+  "global_modifiers": {
+    "stress_gain_multiplier": 1.5,
+    "disease_apply_chance_multiplier": 1.5,
+    "comment": "Theo Core GDD: Stage 3 — bệnh tật và stress nghiêm trọng gấp đôi. Áp 1.5x ở MVP để tránh quá khắc nghiệt; có thể tăng lên 2.0x sau playtest."
+  },
+
+  "layout": {
+    "type": "layered_tree",
+    "edge_topology": "fully_connected",
+    "num_layers": 7,
+    "total_nodes": 22,
+    "paths_per_run": 8,
+    "layer_node_counts": [1, 4, 4, 4, 4, 3, 1, 1],
+
+    "first_node_fixed": {
+      "type": "combat",
+      "label": "L1.A",
+      "enemy_pool": ["enemy_03", "enemy_02_special"],
+      "variants_allowed": ["Base", "Special"],
+      "min_enemies": 3,
+      "max_enemies": 3,
+      "comment": "Mở màn 3 enemies, mix Shadow Wisp và Skeleton Mage để báo hiệu độ khó cao."
+    },
+
+    "miniboss_layer": {
+      "name": "L6 (miniboss)",
+      "num_nodes": 1,
+      "type_fixed": "miniboss",
+      "edges_in": "fully_connected_from_layer_5",
+      "edges_out": "to_boss",
+      "miniboss_pool": ["enemy_mb01", "enemy_mb02"],
+      "comment": "L6 là miniboss bắt buộc — chọn ngẫu nhiên từ pool 2 miniboss khi sinh stage. Là cú test cuối trước boss."
+    },
+
+    "last_node_fixed": {
+      "type": "boss",
+      "label": "BOSS",
+      "boss_id": "enemy_b03",
+      "intro_text": "Trái Tim Đen đập một nhịp. Bạn nghe nó nói bằng giọng nói của chính bạn..."
+    },
+
+    "middle_layers": [
+      {
+        "name": "L2",
+        "num_nodes": 4,
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 45, "event": 25, "rest": 15, "reward": 10, "elite": 5 }
+        }
+      },
+      {
+        "name": "L3",
+        "num_nodes": 4,
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 35, "event": 30, "rest": 15, "reward": 12, "elite": 8 }
+        }
+      },
+      {
+        "name": "L4",
+        "num_nodes": 4,
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 30, "event": 30, "rest": 18, "reward": 15, "elite": 7 }
+        }
+      },
+      {
+        "name": "L5",
+        "num_nodes": 4,
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 25, "event": 25, "rest": 22, "reward": 18, "elite": 10 }
+        }
+      },
+      {
+        "name": "L7 (pre-boss)",
+        "num_nodes": 3,
+        "edges_in": "fully_connected_from_miniboss",
+        "edges_out": "all_to_boss",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "rest": 45, "reward": 35, "event": 20, "combat": 0 }
+        },
+        "comment": "Pre-boss layer KHÔNG có combat. Mục đích: cho người chơi 1 cơ hội phục hồi sau miniboss."
+      }
+    ]
+  },
+
+  "rules": [
+    "no_consecutive_rest",
+    "no_consecutive_reward",
+    "no_consecutive_event_unless_30%",
+    "max_combat_per_run: 6",
+    "min_event_per_run: 3",
+    "min_rest_per_run: 2",
+    "elite_node_max_per_run: 2",
+    "if_party_avg_hp_below_25%_after_miniboss: bias_pre_boss_to_rest_and_reward",
+    "if_party_has_3+_permanent_debuffs: spawn_paladin_cleanse_event_in_pre_boss_layer (Stage 3 only)",
+    "global_stress_apply: x1.5 (per global_modifiers)",
+    "global_disease_chance: x1.5 (per global_modifiers)"
+  ],
+
+  "pools": {
+    "combat": {
+      "default": {
+        "enemies": ["enemy_02", "enemy_02_special", "enemy_03", "enemy_03_tank"],
+        "variants_allowed": ["Base", "Tank", "Assassin", "Special"],
+        "min_enemies": 3,
+        "max_enemies": 4
+      },
+      "elite": {
+        "enemies": ["enemy_02_special", "enemy_03_tank"],
+        "variants_allowed": ["Special", "Tank"],
+        "min_enemies": 2,
+        "max_enemies": 3,
+        "stat_modifiers": { "hp_mult": 1.8, "dmg_mult": 1.4 },
+        "rewards": { "gold_bonus": 200, "item_drop_chance": 0.8 },
+        "comment": "Elite Stage 3: HP +80%, DMG +40%, drop 80% chance + 200 gold."
+      },
+      "miniboss": {
+        "miniboss_ids": ["enemy_mb01", "enemy_mb02"],
+        "comment": "Sinh ngẫu nhiên 1 trong 2 miniboss khi tạo stage. Drop guaranteed Uncommon trinket + 300 gold."
+      }
+    },
+
+    "event": {
+      "stage_3_pool": [
+        "event_open_tomb",
+        "event_whispering_shadow",
+        "event_lost_survivor",
+        "event_black_fog_patch",
+        "event_old_witch_doctor",
+        "event_strange_altar",
+        "event_wandering_spirit",
+        "event_cursed_treasure",
+        "event_sacrificial_stone",
+        "event_forbidden_tome"
+      ],
+      "weights": {
+        "event_sacrificial_stone": 18,
+        "event_cursed_treasure": 15,
+        "event_forbidden_tome": 12,
+        "event_strange_altar": 12,
+        "event_wandering_spirit": 12,
+        "event_whispering_shadow": 8,
+        "event_old_witch_doctor": 7,
+        "event_black_fog_patch": 6,
+        "event_open_tomb": 6,
+        "event_lost_survivor": 4
+      },
+      "comment": "Pool Stage 3 nghiêng về Rare/Epic events (sacrificial_stone, cursed_treasure, forbidden_tome). Loại event_glowing_spring vì heal Stage 3 quá rủi ro (10% Plague + global x1.5 = 15% — rất khắc nghiệt)."
+    },
+
+    "rest": {
+      "type": "campsite",
+      "options": [
+        { "label": "Nghỉ ngơi", "effect": "stress_reduce", "target": "single_hero", "value_min": 15, "value_max": 30 },
+        { "label": "Cảnh giới", "effect": "heal", "target": "single_hero", "value_min": 12, "value_max": 22 },
+        { "label": "Trò chuyện", "effect": "stress_reduce", "target": "party", "value_min": 8, "value_max": 14 }
+      ],
+      "special_pre_miniboss_bonus": "+25% giá trị tất cả options",
+      "comment": "Stage 3: rest options cho giá trị cao hơn để bù tổn thất nặng. Rest ngay trước miniboss có bonus thêm 25%."
+    },
+
+    "reward": {
+      "rolls": 3,
+      "drop_table": [
+        { "type": "gold",         "value_min": 100, "value_max": 250, "weight": 25 },
+        { "type": "item_random",  "category": "trinket_uncommon",      "weight": 20 },
+        { "type": "item_random",  "category": "trinket_class_specific","weight": 15 },
+        { "type": "item_random",  "category": "consumable_rare",       "weight": 15 },
+        { "type": "item_random",  "category": "relic",                 "weight": 15 },
+        { "type": "item_random",  "category": "cursed",                "weight": 10 }
+      ],
+      "comment": "Stage 3 reward 3 rolls. Cursed item 10% — Stage 3 chính là nơi tích lũy cursed/permanent."
+    }
+  },
+
+  "miniboss_pool": [
+    {
+      "id": "enemy_mb01",
+      "name": "Echo Wraith",
+      "name_vn": "Tiếng Vọng Linh Hồn",
+      "comment": "TODO design — wraith dùng eff_wraith effect, AoE stress damage"
+    },
+    {
+      "id": "enemy_mb02",
+      "name": "Plague Bearer",
+      "name_vn": "Kẻ Mang Bệnh",
+      "comment": "TODO design — chuyên áp disease (Plague, Fever, Nightmare), lifesteal"
+    }
+  ],
+
+  "boss_node": {
+    "boss_id": "enemy_b03",
+    "boss_name": "The Black Heart",
+    "boss_name_vn": "Trái Tim Đen",
+    "boss_mechanics_overview": "Boss đa pha sao chép skill của party. Mỗi pha: chọn ngẫu nhiên 1 hero trong party, 'biến hình' thành phiên bản tối của hero đó với 4 skill default của hero. Người chơi đối mặt với chính sức mạnh mình đã build.",
+    "phase_transitions": [
+      { "trigger": "combat_start",  "action": "phase_1: Heart Pulse — AoE 5 dmg + 10 stress mỗi 2 lượt." },
+      { "trigger": "hp_below_75%",  "action": "phase_2: Mirror Form — sao chép random hero, 4 default skills." },
+      { "trigger": "hp_below_50%",  "action": "phase_3: Mirror Form 2 — sao chép hero khác." },
+      { "trigger": "hp_below_25%",  "action": "phase_4: True Heart — ngừng sao chép, dùng skill độc quyền AoE party + áp permanent debuff." },
+      { "trigger": "hp_below_10%",  "action": "phase_5: Final Whisper — gọi hero giọng nói của Soul Warden, gây 30 stress all + 50% chance áp Affliction ngay." }
+    ],
+    "rewards_on_kill": {
+      "gold": { "value": 1000, "chance": 1.0 },
+      "items": {
+        "rolls": 3,
+        "drop_table": [
+          { "type": "item_random", "category": "relic",                "weight": 40 },
+          { "type": "item_random", "category": "trinket_class_specific","weight": 25 },
+          { "type": "item_random", "category": "trinket_uncommon",     "weight": 15 },
+          { "type": "item_random", "category": "consumable_rare",      "weight": 10 },
+          { "type": "item_random", "category": "cursed",               "weight": 10 }
+        ],
+        "comment": "Boss cuối: 3 rolls, weight relic 40%, không guarantee item cụ thể nào."
+      },
+      "lore": { "value": "fragment_black_heart_03_final" },
+      "ending_unlock": "true",
+      "comment": "Drop 3 item (có thể trùng category). Unlock ending — game complete."
+    }
+  },
+
+  "validation_refs": {
+    "enemies_used":        ["enemy_02", "enemy_02_special", "enemy_03", "enemy_03_tank", "enemy_b03"],
+    "minibosses_TODO":     ["enemy_mb01", "enemy_mb02"],
+    "enemy_skills_TODO":   ["sk_e_b03_*", "sk_e_mb01_*", "sk_e_mb02_*"],
+    "events_used":         ["event_open_tomb", "event_whispering_shadow", "event_lost_survivor", "event_black_fog_patch", "event_old_witch_doctor", "event_strange_altar", "event_wandering_spirit", "event_cursed_treasure", "event_sacrificial_stone", "event_forbidden_tome"],
+    "comment_TODO": "Cần thiết kế: enemy_b03 (Black Heart, ~5 phase), enemy_mb01 (Echo Wraith), enemy_mb02 (Plague Bearer), kèm các skill tương ứng. Báo trước khi implement chi tiết."
+  }
+}

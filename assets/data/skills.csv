@@ -1,0 +1,141 @@
+Skill ID,Name (VN),Name (EN),Hero Class (VN),Hero Class (EN),Is Offensive,Target Type,Damage Multiplier,Accuracy Modifier,Cooldown,Primary Effect ID,Effect Magnitude,Effect Duration,Effect Notes,Stress Damage,Rarity,Description (VN)
+sk_w1,Đòn Kiếm,Sword Strike,Chiến Binh,Warrior,Yes,Front Enemy,1,0,0,,,,,0,Common,"Đòn cơ bản. Đánh 1 địch hàng đầu, không hiệu ứng phụ."
+sk_w2,Khiêu Chiến,Taunt,Chiến Binh,Warrior,No,Self,0,0,2,eff_taunt,1,2 turns,,0,Common,Buộc tất cả địch tập trung tấn công Chiến Binh trong 2 lượt. Tăng giáp 10%.
+sk_w3,Phòng Thủ Vững Chắc,Shield Wall,Chiến Binh,Warrior,No,Self,0,0,2,eff_def_buff,0.4,,,0,Common,Giảm 40% sát thương nhận vào trong 1 lượt. Kết hợp tốt với Taunt.
+sk_w4,Vũ Bão Kiếm,Blade Storm,Chiến Binh,Warrior,Yes,2 Front Enemies,0.85,0,1,,,,,5,Uncommon,Đánh đồng thời 2 địch hàng đầu với 85% dmg mỗi đòn.
+sk_w5,Cắt Sâu,Deep Cut,Chiến Binh,Warrior,Yes,Front Enemy,0.9,5,0,eff_bleed,3,3 turns,per turn,0,Common,Gây chảy máu 3 dmg/lượt trong 3 lượt.
+sk_w6,Bước Tiến,Advance,Chiến Binh,Warrior,Yes,Front Enemy,1.1,-5,0,eff_self_move,,,Forward,0,Uncommon,"Di chuyển lên hàng đầu và tấn công ngay, +10% dmg nếu đã ở hàng đầu."
+sk_w7,Đứng Vững,Last Stand,Chiến Binh,Warrior,No,Self,0,0,3,eff_hp_threshold_buff,0.5,,stat=DEF when HP<30%,0,Rare,"Passive: khi HP dưới 30%, tự động nhận +50% phòng thủ và không thể bị stun."
+sk_m1,Tia Phép,Magic Bolt,Pháp Sư,Mage,Yes,Any Enemy,1,5,0,,,,,0,Common,"Đòn phép cơ bản, tầm xa, không tốn mana."
+sk_m2,Cầu Lửa,Fireball,Pháp Sư,Mage,Yes,Front Row (AoE),1.2,0,1,eff_burn,2,2 turns,per turn,8,Uncommon,"Tấn công toàn bộ hàng đầu địch, áp burn 2 lượt."
+sk_m3,Băng Giá,Frost Nova,Pháp Sư,Mage,Yes,All Enemies,0.7,0,2,eff_slow,1,2 turns,,5,Uncommon,"Đóng băng chân tất cả địch, giảm tốc độ 30% trong 2 lượt."
+sk_m4,Sét Giáng,Lightning,Pháp Sư,Mage,Yes,Any Enemy,1.4,10,1,eff_stun,1,1 turn,chance=0.5,10,Rare,"Đòn đơn sát thương cao nhất của Pháp Sư, 50% stun 1 lượt."
+sk_m5,Khiên Ma Thuật,Arcane Shield,Pháp Sư,Mage,No,Self,0,0,2,eff_absorb,15,2 turns,,0,Common,"Tạo khiên hấp thụ 15 sát thương tiếp theo, kéo dài 2 lượt."
+sk_m6,Nghi Thức Phục Hồi,Mana Restore,Pháp Sư,Mage,No,Self,0,0,0,eff_reset_cd,,,All skills -1 cd,0,Uncommon,Giảm cooldown tất cả kỹ năng 1 lượt. Tốn cả lượt hành động.
+sk_m7,Nổ Siêu Cỡ,Arcane Explosion,Pháp Sư,Mage,Yes,All Enemies,1.5,-5,3,eff_self_stress,+15,instant,,15,Rare,"AoE toàn sân địch, dmg cao nhất nhưng gây 15 stress cho chính Pháp Sư."
+sk_c1,Đánh Thánh,Holy Strike,Tăng Lữ,Cleric,Yes,Front Enemy,0.9,5,0,eff_bonus_undead,,,1.5x dmg,0,Common,Đòn cơ bản. Gây thêm 50% sát thương nếu địch là Undead.
+sk_c2,Chữa Lành,Heal,Tăng Lữ,Cleric,No,Single Ally,0,0,0,eff_heal,14,instant,target=ally,0,Common,Hồi 14 HP cho 1 đồng đội. Không tốn lượt nếu mục tiêu dưới 20% HP (passive).
+sk_c3,Thánh Ân,Divine Grace,Tăng Lữ,Cleric,No,Single Ally,0,0,1,eff_heal,,,compound: also eff_stress_reduce; 10 HP / -15 stress,0,Uncommon,Hồi 10 HP và giảm 15 stress cho 1 đồng đội. Kỹ năng cốt lõi.
+sk_c4,Tẩy Uế,Cleanse,Tăng Lữ,Cleric,No,Single Ally,0,0,1,eff_remove,,,1 disease/debuff,0,Common,Xóa 1 bệnh tật hoặc debuff khỏi đồng đội. Ưu tiên bệnh nặng nhất.
+sk_c5,Nguyện Cầu,Prayer,Tăng Lữ,Cleric,No,All Allies,0,0,2,eff_stress_reduce,-10,instant,target=all_allies,0,Uncommon,"Giảm 10 stress toàn đội. Tốn cả lượt, cooldown 2."
+sk_c6,Lá Chắn Thánh,Holy Shield,Tăng Lữ,Cleric,No,Single Ally,0,0,1,eff_def_buff,0.3,2 turns,stat=DEF,0,Uncommon,Buff phòng thủ 30% cho 1 đồng đội trong 2 lượt.
+sk_c7,Hồi Sinh,Resurrect,Tăng Lữ,Cleric,No,Dead Ally,0,0,4,eff_revive,0.5,,stat=HP,0,Rare,Hồi sinh đồng đội vừa ngã xuống với 50% HP. Dùng được 1 lần mỗi dungeon.
+sk_a1,Đâm Trộm,Backstab,Sát Thủ,Assassin,Yes,Any Enemy,1.1,10,0,eff_auto_crit,,,If first action,0,Common,Tự động crit nếu Sát Thủ hành động đầu tiên trong lượt đó.
+sk_a2,Dao Độc,Poison Blade,Sát Thủ,Assassin,Yes,Any Enemy,0.8,5,0,eff_poison,4,3 turns,per turn,0,Common,Gây độc 4 dmg/lượt trong 3 lượt. Có thể chồng chất tối đa 3 lần.
+sk_a3,Bóng Tối,Shadow Strike,Sát Thủ,Assassin,Yes,Back Enemy,1.2,0,1,eff_bypass_position,,,Yes,5,Uncommon,"Bỏ qua hàng đầu, tấn công thẳng địch hàng sau. Gây thêm stress."
+sk_a4,Bước Lảng,Evasion Stance,Sát Thủ,Assassin,No,Self,0,0,2,eff_dodge,0.35,2 turns,stat=dodge,0,Common,Tăng tỷ lệ né tránh 35% trong 2 lượt tiếp theo.
+sk_a5,Cắt Yết Hầu,Throat Cut,Sát Thủ,Assassin,Yes,Any Enemy,0.9,0,2,eff_silence,1,1 turn,,0,Uncommon,Địch bị silence không thể dùng kỹ năng đặc biệt trong 1 lượt.
+sk_a6,Làn Khói,Smoke Screen,Sát Thủ,Assassin,No,All Enemies,0,0,2,eff_acc_debuff,,,-25 ACC 2 turns,0,Uncommon,Giảm 25 độ chính xác của toàn bộ địch trong 2 lượt.
+sk_a7,Tử Hình,Execute,Sát Thủ,Assassin,Yes,Any Enemy,2,-10,3,eff_instant_kill,,,If target HP<20%,0,Rare,"Giết ngay lập tức địch có HP dưới 20%. Nếu không đủ điều kiện, vẫn gây 2x dmg."
+sk_ar1,Bắn Chính Xác,Precise Shot,Cung Thủ,Archer,Yes,Any Enemy,1,15,0,,,,,0,Common,Đòn cơ bản với +15 accuracy. Hiếm khi trượt.
+sk_ar2,Đánh Dấu,Mark Target,Cung Thủ,Archer,No,Any Enemy,0,0,1,eff_mark,,,Party +15% dmg vs target,0,Common,"Đánh dấu 1 địch, toàn đội nhận +15% dmg vào mục tiêu đó trong 3 lượt."
+sk_ar3,Mưa Tên,Arrow Rain,Cung Thủ,Archer,Yes,Back Row (AoE),0.7,0,2,,,,,5,Uncommon,Bắn vào toàn bộ hàng sau địch với 70% dmg mỗi đòn.
+sk_ar4,Tên Xuyên,Piercing Arrow,Cung Thủ,Archer,Yes,Any Enemy,1.1,5,1,eff_armor_pierce,,,Ignore armor,0,Uncommon,Bỏ qua toàn bộ giáp của địch. Đặc biệt hiệu quả với Tank enemies.
+sk_ar5,Bẫy Chông,Spike Trap,Cung Thủ,Archer,No,Ground,0,0,2,eff_immobilize,,,Next enemy loses 1 turn,0,Uncommon,"Đặt bẫy, địch tiếp theo di chuyển hoặc tấn công hàng đầu sẽ mất 1 lượt."
+sk_ar6,Bắn Kép,Double Shot,Cung Thủ,Archer,Yes,Any Enemy,0.6,5,0,eff_multi_hit,2,instant,count=2,0,Common,Bắn 2 phát liên tiếp với 60% dmg mỗi phát. Mỗi phát tính crit riêng.
+sk_ar7,Tên Lửa,Fire Arrow,Cung Thủ,Archer,Yes,Any Enemy,1,0,1,eff_burn,3,3 turns,per turn,5,Rare,Gây burn 3 dmg/lượt trong 3 lượt. Kết hợp với Mark Target để tối đa hóa dmg.
+sk_b1,Đập Điên,Frenzy Strike,Cuồng Chiến,Berserker,Yes,Front Enemy,1,-5,0,eff_stacks_on_hit,,,Each hit +5% dmg this turn,0,Common,Mỗi đòn đánh trúng trong lượt tăng 5% dmg cho đòn tiếp theo (tối đa +25%).
+sk_b2,Cơn Giận,Rage,Cuồng Chiến,Berserker,No,Self,0,0,2,eff_dmg_buff,0.3,2 turns,stat=dmg,15,Common,Tăng 30% dmg trong 2 lượt nhưng nhận thêm 15 stress khi kích hoạt.
+sk_b3,Gào Thét,War Cry,Cuồng Chiến,Berserker,No,All Enemies,0,0,2,eff_enemy_stress,+20,instant,target=all_enemies,15,Uncommon,Gây 20 stress cho tất cả địch. Có thể đẩy địch vào Affliction sớm hơn.
+sk_b4,Bão Tố,Whirlwind,Cuồng Chiến,Berserker,Yes,All Enemies,0.75,-10,2,,,,,5,Uncommon,"Xoay tròn tấn công tất cả địch với 75% dmg, -10 accuracy."
+sk_b5,Nuốt Đau,Pain Feast,Cuồng Chiến,Berserker,No,Self,0,0,2,eff_lifesteal,,,Heal 50% of dmg received,0,Uncommon,"Trong 2 lượt tiếp theo, hồi 50% HP bằng mỗi đòn đánh vào Cuồng Chiến."
+sk_b6,Bùng Nổ,Explosive Charge,Cuồng Chiến,Berserker,Yes,Front Enemy,1.6,-15,2,eff_knockback,,,Push enemy back,10,Rare,"Đòn mạnh nhất, dmg x1.6, đẩy địch ra hàng sau. Tốn 10 stress."
+sk_b7,Tử Chiến,Death Wish,Cuồng Chiến,Berserker,Yes,Front Enemy,2.5,0,4,eff_hp_cost,,,Self HP to 1,0,Rare,Hạ HP bản thân xuống 1 để gây 2.5x dmg. Kích hoạt Bạo Nộ ngay lập tức.
+sk_p1,Vung Gươm Thánh,Holy Smite,Thánh Kỵ Sĩ,Paladin,Yes,Front Enemy,1,5,0,eff_bonus_undead,,,1.5x dmg,0,Common,Đòn cơ bản với bonus vs Undead. Passive Aura giảm 3 stress/lượt toàn đội.
+sk_p2,Aura Thánh,Holy Aura,Thánh Kỵ Sĩ,Paladin,No,All Allies,0,0,3,eff_stress_reduce,,,-3 stress/turn x3 turns,0,Uncommon,Kích hoạt Aura 3 lượt: toàn đội giảm 3 stress mỗi lượt. Chồng với hiệu ứng khác.
+sk_p3,Khiên Thánh,Divine Shield,Thánh Kỵ Sĩ,Paladin,No,Single Ally,0,0,2,eff_absorb,20,2 turns,shield,0,Uncommon,"Đặt khiên hấp thụ 20 dmg cho 1 đồng đội bất kỳ, kéo dài 2 lượt."
+sk_p4,Phán Quyết,Judgment,Thánh Kỵ Sĩ,Paladin,Yes,Any Enemy,1.1,10,1,eff_remove,,,Remove 1 debuff from 1 ally,0,Uncommon,Tấn công địch đồng thời giải trừ 1 debuff khỏi đồng đội yếu nhất.
+sk_p5,Bình Phục,Lay on Hands,Thánh Kỵ Sĩ,Paladin,No,Single Ally,0,0,2,eff_heal,20,instant,target=ally,0,Uncommon,Hồi 20 HP cho 1 đồng đội. Lượng hồi cao nhất trong tất cả kỹ năng heal.
+sk_p6,Ánh Sáng,Radiance,Thánh Kỵ Sĩ,Paladin,Yes,All Enemies,0.6,0,2,eff_enemy_stress,+15,instant,target=all_enemies,10,Rare,AoE thánh nữ gây 15 stress cho tất cả địch. Đặc biệt hiệu quả vs Undead (x2 dmg).
+sk_p7,Hy Sinh,Sacrifice,Thánh Kỵ Sĩ,Paladin,No,All Allies,0,0,4,eff_invincible,,,2 turns / self takes all dmg,0,Rare,Toàn đội bất khả xâm phạm 2 lượt. Thánh Kỵ Sĩ hứng toàn bộ dmg thay thế.
+sk_py1,Ngọn Lửa,Flame Bolt,Pháp Sư Hỏa,Pyromancer,Yes,Any Enemy,1,5,0,eff_burn,2,2 turns,per turn,0,Common,Đòn cơ bản kèm 2 chồng burn. Nền tảng combo.
+sk_py2,Vòng Lửa,Fire Ring,Pháp Sư Hỏa,Pyromancer,Yes,All Enemies,0.7,0,1,eff_burn,,,1 stack all enemies,5,Uncommon,Áp 1 chồng burn lên toàn bộ địch. Ít dmg trực tiếp nhưng thiết lập combo.
+sk_py3,Bùng Cháy,Ignite,Pháp Sư Hỏa,Pyromancer,Yes,Any Enemy,0.5,0,0,eff_detonate_burn,,,All burn stacks explode x3,10,Uncommon,"Kích nổ toàn bộ chồng burn của mục tiêu, mỗi chồng gây 3x dmg ngay lập tức."
+sk_py4,Tường Lửa,Fire Wall,Pháp Sư Hỏa,Pyromancer,No,Ground,0,0,2,eff_block_movement,,,Enemy move triggers 8 dmg + burn,0,Uncommon,Đặt tường lửa: địch di chuyển hoặc đổi vị trí chịu 8 dmg và 2 chồng burn.
+sk_py5,Lửa Phượng,Phoenix Flame,Pháp Sư Hỏa,Pyromancer,Yes,Any Enemy,1.5,0,2,eff_burn,,,3 stacks,15,Rare,Sát thương đơn cao nhất của Pyromancer kèm 3 chồng burn. Kết hợp Ignite ngay sau.
+sk_py6,Nổ Lửa,Combustion,Pháp Sư Hỏa,Pyromancer,Yes,Front Row (AoE),1.2,-5,2,eff_self_dmg,5,instant,target=ally,10,Rare,"AoE hàng đầu mạnh, Pháp Sư Hỏa tự nhận 5 dmg do quá gần vụ nổ."
+sk_py7,Hồi Sinh Lửa,Flame Rebirth,Pháp Sư Hỏa,Pyromancer,No,Self,0,0,5,eff_revive,,,Revive at 40% HP + 10 burn dmg to all enemies,0,Rare,"Khi chết, hồi sinh 1 lần với 40% HP và phát nổ lửa gây 10 dmg toàn địch."
+sk_sh1,Đòn Linh,Spirit Strike,Thầy Cúng,Shaman,Yes,Any Enemy,0.9,0,0,,,,,0,Common,"Đòn cơ bản dùng linh lực, không hiệu ứng phụ."
+sk_sh2,Totem Chữa,Healing Totem,Thầy Cúng,Shaman,No,Ground,0,0,2,eff_zone_buff,,,5 HP/turn x3 turns all allies,0,Common,Đặt totem hồi 5 HP/lượt cho toàn đội trong 3 lượt. Chỉ 1 totem cùng lúc.
+sk_sh3,Totem Chiến,War Totem,Thầy Cúng,Shaman,No,Ground,0,0,2,eff_zone_buff,0.15,3 turns,stat=dmg all allies,0,Uncommon,Đặt totem buff 15% dmg toàn đội trong 3 lượt.
+sk_sh4,Totem Bình An,Calm Totem,Thầy Cúng,Shaman,No,Ground,0,0,2,eff_zone_buff,,,-5 stress/turn x3 turns all allies,0,Uncommon,Đặt totem giảm 5 stress/lượt cho toàn đội trong 3 lượt.
+sk_sh5,Triệu Hồi Linh Vật,Spirit Animal,Thầy Cúng,Shaman,No,Self,0,0,3,eff_summon,,,Wolf spirit: 2 dmg/turn to random enemy 2 turns,0,Uncommon,Triệu hồi Sói Linh tấn công địch ngẫu nhiên 2 dmg/lượt trong 2 lượt.
+sk_sh6,Tiếng Gọi Tổ Tiên,Ancestral Call,Thầy Cúng,Shaman,No,All Allies,0,0,3,eff_stat_buff,0.1,2 turns,stat=all stats,0,Rare,"Buff tất cả chỉ số (HP regen, dmg, speed, stress resist) 10% trong 2 lượt."
+sk_sh7,Nghi Lễ Cổ Xưa,Ancient Rite,Thầy Cúng,Shaman,Yes,All Enemies,1,0,4,eff_consume_totem,,,Destroy active totem for 2x AoE dmg,10,Rare,Hủy totem đang active để giải phóng AoE mạnh gấp đôi lên toàn địch + 10 stress.
+sk_wl1,Tia Bóng Tối,Dark Bolt,Thuật Sĩ Ký Ước,Warlock,Yes,Any Enemy,1,0,0,,,,,0,Common,"Đòn bóng tối cơ bản, không tốn HP."
+sk_wl2,Lời Nguyền,Curse,Thuật Sĩ Ký Ước,Warlock,No,Any Enemy,0,0,1,eff_dmg_debuff,-0.2,,stat=dmg & speed 3 turns,5,Common,Nguyền địch giảm 20% dmg và tốc độ trong 3 lượt.
+sk_wl3,Hút Linh Hồn,Soul Drain,Thuật Sĩ Ký Ước,Warlock,Yes,Any Enemy,1,0,1,eff_lifesteal,0.5,,stat=of dmg dealt,0,Uncommon,Gây dmg và hồi 50% lượng dmg gây ra cho bản thân.
+sk_wl4,Hợp Đồng Máu,Blood Pact,Thuật Sĩ Ký Ước,Warlock,No,Self,0,0,0,eff_hp_cost_buff,,,Cost 8 HP: +40% dmg next skill,0,Uncommon,Hy sinh 8 HP để tăng 40% dmg cho kỹ năng tiếp theo. Không cooldown.
+sk_wl5,Bước Vào Bóng Tối,Shadow Step,Thuật Sĩ Ký Ước,Warlock,Yes,Back Enemy,1.2,10,1,eff_bypass_position,,,Yes,5,Uncommon,"Xuyên qua hàng đầu, đánh thẳng địch hàng sau với độ chính xác cao."
+sk_wl6,Cổng Địa Ngục,Hellgate,Thuật Sĩ Ký Ước,Warlock,Yes,All Enemies,0.8,-5,3,eff_enemy_stress,+12,instant,target=all_enemies,12,Rare,"AoE bóng tối và stress lớn. Ở dưới 50% HP, dmg tăng thêm 30%."
+sk_wl7,Thủ Đoạn Tối Thượng,Dark Ritual,Thuật Sĩ Ký Ước,Warlock,No,Self,0,0,4,eff_hp_threshold_buff,,,If HP<30%: all stats x2 for 3 turns,0,Rare,"Khi HP dưới 30%, toàn bộ chỉ số nhân đôi trong 3 lượt. Rủi ro cực cao."
+sk_bd1,Đàn Chiến,Battle Song,Du Ca,Bard,No,All Allies,0,0,1,eff_spd_buff,,,+3 speed all allies 2 turns,0,Common,Tăng 3 tốc độ toàn đội trong 2 lượt — đội đánh trước địch.
+sk_bd2,Khúc Ca Dũng Khí,Courage Ballad,Du Ca,Bard,No,All Allies,0,0,2,eff_stress_reduce,-10,instant,target=all_allies,0,Common,Giảm 10 stress toàn đội ngay lập tức. Kỹ năng giảm stress mạnh nhất.
+sk_bd3,Điệu Nhạc Khích Lệ,Inspiring Melody,Du Ca,Bard,No,Single Ally,0,0,1,eff_crit_buff,,,Next attack auto-crit,0,Uncommon,Đồng đội được chỉ định đảm bảo crit cho đòn tấn công tiếp theo.
+sk_bd4,Khúc Ca Chữa Lành,Healing Song,Du Ca,Bard,No,All Allies,0,0,2,eff_heal,6,instant,target=ally all,0,Common,Hồi 6 HP toàn đội. Lượng ít nhưng không có cooldown cao.
+sk_bd5,Điệu Nhạc Buồn,Lament,Du Ca,Bard,No,Any Enemy,0,0,2,eff_melancholy,,,Enemy skips next turn,15,Uncommon,"Làm địch mất ý chí chiến đấu, bỏ lỡ 1 lượt. Gây 15 stress cho địch đó."
+sk_bd6,Khúc Ca Chiến Thắng,Victory Song,Du Ca,Bard,No,All Allies,0,0,2,eff_kill_bonus,,,After each kill: +1 action to attacker,0,Rare,"Trong 3 lượt: mỗi khi tiêu diệt địch, hero đó được thêm 1 hành động tức thì."
+sk_bd7,Vũ Điệu Tử Thần,Death's Waltz,Du Ca,Bard,Yes,Random,0,0,4,eff_confusion,,,Random massive effects both sides,20,Rare,Kỹ năng hỗn loạn: các hiệu ứng ngẫu nhiên tác động lên cả hai phe. Du Ca nhận 20 stress.
+sk_n1,Tia Tử Thần,Death Bolt,Tử Linh Sư,Necromancer,Yes,Any Enemy,1,0,0,,,,,0,Common,"Đòn bóng tối cơ bản, không hiệu ứng phụ."
+sk_n2,Triệu Hồn,Raise Dead,Tử Linh Sư,Necromancer,No,Dead Enemy,0,0,1,eff_summon,,,Skeleton: 50% stats of original enemy,0,Uncommon,"Triệu hồi địch vừa chết thành Bộ Xương (slot 5) với 50% chỉ số gốc, tồn tại 2 lượt."
+sk_n3,Bóng Tối Rải Rác,Dark Scatter,Tử Linh Sư,Necromancer,Yes,All Enemies,0.8,0,2,eff_enemy_stress,+15,instant,target=all_enemies,10,Uncommon,AoE bóng tối và 15 stress lên toàn địch. Đẩy địch vào Affliction nhanh hơn.
+sk_n4,Hút Sinh Lực,Life Drain,Tử Linh Sư,Necromancer,Yes,Any Enemy,0.9,5,1,eff_lifesteal,0.6,,stat=of dmg dealt,0,Common,Hút 60% lượng dmg gây ra để hồi HP bản thân.
+sk_n5,Quân Đoàn,Undead Legion,Tử Linh Sư,Necromancer,No,Summons,0,0,2,eff_summon_enhance,0.5,,stat=stats to active skeletons,0,Uncommon,Buff tất cả Bộ Xương đang active +50% chỉ số trong 2 lượt còn lại.
+sk_n6,Nổ Xác,Corpse Explosion,Tử Linh Sư,Necromancer,Yes,All Enemies,0,0,1,eff_consume_summon,,,Destroy skeleton: AoE 15-25 dmg,10,Rare,Kích nổ 1 Bộ Xương đang active để gây 15-25 AoE dmg toàn địch + 10 stress.
+sk_n7,Sự Bất Tử,Undying,Tử Linh Sư,Necromancer,No,Self,0,0,5,eff_perm_undying,,,"Transfer to skeleton if killed, 1/dungeon",0,Rare,"Nếu chết, linh hồn chuyển vào Bộ Xương gần nhất, tiếp tục chiến đấu 2 lượt. 1 lần/dungeon."
+sk_mk1,Đòn Quyền,Iron Fist,Võ Thánh,Monk,Yes,Front Enemy,0.9,10,0,,,,,0,Common,"Đòn cơ bản, tốc độ cao và chính xác. Nền tảng cho combo."
+sk_mk2,Liên Hoàn Quyền,Combo Strike,Võ Thánh,Monk,Yes,Front Enemy,0.45,10,0,eff_multi_hit,3,instant,count=3,0,Uncommon,3 đòn liên tiếp với 45% dmg mỗi đòn. Mỗi đòn tính bleed/burn/crit riêng.
+sk_mk3,Thiền Định,Meditate,Võ Thánh,Monk,No,Self,0,0,2,eff_stress_reset,,,Stress to 0 + heal 20% HP,0,Uncommon,Reset stress về 0 và hồi 20% HP tối đa. Giải pháp thoát Affliction duy nhất.
+sk_mk4,Bước Nhanh,Swift Step,Võ Thánh,Monk,No,Self,0,0,1,eff_spd_buff,,,compound: also eff_dodge; +5 speed & +20% dodge 2 turns,0,Common,Tăng tốc độ 5 và dodge 20% trong 2 lượt. Thường đứng đầu turn order.
+sk_mk5,Đòn Gió,Wind Strike,Võ Thánh,Monk,Yes,Any Enemy,1,5,1,eff_bypass_position,,,Yes,0,Uncommon,"Bỏ qua vị trí, có thể tấn công bất kỳ địch nào."
+sk_mk6,Bùng Khí,Ki Burst,Võ Thánh,Monk,Yes,Front Enemy,1.3,0,2,eff_stun,,,aoe; After 3 consecutive hits: stun all,5,Rare,"Tích lũy khí sau 3 đòn liên tiếp, phát nổ gây AoE stun toàn địch 1 lượt."
+sk_mk7,Trạng Thái Siêu Việt,Transcendence,Võ Thánh,Monk,No,Self,0,0,4,eff_invincible_store,,,"1 turn invincible, next hit = stored dmg x2",0,Rare,"Bất tử 1 lượt, tích lũy toàn bộ dmg nhận được, xả ra x2 ở đòn tiếp theo."
+sk_dr1,Rễ Cây,Entangle,Pháp Sư Tự Nhiên,Druid,Yes,Any Enemy,0.7,5,1,eff_immobilize,1,2 turns,,0,Common,"Trói địch bằng rễ cây, không thể di chuyển hoặc đổi vị trí trong 2 lượt."
+sk_dr2,Hóa Gấu,Bear Form,Pháp Sư Tự Nhiên,Druid,No,Self,0,0,0,eff_transform,,,"Tank form: +30% HP, -2 speed, front row",0,Common,"Chuyển sang Dạng Gấu: +30% HP, -2 tốc độ, kỹ năng thiên về phòng thủ. Không tốn lượt."
+sk_dr3,Hóa Chim,Hawk Form,Pháp Sư Tự Nhiên,Druid,No,Self,0,0,0,eff_transform,,,"DPS form: +3 speed, can target back row, -20% HP",0,Common,"Chuyển sang Dạng Chim: +3 tốc độ, đánh hàng sau, -20% HP. Không tốn lượt."
+sk_dr4,Liệu Pháp Tự Nhiên,Nature's Touch,Pháp Sư Tự Nhiên,Druid,No,Single Ally,0,0,1,eff_form_heal,,,Bear:16HP / Hawk:8HP + stress-5,0,Uncommon,Hồi 16 HP (Dạng Gấu) hoặc 8 HP + giảm 5 stress (Dạng Chim).
+sk_dr5,Bão Tự Nhiên,Nature's Wrath,Pháp Sư Tự Nhiên,Druid,Yes,All Enemies,0.85,0,2,eff_immobilize,0.3,,stat=immobilize chance each,8,Uncommon,"AoE tự nhiên lên toàn địch, 30% cơ hội trói chân mỗi địch. +8 stress cho địch."
+sk_dr6,Lớp Vỏ Cây,Bark Skin,Pháp Sư Tự Nhiên,Druid,No,Self,0,0,2,eff_def_buff,,,Bear only: +60% DEF 2 turns,0,Rare,Chỉ trong Dạng Gấu: +60% phòng thủ trong 2 lượt. Kết hợp với Taunt từ đồng đội.
+sk_dr7,Sói Linh,Spirit Wolf,Pháp Sư Tự Nhiên,Druid,No,Self,0,0,3,eff_summon,,,Wolf companion: 6 dmg/turn random enemy 3 turns,5,Rare,Triệu hồi Sói Linh tấn công địch ngẫu nhiên 6 dmg/lượt trong 3 lượt + 5 stress/đòn.
+sk_w8,Phản Chiếu Đòn,Damage Reflect,Chiến Binh,Warrior,No,Self,0,0,2,eff_reflect_dmg,0.3,2 turns,stat=dmg reflected,0,Rare,Phản chiếu 30% sát thương nhận về phía địch trong 2 lượt. Không thể bị xóa bởi silence.
+sk_w9,Khắc Chế,Counter Stance,Chiến Binh,Warrior,Yes,Front Enemy,1.3,0,2,eff_conditional_dmg,,,x2 dmg if target is stunned/immobilized,0,Uncommon,"Gây 1.3x dmg thông thường, nhưng nếu mục tiêu đang bị stun/immobilize thì gây 2.6x dmg."
+sk_w10,Chiến Kỳ,War Banner,Chiến Binh,Warrior,No,All Allies,0,0,3,eff_dmg_buff,0.2,3 turns,stat=dmg all allies,10,Rare,"Cắm cờ chiến, toàn đội nhận +20% dmg trong 3 lượt. Địch nhìn thấy cờ nhận +10 stress."
+sk_m8,Hố Tối,Void Rift,Pháp Sư,Mage,Yes,Any Enemy,0.6,0,3,eff_doom,,,Die in 4 turns if not dispelled,15,Rare,"Mở hố tối dưới mục tiêu. Đếm ngược 4 lượt — nếu không được giải trừ, mục tiêu chết ngay lập tức."
+sk_m9,Gương Phép,Spell Mirror,Pháp Sư,Mage,No,Self,0,0,3,eff_reflect_spell,,,Next skill used on self reflected back,0,Rare,Phản chiếu kỹ năng tiếp theo nhắm vào Pháp Sư — bao gồm buff và debuff — về phía người dùng.
+sk_m10,Tăng Tốc Phép,Arcane Surge,Pháp Sư,Mage,No,Self,0,0,4,eff_reset_cd,,,All skills cooldown set to 0,20,Rare,Reset cooldown tất cả kỹ năng về 0 ngay lập tức. Pháp Sư tự nhận 20 stress do quá tải ma lực.
+sk_c8,Phúc Lành,Divine Blessing,Tăng Lữ,Cleric,No,Single Ally,0,0,2,eff_preemptive_heal,,,Auto-heal 12 HP when ally drops below 25% HP,0,Rare,"Đặt phúc lành lên đồng đội: nếu HP xuống dưới 25% bất kỳ lúc nào, tự động hồi 12 HP ngay lập tức."
+sk_c9,Trừng Phạt,Holy Wrath,Tăng Lữ,Cleric,Yes,Any Enemy,0,10,1,eff_stress_scale_dmg,,,"Dmg = party avg stress / 5 (min 5, max 40)",5,Rare,"Đòn thánh linh gây sát thương tỷ lệ với stress trung bình của cả đội. Đội càng khốn khổ, đòn càng mạnh."
+sk_c10,Thánh Địa,Sanctuary,Tăng Lữ,Cleric,No,All Allies,0,0,4,eff_zone_buff,,,All allies cannot die for 1 turn (survive at 1 HP),0,Rare,"Triệu hồi vùng thánh địa 1 lượt: mọi đồng đội không thể chết, mọi đòn致命 chỉ hạ xuống 1 HP."
+sk_a8,Đầu Độc Hàng Loạt,Mass Poison,Sát Thủ,Assassin,Yes,All Enemies,0.4,0,2,eff_poison,3,3 turns,"per turn, target=all_enemies",0,Rare,Rải độc lên toàn bộ địch với 40% dmg trực tiếp + poison 3/lượt x3 lượt cho mỗi kẻ.
+sk_a9,Dấu Tử Thần,Death Mark,Sát Thủ,Assassin,No,Any Enemy,0,0,1,eff_execute_threshold,,,Execute threshold raised to 35% HP,10,Uncommon,Đánh dấu địch: ngưỡng Execute của kỹ năng Tử Hình tăng từ 20% lên 35% HP với mục tiêu này.
+sk_a10,Phục Kích,Ambush,Sát Thủ,Assassin,Yes,Any Enemy,1.4,20,0,eff_first_strike,,,Guaranteed to act before all enemies this turn,0,Rare,Đảm bảo Sát Thủ hành động trước TẤT CẢ địch trong lượt này. Dmg +40% nếu đánh vào địch chưa hành động.
+sk_ar8,Khóa Chân,Pin Down,Cung Thủ,Archer,Yes,Any Enemy,0.8,5,1,eff_immobilize,,,compound: also eff_bleed; 2 turns immobilize + bleed 2/turn x3,0,Uncommon,Ghim địch xuống đất: immobilize 2 lượt VÀ gây bleed 2/lượt x3 lượt. Combo tốt với Bounty Hunter.
+sk_ar9,Tên Nguyền,Cursed Arrow,Cung Thủ,Archer,Yes,Any Enemy,0.7,0,2,eff_curse_perm,,,"Permanent -10 accuracy, irremovable",8,Rare,Mũi tên mang lời nguyền: áp dụng debuff VĨNH VIỄN -10 accuracy lên mục tiêu. Không thể giải trừ.
+sk_ar10,Mục Tiêu Ưu Tiên,Priority Target,Cung Thủ,Archer,Yes,Lowest HP Enemy,1.6,10,2,eff_execute_threshold,,,x2 dmg if target HP < 30%,0,Rare,Tự động nhắm vào địch có HP thấp nhất. Nếu mục tiêu dưới 30% HP thì gây 2x dmg thay vì 1.6x.
+sk_b8,Điên Cuồng,Frenzy,Cuồng Chiến,Berserker,Yes,2 Random Enemies,0.7,-10,1,eff_random_aoe,,,Hit 2 random targets including allies (5% chance),15,Rare,Tấn công 2 mục tiêu ngẫu nhiên trong địch. Có 5% tấn công nhầm đồng đội khi đang Affliction.
+sk_b9,Uống Máu,Blood Feast,Cuồng Chiến,Berserker,Yes,Front Enemy,1.2,-5,2,eff_kill_heal,,,Kill = restore to full HP,0,Rare,"Nếu đòn này hạ gục địch, Cuồng Chiến hồi về đầy HP ngay lập tức. Không hồi nếu không kill."
+sk_b10,Gào Thét Huyết,Blood Howl,Cuồng Chiến,Berserker,No,Self,0,0,2,eff_timed_buff,,,"All stats +25% for 2 turns, then -10% for 2 turns",20,Rare,"Buff cực mạnh 2 lượt (+25% tất cả), sau đó tự động chịu debuff 2 lượt (-10%). Tốn 20 stress."
+sk_p8,Tẩy Trần,Purify,Thánh Kỵ Sĩ,Paladin,No,Single Ally,0,0,3,eff_remove_permanent,,,Remove 1 irremovable debuff,0,Rare,Kỹ năng DUY NHẤT trong game có thể xóa bỏ 1 debuff vĩnh viễn. Cooldown rất cao.
+sk_p9,Đòn Chí Thiện,Smite Evil,Thánh Kỵ Sĩ,Paladin,Yes,Any Enemy,1.2,10,1,eff_curse_bonus,,,x2 dmg if target has curse/permanent debuff,10,Rare,Gây 1.2x dmg thông thường. Nếu mục tiêu đang bị nguyền rủa hoặc debuff vĩnh viễn thì x2 toàn bộ.
+sk_p10,Lá Chắn Thần,Aegis,Thánh Kỵ Sĩ,Paladin,No,Single Ally,0,0,4,eff_invincible,,,Target immune to all dmg for 2 turns,0,Rare,Đặt lá chắn thần cho 1 đồng đội: hoàn toàn miễn nhiễm sát thương trong 2 lượt. Không thể cản stress.
+sk_py8,Cháy Ngược,Backdraft,Pháp Sư Hỏa,Pyromancer,No,Self,0,0,2,eff_burn_reflect,,,"When hit, apply 2 burn stacks to attacker",0,Uncommon,"Khi bị tấn công vật lý, tự động áp 2 chồng burn lên kẻ tấn công trong 2 lượt."
+sk_py9,Nham Thạch,Lava Pool,Pháp Sư Hỏa,Pyromancer,No,Ground,0,0,3,eff_zone_dot,,,All enemies take 5 burn dmg/turn for 3 turns,8,Rare,Tạo vùng nham thạch: mọi địch nhận 5 burn damage/lượt trong 3 lượt. Không thể thoát khỏi vùng.
+sk_py10,Rồng Lửa,Fire Drake,Pháp Sư Hỏa,Pyromancer,No,Self,0,0,4,eff_summon,,,"Fire Drake: 8 dmg + 2 burn stacks to random enemy/turn, 3 turns",10,Rare,Triệu hồi Rồng Lửa: tấn công địch ngẫu nhiên 8 dmg + 2 burn stacks/lượt trong 3 lượt.
+sk_sh8,Nghi Lễ Trói Buộc,Binding Ritual,Thầy Cúng,Shaman,No,Any Enemy,0,0,3,eff_perm_debuff_generic,,,Apply irremovable -15% dmg to target,10,Rare,Thực hiện nghi lễ trói buộc: áp debuff VĨNH VIỄN -15% sát thương lên địch. Không thể bị giải trừ.
+sk_sh9,Linh Hồn Tổ Tiên,Ancestor Wrath,Thầy Cúng,Shaman,Yes,All Enemies,1,0,4,eff_spirit_aoe,,,"AoE + 20 stress all enemies, ignore stress resist",12,Rare,Triệu linh hồn tổ tiên giáng xuống: AoE sát thương + 20 stress bỏ qua kháng stress của địch.
+sk_sh10,Bão Sét,Thunder Storm,Thầy Cúng,Shaman,Yes,All Enemies,0.9,0,3,eff_stun,0.3,,aoe; stat=stun chance each enemy + 5 stress,8,Rare,Bão sét giáng xuống toàn sân: 30% stun từng địch + 5 stress/kẻ. Kết hợp tốt với Nghi Lễ Trói Buộc.
+sk_wl8,Cướp Phép,Buff Steal,Thuật Sĩ Ký Ước,Warlock,No,Any Enemy,0,0,2,eff_steal_buff,,,"Remove 1 buff from enemy, apply to self",5,Rare,Cướp 1 buff đang hoạt động của địch và áp dụng lên chính mình. Không hoạt động với permanent buff.
+sk_wl9,Ký Ước Vĩnh Cửu,Eternal Pact,Thuật Sĩ Ký Ước,Warlock,No,Self,0,0,5,eff_perm_buff_generic,,,"Permanent +15% dmg, irremovable",25,Rare,Ký ước với bóng tối: nhận buff VĨNH VIỄN +15% dmg. Không thể bị dispel. Tốn 25 stress.
+sk_wl10,Nguyền Rủa Tối Thượng,Supreme Curse,Thuật Sĩ Ký Ước,Warlock,No,Any Enemy,0,0,4,eff_perm_debuff_generic,,,Irremovable: -20% all stats + 3 stress/turn,15,Rare,Nguyền rủa vĩnh viễn: mục tiêu chịu -20% tất cả chỉ số VÀ +3 stress/lượt. Không thể giải trừ bằng bất kỳ cách nào.
+sk_bd8,Bài Ca Nguyền,Cursed Lullaby,Du Ca,Bard,No,Any Enemy,0,0,3,eff_timed_debuff_then_cc,,,"Enemy dmg -30% for 4 turns, then confused 1 turn",12,Rare,"Bài hát ma quái: địch bị giảm 30% dmg trong 4 lượt, sau đó tự động mất 1 lượt vì hoảng loạn."
+sk_bd9,Giai Điệu Hồi Sinh,Revival Hymn,Du Ca,Bard,No,Dead Ally,0,0,5,eff_revive,,,Revive at 70% HP + stress reset to 0,0,Rare,Hồi sinh đồng đội với 70% HP và reset stress về 0. Mạnh hơn kỹ năng Resurrect của Tăng Lữ nhưng cooldown cao hơn.
+sk_bd10,Vũ Điệu Chiến,War Dance,Du Ca,Bard,No,All Allies,0,0,4,eff_party_extra_action,,,All allies gain 1 extra action this turn,15,Rare,Vũ điệu cuồng nhiệt: toàn đội được hành động THÊM 1 lần ngay trong lượt này. Du Ca nhận 15 stress.
+sk_n8,Cánh Cổng Tử Thần,Death Gate,Tử Linh Sư,Necromancer,No,Self,0,0,3,eff_summon,,,Summon 2 skeletons at 40% stats each,10,Rare,"Mở cổng tử thần: triệu hồi cùng lúc 2 Bộ Xương (slot 5 và 6) với 40% chỉ số gốc, tồn tại 2 lượt."
+sk_n9,Hấp Thụ Sinh Khí,Life Siphon,Tử Linh Sư,Necromancer,No,All Allies,0,0,3,eff_drain_party_stress,,,Convert 10 stress from each ally to 8 HP for self,0,Rare,Hút 10 stress từ mỗi đồng đội (họ giảm stress) và chuyển thành 8 HP hồi cho chính mình.
+sk_n10,Bóng Ma Hận Thù,Wraith Form,Tử Linh Sư,Necromancer,No,Self,0,0,4,eff_transform,,,"Intangible 2 turns: immune to physical, +30% spell dmg",15,Rare,"Hóa thành bóng ma 2 lượt: miễn nhiễm mọi tấn công vật lý, tăng 30% sát thương phép thuật."
+sk_mk8,Tâm Bão,Eye of Storm,Võ Thánh,Monk,No,Self,0,0,3,eff_dodge,,,Dodge all attacks for 1 turn + counter each miss,0,Rare,"Né tránh tuyệt đối 1 lượt. Mỗi đòn địch trượt, Võ Thánh phản đòn tức thì với 50% dmg cơ bản."
+sk_mk9,Quyền Sấm,Thunder Punch,Võ Thánh,Monk,Yes,Front Enemy,1.2,5,2,eff_stun,,,compound: also eff_knockback; Stun 1 turn + push to back row,8,Uncommon,Đòn quyền sét đánh: stun 1 lượt VÀ đẩy địch ra hàng sau. Hai hiệu ứng áp dụng cùng lúc.
+sk_mk10,Tâm Linh Thức,Awakened Mind,Võ Thánh,Monk,No,Self,0,0,3,eff_stress_immune,,,Immune to all stress for 3 turns,0,Rare,Đạt trạng thái tỉnh thức: hoàn toàn miễn nhiễm mọi nguồn stress trong 3 lượt. Không thể vào Affliction trong thời gian này.
+sk_dr8,Hồi Sinh Thiên Nhiên,Nature's Embrace,Pháp Sư Tự Nhiên,Druid,No,All Allies,0,0,3,eff_regen,,,4 HP/turn x4 turns all allies,0,Rare,Năng lượng tự nhiên bao phủ đội: toàn bộ đồng đội hồi 4 HP/lượt trong 4 lượt liên tiếp.
+sk_dr9,Bão Thiên Lôi,Storm Surge,Pháp Sư Tự Nhiên,Druid,Yes,All Enemies,1.1,5,3,eff_form_condition,,,Hawk form only: AoE + 40% stun chance each,10,Rare,CHỈ dùng được ở Dạng Chim: AoE sét đánh toàn địch 1.1x dmg + 40% stun mỗi kẻ.
+sk_dr10,Đất Vững Chắc,Earth Grasp,Pháp Sư Tự Nhiên,Druid,Yes,All Enemies,0.6,0,3,eff_form_condition,,,Bear form only: immobilize all enemies 2 turns,0,Rare,CHỈ dùng được ở Dạng Gấu: trói chân TOÀN BỘ địch trong 2 lượt với 60% dmg mỗi kẻ.

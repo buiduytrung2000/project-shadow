@@ -5,7 +5,26 @@ dependencies {
   api "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion"
   api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
+  // ─── Project Shadow specific ───
+  // JSON parsing (Stage_*.json)
+  api 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+  api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
 
+  // CSV parsing (Heroes_FIXED.csv, Skills_v3_FIXED.csv, ...)
+  api 'com.opencsv:opencsv:5.9'
+
+  // Logging
+  api 'org.slf4j:slf4j-api:2.0.16'
+  api 'ch.qos.logback:logback-classic:1.5.12'
+
+  // Lombok (compile-time annotation)
+  compileOnly 'org.projectlombok:lombok:1.18.36'
+  annotationProcessor 'org.projectlombok:lombok:1.18.36'
+
+  // ─── Test ───
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+  testImplementation 'org.assertj:assertj-core:3.26.3'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
@@ -13,4 +32,7 @@ dependencies {
 
 jar {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+test {
+  useJUnitPlatform()
 }

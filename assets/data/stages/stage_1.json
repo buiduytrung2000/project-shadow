@@ -1,0 +1,158 @@
+{
+  "id": "stage_1",
+  "name": "Hầm mộ khởi đầu",
+  "name_en": "Starting Catacombs",
+  "act": 1,
+  "difficulty": 1,
+  "description": "Màn chơi đầu tiên, nhẹ nhàng, dạy người chơi cơ chế cơ bản: combat, sự kiện, nghỉ, kho báu. Trục cốt truyện: giải cứu nhóm thợ mỏ bị mắc kẹt, kết thúc bằng boss Giant Zombie tiết lộ Trái Tim Đen.",
+
+  "presentation": {
+    "background": "catacombs_bg",
+    "music": "dungeon_ambient",
+    "intro_text": "Bạn xuống hầm mộ tối tăm. Tiếng rên khe khẽ vang lên từ đâu đó. Bóng tối ở đây mỏng — nhưng đủ để giấu thứ gì đó.",
+    "outro_text_win": "Giant Zombie ngã xuống. Trên ngực nó, một mảnh đá đen nhỏ rỉ máu — có lẽ là dấu vết đầu tiên của Trái Tim Đen.",
+    "outro_text_lose": "Bóng Tối nuốt chửng đoàn của bạn. Sương Mù Đen lan rộng thêm một dặm."
+  },
+
+  "layout": {
+    "type": "layered_tree",
+    "edge_topology": "fully_connected",
+    "num_layers": 3,
+    "total_nodes": 6,
+    "paths_per_run": 4,
+    "first_node_fixed": {
+      "type": "combat",
+      "label": "L1.A",
+      "enemy_pool": ["enemy_01"],
+      "min_enemies": 1,
+      "max_enemies": 1,
+      "tutorial_hints": ["target_select", "skill_select", "stress_intro"]
+    },
+    "last_node_fixed": {
+      "type": "boss",
+      "label": "BOSS",
+      "boss_id": "enemy_b01",
+      "intro_text": "Một xác chết khổng lồ trồi lên từ đống xương..."
+    },
+    "layer_2": {
+      "label_prefix": "L2",
+      "num_nodes": 2,
+      "edges_in": "fully_connected_from_layer_1",
+      "edges_out": "fully_connected_to_layer_3",
+      "node_generation": {
+        "type": "random_from_pool_weighted",
+        "weights": { "combat": 50, "event": 25, "rest": 15, "reward": 10 }
+      }
+    },
+    "layer_3": {
+      "label_prefix": "L3",
+      "num_nodes": 2,
+      "edges_in": "fully_connected_from_layer_2",
+      "edges_out": "all_to_boss",
+      "node_generation": {
+        "type": "random_from_pool_weighted",
+        "weights": { "combat": 40, "event": 30, "rest": 20, "reward": 10 },
+        "constraint": "if_player_came_from_combat_node: bias_away_from_combat (combat weight halved)"
+      }
+    }
+  },
+
+  "rules": [
+    "no_consecutive_rest",
+    "no_consecutive_reward",
+    "max_combat_per_run: 3",
+    "min_event_per_run: 1",
+    "if_layer_3_node_is_combat_and_path_ends_into_boss: must_use_pre_boss_pool (1 goblin only)",
+    "if_player_has_full_party_hp_before_boss: spawn_extra_reward_node (replaces 1 layer_3 node with reward)"
+  ],
+
+  "pools": {
+    "combat": {
+      "default": {
+        "enemies": ["enemy_01", "enemy_02"],
+        "variants_allowed": ["Base", "Tank", "Assassin"],
+        "min_enemies": 2,
+        "max_enemies": 3
+      },
+      "pre_boss": {
+        "enemies": ["enemy_01"],
+        "variants_allowed": ["Base"],
+        "min_enemies": 1,
+        "max_enemies": 1,
+        "comment": "Trận trước boss luôn dễ để người chơi không rỗ HP/stress trước boss"
+      }
+    },
+
+    "event": {
+      "stage_1_pool": [
+        "event_open_tomb",
+        "event_whispering_shadow",
+        "event_glowing_spring",
+        "event_lost_survivor",
+        "event_black_fog_patch",
+        "event_old_witch_doctor"
+      ],
+      "weights": {
+        "event_open_tomb": 25,
+        "event_whispering_shadow": 20,
+        "event_glowing_spring": 25,
+        "event_lost_survivor": 15,
+        "event_black_fog_patch": 10,
+        "event_old_witch_doctor": 5
+      },
+      "comment": "Pool Stage 1 chỉ chứa event Common/Uncommon. Event Rare/Epic dành Stage 2-3."
+    },
+
+    "rest": {
+      "type": "campsite",
+      "options": [
+        { "label": "Nghỉ ngơi", "effect": "stress_reduce", "target": "single_hero", "value_min": 10, "value_max": 20 },
+        { "label": "Cảnh giới", "effect": "heal", "target": "single_hero", "value_min": 8, "value_max": 15 },
+        { "label": "Trò chuyện", "effect": "stress_reduce", "target": "party", "value_min": 5, "value_max": 8 }
+      ],
+      "comment": "Player chọn 1 trong 3 hành động khi vào rest node."
+    },
+
+    "reward": {
+      "rolls": 2,
+      "drop_table": [
+        { "type": "gold",         "value_min": 30, "value_max": 70, "weight": 40 },
+        { "type": "item",         "item_id": "item_c01",          "weight": 25 },
+        { "type": "item",         "item_id": "item_c04",          "weight": 15 },
+        { "type": "item",         "item_id": "item_c03",          "weight": 10 },
+        { "type": "item_random",  "category": "trinket_common",   "weight": 10 }
+      ],
+      "comment": "Mỗi node reward roll 2 lần (có thể trùng)."
+    }
+  },
+
+  "boss_node": {
+    "boss_id": "enemy_b01",
+    "boss_name": "Giant Zombie",
+    "phase_transitions": [
+      { "trigger": "hp_below_30%", "action": "use_skill: sk_e_b01_enrage", "once_per_combat": true }
+    ],
+    "rewards_on_kill": {
+      "gold": { "value": 200, "chance": 1.0 },
+      "items": {
+        "rolls": 1,
+        "drop_table": [
+          { "type": "item_random", "category": "trinket_common",   "weight": 35 },
+          { "type": "item_random", "category": "trinket_uncommon", "weight": 30 },
+          { "type": "item_random", "category": "consumable_rare",  "weight": 15 },
+          { "type": "item_random", "category": "relic",            "weight": 15 },
+          { "type": "item_random", "category": "cursed",           "weight": 5 }
+        ],
+        "comment": "Drop 1 item ngẫu nhiên từ weighted pool. Chỉ ~15% chance ra relic ở Stage 1 boss — không guarantee Epic."
+      },
+      "lore": { "value": "fragment_black_heart_01" }
+    }
+  },
+
+  "validation_refs": {
+    "enemies_used":        ["enemy_01", "enemy_02", "enemy_b01"],
+    "enemy_skills_used":   ["sk_e_stab", "sk_e_bone_club", "sk_e_dark_bolt", "sk_e_self_heal", "sk_e_b01_smash", "sk_e_b01_putrid_breath", "sk_e_b01_enrage"],
+    "events_used":         ["event_open_tomb", "event_whispering_shadow", "event_glowing_spring", "event_lost_survivor", "event_black_fog_patch", "event_old_witch_doctor"],
+    "items_referenced":    ["item_c01", "item_c03", "item_c04"]
+  }
+}

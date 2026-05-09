@@ -1,0 +1,212 @@
+{
+  "id": "stage_2",
+  "name": "Rừng Sương Mù",
+  "name_en": "Mistwood Forest",
+  "act": 2,
+  "difficulty": 2,
+  "description": "Hồi 2 – Những nỗi sợ bị lãng quên. Player lần theo manh mối, mở khóa khu rừng tối và đầm lầy. Mỗi vùng đất tiết lộ một phần quá khứ của các linh hồn. Cuối stage, một trong bốn linh hồn chính bị 'ăn mòn' hoàn toàn — trở thành boss The Whispering Shade.",
+
+  "presentation": {
+    "background": "mistwood_forest_bg",
+    "music": "forest_dark_ambient",
+    "intro_text": "Sương Mù Đen dày hơn ở đây. Cây cối thì thầm bằng giọng nói của những người đã chết.",
+    "outro_text_win": "Whispering Shade tan biến trong tiếng khóc — bạn nhận ra giọng nói đó từng là một trong số bạn. Mảnh đá đen thứ hai rơi xuống, cùng nhịp với tim bạn.",
+    "outro_text_lose": "Bạn quên dần chính mình. Khi tỉnh dậy, không ai còn nhớ tên các hero đã ngã."
+  },
+
+  "layout": {
+    "type": "layered_tree",
+    "edge_topology": "fully_connected",
+    "num_layers": 5,
+    "total_nodes": 13,
+    "paths_per_run": 6,
+    "layer_node_counts": [1, 3, 3, 3, 2, 1],
+
+    "first_node_fixed": {
+      "type": "combat",
+      "label": "L1.A",
+      "enemy_pool": ["enemy_03"],
+      "variants_allowed": ["Base", "Tank"],
+      "min_enemies": 2,
+      "max_enemies": 2,
+      "comment": "Trận mở màn dùng Shadow Wisp (theme Sương Mù). 2 con để báo hiệu độ khó tăng so Stage 1."
+    },
+
+    "last_node_fixed": {
+      "type": "boss",
+      "label": "BOSS",
+      "boss_id": "enemy_b02",
+      "intro_text": "Một bóng đen lạnh lẽo bước ra từ sương mù. Khuôn mặt nó mơ hồ — gần như là một trong các bạn đồng hành của bạn..."
+    },
+
+    "middle_layers": [
+      {
+        "name": "L2",
+        "num_nodes": 3,
+        "edges_in": "fully_connected_from_layer_1",
+        "edges_out": "fully_connected_to_next_layer",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 50, "event": 25, "rest": 15, "reward": 10 }
+        }
+      },
+      {
+        "name": "L3",
+        "num_nodes": 3,
+        "edges_in": "fully_connected_from_layer_2",
+        "edges_out": "fully_connected_to_next_layer",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 35, "event": 30, "rest": 15, "reward": 15, "elite": 5 }
+        }
+      },
+      {
+        "name": "L4",
+        "num_nodes": 3,
+        "edges_in": "fully_connected_from_layer_3",
+        "edges_out": "fully_connected_to_next_layer",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 30, "event": 30, "rest": 20, "reward": 15, "elite": 5 }
+        }
+      },
+      {
+        "name": "L5",
+        "num_nodes": 2,
+        "edges_in": "fully_connected_from_layer_4",
+        "edges_out": "all_to_boss",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "rest": 35, "reward": 30, "event": 25, "combat": 10 },
+          "constraint": "if_layer_5_node_is_combat: must_use_pre_boss_pool"
+        }
+      }
+    ]
+  },
+
+  "rules": [
+    "no_consecutive_rest",
+    "no_consecutive_reward",
+    "no_consecutive_event_unless_30%",
+    "max_combat_per_run: 4",
+    "min_event_per_run: 2",
+    "min_rest_per_run: 1",
+    "elite_node_max_per_run: 1",
+    "if_player_has_full_party_hp_before_boss: spawn_extra_reward_node",
+    "if_party_avg_hp_below_30%_at_layer_4: bias_layer_5_to_rest"
+  ],
+
+  "pools": {
+    "combat": {
+      "default": {
+        "enemies": ["enemy_02", "enemy_03"],
+        "variants_allowed": ["Base", "Tank", "Assassin", "Special"],
+        "min_enemies": 2,
+        "max_enemies": 4,
+        "comment": "Stage 2 mở rộng variants — bao gồm Special (Skeleton Mage, Goblin Shaman if mid-late layer) để teach mới."
+      },
+      "elite": {
+        "enemies": ["enemy_02_special", "enemy_03"],
+        "variants_allowed": ["Special", "Tank"],
+        "min_enemies": 1,
+        "max_enemies": 2,
+        "stat_modifiers": { "hp_mult": 1.5, "dmg_mult": 1.2 },
+        "rewards": { "gold_bonus": 100, "item_drop_chance": 0.6 },
+        "comment": "Elite combat: stat tăng 50% HP / 20% dmg, drop ngon hơn (60% chance item, +100 gold). Tối đa 1 elite/run."
+      },
+      "pre_boss": {
+        "enemies": ["enemy_02"],
+        "variants_allowed": ["Base"],
+        "min_enemies": 1,
+        "max_enemies": 2,
+        "comment": "Pre-boss của Stage 2 cho phép tối đa 2 enemies (khó hơn Stage 1's 1)."
+      }
+    },
+
+    "event": {
+      "stage_2_pool": [
+        "event_open_tomb",
+        "event_whispering_shadow",
+        "event_glowing_spring",
+        "event_lost_survivor",
+        "event_black_fog_patch",
+        "event_old_witch_doctor",
+        "event_strange_altar",
+        "event_wandering_spirit",
+        "event_cursed_treasure",
+        "event_forbidden_tome"
+      ],
+      "weights": {
+        "event_open_tomb": 12,
+        "event_whispering_shadow": 15,
+        "event_glowing_spring": 12,
+        "event_lost_survivor": 8,
+        "event_black_fog_patch": 10,
+        "event_old_witch_doctor": 8,
+        "event_strange_altar": 12,
+        "event_wandering_spirit": 12,
+        "event_cursed_treasure": 8,
+        "event_forbidden_tome": 3
+      },
+      "comment": "Pool Stage 2 mở rộng thêm các event Rare (altar, wandering_spirit, cursed_treasure, forbidden_tome). Forbidden tome còn hiếm vì xuất hiện chính ở Stage 3."
+    },
+
+    "rest": {
+      "type": "campsite",
+      "options": [
+        { "label": "Nghỉ ngơi", "effect": "stress_reduce", "target": "single_hero", "value_min": 12, "value_max": 25 },
+        { "label": "Cảnh giới", "effect": "heal", "target": "single_hero", "value_min": 10, "value_max": 18 },
+        { "label": "Trò chuyện", "effect": "stress_reduce", "target": "party", "value_min": 6, "value_max": 10 }
+      ],
+      "comment": "Cùng options Stage 1, nhưng giá trị tăng nhẹ phản ánh Stage 2 căng thẳng hơn."
+    },
+
+    "reward": {
+      "rolls": 2,
+      "drop_table": [
+        { "type": "gold",         "value_min": 60, "value_max": 130, "weight": 30 },
+        { "type": "item_random",  "category": "consumable_common",   "weight": 20 },
+        { "type": "item_random",  "category": "consumable_uncommon", "weight": 20 },
+        { "type": "item_random",  "category": "trinket_common",      "weight": 15 },
+        { "type": "item_random",  "category": "trinket_uncommon",    "weight": 10 },
+        { "type": "item_random",  "category": "trinket_class_specific", "weight": 5 }
+      ],
+      "comment": "Stage 2 reward weight nghiêng về consumable + trinket. Class-specific trinket bắt đầu xuất hiện ở Stage 2."
+    }
+  },
+
+  "boss_node": {
+    "boss_id": "enemy_b02",
+    "boss_name": "The Whispering Shade",
+    "boss_name_vn": "Bóng Thì Thầm",
+    "phase_transitions": [
+      { "trigger": "hp_below_60%", "action": "use_skill: sk_e_b02_haunting_aura", "once_per_combat": true,
+        "comment": "Aura áp perm_debuff_03 (Hồn Ma Ám Ảnh / Haunted Soul) lên random hero — debuff vĩnh viễn, chỉ Tẩy Trần xóa được." },
+      { "trigger": "hp_below_30%", "action": "use_skill: sk_e_b02_form_shift", "once_per_combat": true,
+        "comment": "Đổi form: trở thành 'Hollow Echo' với +30% dmg, -50% HP tối đa, immune to first hit." }
+    ],
+    "rewards_on_kill": {
+      "gold": { "value": 400, "chance": 1.0 },
+      "items": {
+        "rolls": 2,
+        "drop_table": [
+          { "type": "item_random", "category": "trinket_uncommon",     "weight": 30 },
+          { "type": "item_random", "category": "trinket_class_specific","weight": 20 },
+          { "type": "item_random", "category": "consumable_rare",      "weight": 15 },
+          { "type": "item_random", "category": "relic",                "weight": 25 },
+          { "type": "item_random", "category": "cursed",               "weight": 10 }
+        ],
+        "comment": "Boss Stage 2: 2 rolls, weight relic 25% (cao hơn Stage 1's 15%). Cursed item 10% — thematic vì boss là 'linh hồn ăn mòn'."
+      },
+      "lore": { "value": "fragment_black_heart_02" }
+    }
+  },
+
+  "validation_refs": {
+    "enemies_used":        ["enemy_02", "enemy_03", "enemy_b02"],
+    "enemy_skills_TODO":   ["sk_e_b02_*"],
+    "events_used":         ["event_open_tomb", "event_whispering_shadow", "event_glowing_spring", "event_lost_survivor", "event_black_fog_patch", "event_old_witch_doctor", "event_strange_altar", "event_wandering_spirit", "event_cursed_treasure", "event_forbidden_tome"],
+    "permanent_effects_referenced": ["perm_debuff_03"],
+    "comment_TODO": "Cần tạo enemy_b02 + 4-5 boss skill: sk_e_b02_drain_stress, sk_e_b02_haunting_aura, sk_e_b02_phantom_blade, sk_e_b02_form_shift. Báo trước khi implement."
+  }
+}

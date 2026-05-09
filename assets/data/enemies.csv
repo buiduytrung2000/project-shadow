@@ -1,0 +1,12 @@
+Name,Enemy ID,Base HP,Damage Min,Damage Max,Critical Chance,Stress Resist,Accuracy,Skill 1,Skill 2,Drop Item,Drop Chance,Special Skill,Notes,Variant Type
+Goblin,enemy_01,12,3,6,0.05,0.1,80,sk_e_stab,,item_c01,0.3,,Basic melee enemy with low stats,Base
+Goblin Assassin,enemy_01_assassin,8,4,8,0.05,0.1,80,sk_e_stab,,item_c01,0.3,,Glass cannon variant with 0.7x HP and 1.4x damage,Assassin
+Goblin Shaman,enemy_01_special,12,3,6,0.05,0.1,80,sk_e_stab,,item_c01,0.3,sk_e_self_heal,Special variant with self-healing ability,Special
+Goblin Tank,enemy_01_tank,18,2,5,0.05,0.1,80,sk_e_stab,,item_c01,0.3,,Tankier variant with 1.5x HP and 0.8x damage,Tank
+Shadow Wisp,enemy_03,8,2,5,0.15,0.3,85,sk_e_curse,sk_e_drain_light,item_c05,0.2,,Fragile magic enemy with high crit and dual skills,Base
+Shadow Wisp Tank,enemy_03_tank,12,2,4,0.15,0.3,85,sk_e_curse,sk_e_drain_light,item_c05,0.2,,Reinforced wisp with 1.5x HP and 0.8x damage,Tank
+Skeleton,enemy_02,18,5,8,0.06,0.2,75,sk_e_bone_club,,item_gold,0.5,,Undead warrior with moderate stats,Base
+Skeleton Assassin,enemy_02_assassin,13,7,11,0.06,0.2,75,sk_e_bone_club,,item_gold,0.5,,Fast skeleton with 0.7x HP and 1.4x damage,Assassin
+Skeleton Mage,enemy_02_special,18,5,8,0.06,0.2,75,sk_e_bone_club,sk_e_dark_bolt,item_gold,0.5,sk_e_dark_bolt,Skeleton with ranged dark magic attack,Special
+Skeleton Tank,enemy_02_tank,27,4,6,0.06,0.2,75,sk_e_bone_club,,item_gold,0.5,,Heavy armored skeleton with 1.5x HP and 0.8x damage,Tank
+Giant Zombie,enemy_b01,80,8,14,0.05,0.4,78,sk_e_b01_smash,sk_e_b01_putrid_breath,random_boss_pool,1.0,sk_e_b01_enrage,"Stage 1 Boss. HP 80, 2 skill cơ bản + 1 enrage khi HP<30%. Drop ngẫu nhiên từ boss_pool (gold + 1 item theo weighted rarity).",Boss

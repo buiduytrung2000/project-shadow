@@ -1,0 +1,10 @@
+Skill ID,Name (VN),Name (EN),User Type,Is Offensive,Target Type,Damage Multiplier,Accuracy Modifier,Cooldown,Effect ID,Effect Value,Stress Damage,Description (VN)
+sk_e_stab,Đâm,Stab,Goblin,Yes,Front Hero,1.0,0,0,,,0,Đòn đâm cơ bản của Goblin. Nhắm hero hàng trước.
+sk_e_curse,Nguyền Rủa,Curse,Shadow Wisp,Yes,Random Hero,0.8,+5,1,eff_acc_debuff,-15 ACC 2 turns,5,Nguyền hero ngẫu nhiên: giảm accuracy 2 lượt và gây stress nhẹ.
+sk_e_drain_light,Hút Sáng,Drain Light,Shadow Wisp,Yes,Single Hero,0.6,0,2,eff_dmg_debuff,-10% dmg 2 turns,8,Hút sinh khí: giảm sát thương hero 2 lượt và gây stress.
+sk_e_bone_club,Chùy Xương,Bone Club,Skeleton,Yes,Front Hero,1.1,0,0,,,0,Đòn chùy nặng của Skeleton. Sát thương cao hơn cơ bản 10%.
+sk_e_dark_bolt,Tia Bóng Tối,Dark Bolt,Skeleton Mage,Yes,Back Hero,0.9,0,1,eff_burn,2 stacks burn,0,"Phép tầm xa: nhắm hero hàng sau, áp 2 chồng burn."
+sk_e_self_heal,Tự Chữa Lành,Self Heal,Goblin Shaman,No,Self,0,0,2,eff_regen,+5 HP/turn 2 turns,0,Tự hồi máu cho bản thân: regen 5 HP/lượt trong 2 lượt.
+sk_e_b01_smash,Đập Đất,Ground Smash,Giant Zombie,Yes,Front 2 Heroes,1.2,0,1,eff_stun,30% chance 1 turn,5,"Boss đập tay xuống đất gây dmg AoE 2 hero hàng trước, 30% stun 1 lượt."
+sk_e_b01_putrid_breath,Hơi Thở Thối Rữa,Putrid Breath,Giant Zombie,Yes,All Heroes,0.6,0,3,eff_poison,3/turn x3,10,"AoE toàn party, sát thương nhỏ + áp Poison 3/lượt x3 lượt + 10 stress."
+sk_e_b01_enrage,Cuồng Nộ,Enrage,Giant Zombie,No,Self,0,+10,0,eff_dmg_buff,+50% dmg permanent,15,Tự kích hoạt khi HP<30% (1 lần/trận). Tăng 50% dmg vĩnh viễn + 10 ACC. Gây 15 stress toàn party.
