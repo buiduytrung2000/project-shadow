@@ -28,9 +28,6 @@ public final class CombatScenario {
         if (heroIds.isEmpty() || heroIds.size() > 4) {
             throw new IllegalArgumentException("heroIds size must be 1..4, got " + heroIds.size());
         }
-        if (enemyIds.isEmpty() || enemyIds.size() > 4) {
-            throw new IllegalArgumentException("enemyIds size must be 1..4, got " + enemyIds.size());
-        }
 
         List<Hero> heroes = new ArrayList<>();
         for (int i = 0; i < heroIds.size(); i++) {
@@ -39,15 +36,30 @@ public final class CombatScenario {
             if (data == null) throw new IllegalArgumentException("Unknown heroId: " + id);
             heroes.add(new Hero(data, Position.values()[i], gd.effects()));
         }
+        return buildWithHeroes(gd, heroes, enemyIds);
+    }
 
-        List<Enemy> enemies = new ArrayList<>();
+    /**
+     * Build an encounter using existing {@link Hero} instances (so HP/stress/effects
+     * persist between combats during a run). Enemy ids are resolved fresh from
+     * {@link GameData} on each call.
+     */
+    public static CombatEncounter buildWithHeroes(GameData gd, List<Hero> party, List<String> enemyIds) {
+        if (party == null || party.isEmpty() || party.size() > 4) {
+            throw new IllegalArgumentException("party size must be 1..4, got "
+                    + (party == null ? 0 : party.size()));
+        }
+        if (enemyIds == null || enemyIds.isEmpty() || enemyIds.size() > 4) {
+            throw new IllegalArgumentException("enemyIds size must be 1..4, got "
+                    + (enemyIds == null ? 0 : enemyIds.size()));
+        }
+        List<Enemy> enemies = new ArrayList<>(enemyIds.size());
         for (int i = 0; i < enemyIds.size(); i++) {
             String id = enemyIds.get(i);
             var data = gd.enemies().get(id);
             if (data == null) throw new IllegalArgumentException("Unknown enemyId: " + id);
             enemies.add(new Enemy(data, Position.values()[i], gd.effects()));
         }
-
-        return new CombatEncounter(heroes, enemies);
+        return new CombatEncounter(party, enemies);
     }
 }

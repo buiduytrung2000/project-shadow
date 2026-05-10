@@ -55,6 +55,8 @@ public class CombatScreen implements Screen {
 
     private final CombatRenderer renderer;
     private final CombatController controller;
+    private final Runnable onWin;
+    private final Runnable onLose;
 
     private List<CombatantView> heroViews = List.of();
     private List<CombatantView> enemyViews = List.of();
@@ -68,9 +70,22 @@ public class CombatScreen implements Screen {
     private UiState uiState = UiState.IDLE;
     private int pendingSkillIndex = -1;
     private final Set<Combatant> highlightedTargets = new HashSet<>();
+    private boolean transitioned = false;
 
+    /** Standalone combat (no run loop wiring). Used for the Sprint 5 demo. */
     public CombatScreen(GameData gameData) {
+        this(gameData, CombatScenario.buildDefault(gameData), null, null);
+    }
+
+    /**
+     * Run-loop combat. {@code onWin}/{@code onLose} fire once after the combat ends and
+     * the player presses Continue (currently auto-fires on combat end with a short delay
+     * so the result label is visible).
+     */
+    public CombatScreen(GameData gameData, CombatEncounter encounter, Runnable onWin, Runnable onLose) {
         this.gameData = gameData;
+        this.onWin = onWin;
+        this.onLose = onLose;
         this.camera = new OrthographicCamera();
         this.viewport = new FitViewport(CombatRenderer.VIRTUAL_WIDTH, CombatRenderer.VIRTUAL_HEIGHT, camera);
         this.batch = new SpriteBatch();
@@ -82,7 +97,6 @@ public class CombatScreen implements Screen {
         this.uiStage = new Stage(viewport, batch);
         this.renderer = new CombatRenderer();
 
-        CombatEncounter encounter = CombatScenario.buildDefault(gameData);
         this.controller = new CombatController(encounter, gameData, new Random());
 
         this.skillTable = new Table();
@@ -116,6 +130,7 @@ public class CombatScreen implements Screen {
                 pushLog("=== " + (winner == CombatEncounter.Side.HEROES ? "VICTORY" : "DEFEAT") + " ===");
                 exitTargetMode();
                 refreshSkillButtons();
+                showContinueButton(winner);
             }
         });
 
@@ -206,6 +221,25 @@ public class CombatScreen implements Screen {
         int idx = pendingSkillIndex;
         exitTargetMode();
         controller.executePlayerSkill(idx, target);
+    }
+
+    private void showContinueButton(CombatEncounter.Side winner) {
+        if (onWin == null && onLose == null) return; // standalone mode — no callback wiring
+        skillTable.clear();
+        skillButtons.clear();
+        TextButton btn = new TextButton(
+                winner == CombatEncounter.Side.HEROES ? "Tiếp tục" : "Kết thúc",
+                skin);
+        btn.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                if (transitioned) return;
+                transitioned = true;
+                if (winner == CombatEncounter.Side.HEROES && onWin != null) onWin.run();
+                else if (onLose != null) onLose.run();
+            }
+        });
+        skillTable.add(btn).pad(8).width(280).height(60);
     }
 
     private void refreshStatus(Combatant actor) {
