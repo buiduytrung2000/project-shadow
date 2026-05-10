@@ -45,6 +45,16 @@ public class ActiveEffects {
     }
 
     public EffectInstance apply(String effectId, Combatant source, Combatant target, RandomGenerator rng) {
+        return apply(effectId, source, target, rng, null);
+    }
+
+    public EffectInstance apply(
+            String effectId,
+            Combatant source,
+            Combatant target,
+            RandomGenerator rng,
+            String skillMagnitudeOverride
+    ) {
         EffectData data = lookup(effectId);
         int duration = parseDuration(data);
 
@@ -66,7 +76,7 @@ public class ActiveEffects {
                 1
         );
         instances.add(fresh);
-        applyImmediate(fresh, data, target, rng);
+        applyImmediate(fresh, data, target, rng, skillMagnitudeOverride);
         return fresh;
     }
 
@@ -132,17 +142,35 @@ public class ActiveEffects {
         return has("eff_taunt");
     }
 
-    private void applyImmediate(EffectInstance ei, EffectData data, Combatant target, RandomGenerator rng) {
+    private void applyImmediate(
+            EffectInstance ei,
+            EffectData data,
+            Combatant target,
+            RandomGenerator rng,
+            String skillMagnitudeOverride
+    ) {
         if (target == null) return;
         String cat = data.category();
+        String value = resolveValue(data.modifierValue(), skillMagnitudeOverride);
+
         if ("heal".equals(cat) || ("instant".equals(data.durationType()) && "hp".equals(data.statAffected()))) {
-            int amount = parseFlatValue(data.modifierValue(), rng);
+            int amount = Math.abs(parseFlatValue(value, rng));
             if (amount > 0) target.heal(amount);
-            else if (amount < 0) target.takeHpDamage(-amount);
         } else if ("damage".equals(cat)) {
-            int amount = Math.abs(parseFlatValue(data.modifierValue(), rng));
-            target.takeHpDamage(amount);
+            int amount = Math.abs(parseFlatValue(value, rng));
+            if (amount > 0) target.takeHpDamage(amount);
         }
+    }
+
+    private static String resolveValue(String effectModifierValue, String skillMagnitudeOverride) {
+        boolean placeholder = effectModifierValue == null
+                || effectModifierValue.isBlank()
+                || "+".equals(effectModifierValue.trim())
+                || "-".equals(effectModifierValue.trim());
+        if (placeholder && skillMagnitudeOverride != null && !skillMagnitudeOverride.isBlank()) {
+            return skillMagnitudeOverride;
+        }
+        return effectModifierValue;
     }
 
     private void tickEffect(EffectInstance ei, EffectData data, Combatant self, RandomGenerator rng) {

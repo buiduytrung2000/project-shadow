@@ -196,8 +196,9 @@ public class CombatController {
         }
 
         if (skill.primaryEffectId() != null && data.effects().containsKey(skill.primaryEffectId())) {
-            Combatant effectTarget = skill.isOffensive() ? target : attacker;
-            effectTarget.activeEffects().apply(skill.primaryEffectId(), attacker, effectTarget, rng);
+            target.activeEffects().apply(
+                    skill.primaryEffectId(), attacker, target, rng, skill.effectMagnitude()
+            );
         }
 
         log.add(formatLogEntry(attacker, target, skill, result));
