@@ -18,15 +18,18 @@ public final class DamageFormula {
             SkillData skill,
             RandomGenerator rng
     ) {
-        int hitChance = clamp(attacker.accuracy() + skill.accuracyModifier() - target.dodge(), 0, 100);
+        int hitChance = clamp(
+                attacker.effectiveAccuracy() + skill.accuracyModifier() - target.effectiveDodge(),
+                0, 100
+        );
         boolean hit = rng.nextInt(100) < hitChance;
         if (!hit) return AttackResult.miss();
 
-        int rolled = rollInclusive(rng, attacker.dmgMin(), attacker.dmgMax());
+        int rolled = rollInclusive(rng, attacker.effectiveDmgMin(), attacker.effectiveDmgMax());
         double base = rolled * skill.damageMultiplier();
 
-        boolean crit = rng.nextDouble() < attacker.critChance();
-        double finalDmg = crit ? base * CRIT_MULTIPLIER : base;
+        boolean crit = rng.nextDouble() < attacker.effectiveCritChance();
+        double finalDmg = (crit ? base * CRIT_MULTIPLIER : base) * target.damageReceivedMultiplier();
 
         int hpDamage = (int) Math.round(finalDmg);
         return new AttackResult(true, crit, hpDamage, skill.stressDamage());

@@ -1,8 +1,11 @@
 package com.trungbui.projectshadow.domain;
 
+import com.trungbui.projectshadow.data.model.EffectData;
 import com.trungbui.projectshadow.data.model.HeroData;
+import com.trungbui.projectshadow.effect.ActiveEffects;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,12 +26,21 @@ public class Hero implements Combatant {
     private final Set<String> traits;
     private final Set<String> diseases;
     private final Map<String, Integer> skillCooldowns;
+    private final ActiveEffects activeEffects;
 
     public Hero(HeroData data, Position position) {
-        this(data, 0, position, new ArrayList<>(data.defaultSkills()));
+        this(data, 0, position, new ArrayList<>(data.defaultSkills()), Collections.emptyMap());
     }
 
     public Hero(HeroData data, int level, Position position, List<String> equippedSkills) {
+        this(data, level, position, equippedSkills, Collections.emptyMap());
+    }
+
+    public Hero(HeroData data, Position position, Map<String, EffectData> effectCatalog) {
+        this(data, 0, position, new ArrayList<>(data.defaultSkills()), effectCatalog);
+    }
+
+    public Hero(HeroData data, int level, Position position, List<String> equippedSkills, Map<String, EffectData> effectCatalog) {
         if (data == null) throw new IllegalArgumentException("data must not be null");
         if (position == null) throw new IllegalArgumentException("position must not be null");
         if (level < 0) throw new IllegalArgumentException("level must be >= 0, got " + level);
@@ -42,8 +54,14 @@ public class Hero implements Combatant {
         this.traits = new HashSet<>();
         this.diseases = new HashSet<>();
         this.skillCooldowns = new HashMap<>();
+        this.activeEffects = new ActiveEffects(effectCatalog);
         this.currentHp = maxHp();
         this.currentStress = 0;
+    }
+
+    @Override
+    public ActiveEffects activeEffects() {
+        return activeEffects;
     }
 
     @Override

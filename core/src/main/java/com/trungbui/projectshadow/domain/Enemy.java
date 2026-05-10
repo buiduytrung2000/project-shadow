@@ -1,7 +1,10 @@
 package com.trungbui.projectshadow.domain;
 
+import com.trungbui.projectshadow.data.model.EffectData;
 import com.trungbui.projectshadow.data.model.EnemyData;
+import com.trungbui.projectshadow.effect.ActiveEffects;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,8 +17,13 @@ public class Enemy implements Combatant {
     private Position position;
     private final Map<String, Integer> skillCooldowns;
     private final boolean boss;
+    private final ActiveEffects activeEffects;
 
     public Enemy(EnemyData data, Position position) {
+        this(data, position, Collections.emptyMap());
+    }
+
+    public Enemy(EnemyData data, Position position, Map<String, EffectData> effectCatalog) {
         if (data == null) throw new IllegalArgumentException("data must not be null");
         if (position == null) throw new IllegalArgumentException("position must not be null");
         this.data = data;
@@ -23,6 +31,12 @@ public class Enemy implements Combatant {
         this.currentHp = data.baseHp();
         this.skillCooldowns = new HashMap<>();
         this.boss = "Boss".equalsIgnoreCase(data.variantType());
+        this.activeEffects = new ActiveEffects(effectCatalog);
+    }
+
+    @Override
+    public ActiveEffects activeEffects() {
+        return activeEffects;
     }
 
     @Override
