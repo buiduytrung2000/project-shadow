@@ -6,12 +6,22 @@ import com.badlogic.gdx.Screen;
 import com.trungbui.projectshadow.combat.CombatScenario;
 import com.trungbui.projectshadow.data.GameData;
 import com.trungbui.projectshadow.domain.CombatEncounter;
+import com.trungbui.projectshadow.meta.HamletService;
+import com.trungbui.projectshadow.meta.MetaState;
+import com.trungbui.projectshadow.meta.MetaStateManager;
 import com.trungbui.projectshadow.run.RunSession;
+import com.trungbui.projectshadow.save.HeroState;
 import com.trungbui.projectshadow.save.SaveManager;
+import com.trungbui.projectshadow.screens.CaretakerScreen;
 import com.trungbui.projectshadow.screens.CombatScreen;
+import com.trungbui.projectshadow.screens.EmbarkSelectionScreen;
 import com.trungbui.projectshadow.screens.GameOverScreen;
+import com.trungbui.projectshadow.screens.GuildScreen;
+import com.trungbui.projectshadow.screens.HamletScreen;
 import com.trungbui.projectshadow.screens.NodeInfoScreen;
+import com.trungbui.projectshadow.screens.StagecoachScreen;
 import com.trungbui.projectshadow.screens.StageMapScreen;
+import com.trungbui.projectshadow.screens.SurvivalistScreen;
 import com.trungbui.projectshadow.screens.VictoryScreen;
 import com.trungbui.projectshadow.stage.BossNode;
 import com.trungbui.projectshadow.stage.CombatNode;
@@ -28,22 +38,30 @@ public class ProjectShadowGame extends Game {
     public static final int VIRTUAL_WIDTH = 1920;
     public static final int VIRTUAL_HEIGHT = 1080;
 
-    private static final List<String> DEFAULT_PARTY =
+    private static final List<String> DEFAULT_ROSTER =
             List.of("hero_01", "hero_13", "hero_05", "hero_03");
     private static final String DEFAULT_STAGE = "stage_1";
     private static final long DEFAULT_SEED = 42L;
 
     private GameData gameData;
     private SaveManager saveManager;
+    private MetaStateManager metaManager;
+    private MetaState meta;
     private RunSession runSession;
 
     @Override
     public void create() {
         gameData = loadGameData();
-        saveManager = new SaveManager(Gdx.files.local("saves").file().toPath());
-        runSession = RunSession.startNew(
-                gameData, saveManager, DEFAULT_STAGE, DEFAULT_SEED, DEFAULT_PARTY);
-        setScreen(new StageMapScreen(this));
+        Path savesDir = Gdx.files.local("saves").file().toPath();
+        saveManager = new SaveManager(savesDir);
+        metaManager = new MetaStateManager(savesDir);
+        try {
+            meta = metaManager.loadOrInit(gameData, DEFAULT_ROSTER);
+            metaManager.save(meta);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load/save meta state", e);
+        }
+        setScreen(new HamletScreen(this));
     }
 
     public GameData gameData() {
@@ -54,8 +72,89 @@ public class ProjectShadowGame extends Game {
         return saveManager;
     }
 
+    public MetaStateManager metaManager() {
+        return metaManager;
+    }
+
+    public MetaState meta() {
+        return meta;
+    }
+
     public RunSession runSession() {
         return runSession;
+    }
+
+    /** Persist a new {@link MetaState}. Called after every Hamlet action. */
+    public void applyMeta(MetaState newMeta) {
+        this.meta = newMeta;
+        try {
+            metaManager.save(newMeta);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save meta state", e);
+        }
+    }
+
+    // ---------- Hamlet hub navigation ----------
+
+    public void returnToHamlet() {
+        Screen prev = getScreen();
+        runSession = null; // any active run is finalized when we land here
+        setScreen(new HamletScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    public void openStagecoach() {
+        Screen prev = getScreen();
+        setScreen(new StagecoachScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    public void openGuild() {
+        Screen prev = getScreen();
+        setScreen(new GuildScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    public void openSurvivalist() {
+        Screen prev = getScreen();
+        setScreen(new SurvivalistScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    public void openCaretaker() {
+        Screen prev = getScreen();
+        setScreen(new CaretakerScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    public void openEmbarkSelection() {
+        Screen prev = getScreen();
+        setScreen(new EmbarkSelectionScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    // ---------- Run lifecycle ----------
+
+    /** Start a new run with the chosen 4 heroes (must already be in the meta roster). */
+    public void startNewRun(List<String> heroIds) {
+        Screen prev = getScreen();
+        // Use a snapshot of the heroes' meta state as their starting state for the run.
+        // RunSession.startNew creates fresh Hero instances; to carry over level/HP/stress,
+        // we restore each from its HeroState snapshot in meta.roster after creation.
+        runSession = RunSession.startNew(gameData, saveManager, DEFAULT_STAGE, DEFAULT_SEED, heroIds);
+        // overlay roster snapshot onto party (level/hp/stress/diseases/cooldowns)
+        for (int i = 0; i < heroIds.size(); i++) {
+            HeroState rs = meta.heroInRoster(heroIds.get(i)).orElseThrow();
+            var live = runSession.party().get(i);
+            live.setLevel(rs.level());
+            live.setCurrentHp(rs.currentHp());
+            live.setCurrentStress(rs.currentStress());
+            for (String t : rs.traits()) live.addTrait(t);
+            for (String d : rs.diseases()) live.addDisease(d);
+            for (var e : rs.skillCooldowns().entrySet()) live.putOnCooldown(e.getKey(), e.getValue());
+        }
+        setScreen(new StageMapScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
     }
 
     /** Called by {@link StageMapScreen} when a clickable node is picked. */
@@ -80,7 +179,8 @@ public class ProjectShadowGame extends Game {
             throw new RuntimeException("Failed to save run after node " + node.label(), e);
         }
         if (runSession.isPartyDead()) {
-            handleDefeat();
+            applyOutcomeAndArchive(false);
+            setScreen(new GameOverScreen(this));
         } else {
             setScreen(new StageMapScreen(this));
         }
@@ -105,6 +205,7 @@ public class ProjectShadowGame extends Game {
             throw new RuntimeException("Failed to save run after combat at " + nodeLabel, e);
         }
         if (runSession.isOnBossNode()) {
+            applyOutcomeAndArchive(true);
             setScreen(new VictoryScreen(this));
         } else {
             setScreen(new StageMapScreen(this));
@@ -113,25 +214,31 @@ public class ProjectShadowGame extends Game {
     }
 
     private void handleCombatLoss(String nodeLabel) {
-        // Party died inside combat — record the run on the death node, then archive.
         Screen prev = getScreen();
         try {
             runSession.completeNode(nodeLabel);
-            runSession.archiveOnDeath();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to archive run after defeat at " + nodeLabel, e);
+            throw new RuntimeException("Failed to save run after defeat at " + nodeLabel, e);
         }
+        applyOutcomeAndArchive(false);
         setScreen(new GameOverScreen(this));
         if (prev != null && prev != getScreen()) prev.dispose();
     }
 
-    private void handleDefeat() {
+    /**
+     * Sync the run result into the meta roster + wallet, then archive the run save.
+     * On victory, surviving heroes' states overwrite their roster snapshot and the run gold
+     * is added to the wallet. On defeat, dead heroes are removed from the roster.
+     */
+    private void applyOutcomeAndArchive(boolean victory) {
+        if (runSession == null) return;
+        MetaState newMeta = HamletService.applyRunOutcome(meta, runSession, victory);
+        applyMeta(newMeta);
         try {
             runSession.archiveOnDeath();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to archive run on defeat", e);
+            throw new RuntimeException("Failed to archive run save", e);
         }
-        setScreen(new GameOverScreen(this));
     }
 
     private static GameData loadGameData() {
@@ -146,4 +253,5 @@ public class ProjectShadowGame extends Game {
             throw new RuntimeException("Failed to load game data", e);
         }
     }
+
 }

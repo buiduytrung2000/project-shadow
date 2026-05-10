@@ -56,6 +56,13 @@ public class VictoryScreen implements Screen {
         body.setColor(Color.WHITE);
         body.setAlignment(com.badlogic.gdx.utils.Align.center);
 
+        TextButton hamlet = new TextButton("Về Hamlet", skin);
+        hamlet.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                game.returnToHamlet();
+            }
+        });
         TextButton quit = new TextButton("Thoát", skin);
         quit.addListener(new ChangeListener() {
             @Override
@@ -64,9 +71,13 @@ public class VictoryScreen implements Screen {
             }
         });
 
+        Table buttons = new Table();
+        buttons.add(hamlet).pad(20).width(280).height(70);
+        buttons.add(quit).pad(20).width(280).height(70);
+
         root.add(title).pad(60).row();
         root.add(body).pad(40).row();
-        root.add(quit).width(280).height(70).pad(40);
+        root.add(buttons).pad(40);
         uiStage.addActor(root);
         viewport.apply(true);
     }
