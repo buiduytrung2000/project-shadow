@@ -81,7 +81,7 @@ public class CombatEncounter {
         List<Combatant> all = new ArrayList<>(heroes.size() + enemies.size());
         for (Hero h : heroes) if (h.isAlive()) all.add(h);
         for (Enemy e : enemies) if (e.isAlive()) all.add(e);
-        all.sort(Comparator.comparingInt(Combatant::speed).reversed());
+        all.sort(Comparator.comparingInt(Combatant::effectiveSpeed).reversed());
         return all;
     }
 
