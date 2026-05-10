@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.data.model.HeroData;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.save.HeroState;
 import com.trungbui.projectshadow.ui.FontFactory;
 
@@ -65,22 +66,21 @@ public class EmbarkSelectionScreen implements Screen {
 
     private void rebuildUi() {
         root.clear();
-        Label title = new Label("Chọn đội (4 hero)", new Label.LabelStyle(titleFont, Color.GOLD));
+        Label title = new Label(I18n.t("embark.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).colspan(2).pad(20).row();
 
-        Label status = new Label("Đã chọn: " + selected.size() + " / " + PARTY_SIZE, skin);
+        Label status = new Label(I18n.t("embark.selected", selected.size(), PARTY_SIZE), skin);
         status.setColor(selected.size() == PARTY_SIZE ? Color.LIME : Color.WHITE);
         root.add(status).colspan(2).pad(10).row();
 
         for (HeroState rs : game.meta().roster()) {
             HeroData data = game.gameData().heroes().get(rs.heroId());
-            String name = data != null ? data.nameVn() : rs.heroId();
-            String info = name + " Lv" + rs.level()
-                    + " HP " + rs.currentHp() + "  Stress " + rs.currentStress();
+            String name = data != null ? data.displayName() : rs.heroId();
+            String info = I18n.t("embark.heroLine", name, rs.level(), rs.currentHp(), rs.currentStress());
             Label heroLabel = new Label(info, skin);
 
             boolean isSelected = selected.contains(rs.heroId());
-            TextButton btn = new TextButton(isSelected ? "✓ Đã chọn" : "Chọn", skin);
+            TextButton btn = new TextButton(isSelected ? I18n.t("embark.picked") : I18n.t("embark.pick"), skin);
             if (isSelected) btn.setColor(Color.LIME);
             final String idCaptured = rs.heroId();
             btn.addListener(new ChangeListener() {
@@ -99,7 +99,7 @@ public class EmbarkSelectionScreen implements Screen {
             root.add(btn).pad(8).width(220).height(50).row();
         }
 
-        TextButton embark = new TextButton("EMBARK", skin);
+        TextButton embark = new TextButton(I18n.t("embark.button"), skin);
         embark.setDisabled(selected.size() != PARTY_SIZE);
         if (embark.isDisabled()) embark.setColor(Color.GRAY);
         embark.addListener(new ChangeListener() {
@@ -109,7 +109,7 @@ public class EmbarkSelectionScreen implements Screen {
             }
         });
 
-        TextButton back = new TextButton("Hủy", skin);
+        TextButton back = new TextButton(I18n.t("embark.cancel"), skin);
         back.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {

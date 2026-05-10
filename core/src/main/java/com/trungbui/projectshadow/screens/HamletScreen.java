@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.save.HeroState;
 import com.trungbui.projectshadow.ui.FontFactory;
@@ -50,17 +51,28 @@ public class HamletScreen implements Screen {
         root.setFillParent(true);
         root.top().pad(40);
 
-        Label title = new Label("HAMLET", new Label.LabelStyle(titleFont, Color.GOLD));
-        Label gold = new Label("Gold: " + game.meta().gold(), skin);
+        Label title = new Label(I18n.t("hamlet.title"), new Label.LabelStyle(titleFont, Color.GOLD));
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
 
-        root.add(title).colspan(4).pad(20).row();
+        // VN/EN toggle button — top-right
+        TextButton langToggle = new TextButton(I18n.t("hamlet.lang.toggle"), skin);
+        langToggle.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                I18n.toggleLocale();
+                game.returnToHamlet();
+            }
+        });
+
+        root.add(title).colspan(3).pad(20);
+        root.add(langToggle).pad(10).width(120).height(50).right().row();
         root.add(gold).colspan(4).pad(10).row();
         root.add(rosterLabel()).colspan(4).pad(20).row();
 
-        TextButton stagecoach = button("Trạm Xe Ngựa\n(Stagecoach)", () -> game.openStagecoach());
-        TextButton guild = button("Phường Hội\n(Guild)", () -> game.openGuild());
-        TextButton survivalist = button("Thợ Thủ Công\n(Survivalist)", () -> game.openSurvivalist());
-        TextButton caretaker = button("Người Chăm Sóc\n(Caretaker)", () -> game.openCaretaker());
+        TextButton stagecoach = button(I18n.t("hamlet.button.stagecoach"), () -> game.openStagecoach());
+        TextButton guild = button(I18n.t("hamlet.button.guild"), () -> game.openGuild());
+        TextButton survivalist = button(I18n.t("hamlet.button.survivalist"), () -> game.openSurvivalist());
+        TextButton caretaker = button(I18n.t("hamlet.button.caretaker"), () -> game.openCaretaker());
 
         root.add(stagecoach).pad(10).width(280).height(120);
         root.add(guild).pad(10).width(280).height(120);
@@ -68,7 +80,21 @@ public class HamletScreen implements Screen {
         root.add(caretaker).pad(10).width(280).height(120);
         root.row();
 
-        TextButton embark = new TextButton("EMBARK — Bắt đầu chuyến đi", skin);
+        // Continue Run button (Sprint 9) — enabled if an active save exists
+        TextButton continueRun = new TextButton(I18n.t("hamlet.button.continueRun"), skin);
+        boolean hasActive = game.hasActiveRun();
+        continueRun.setDisabled(!hasActive);
+        if (!hasActive) continueRun.setColor(Color.GRAY);
+        continueRun.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                if (game.hasActiveRun()) game.resumeLatestRun();
+            }
+        });
+        root.add(continueRun).colspan(4).pad(20).width(600).height(70);
+        root.row();
+
+        TextButton embark = new TextButton(I18n.t("hamlet.button.embark"), skin);
         embark.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
@@ -82,8 +108,7 @@ public class HamletScreen implements Screen {
         if (game.meta().roster().size() < 4) {
             root.row();
             Label warn = new Label(
-                    "Cần ít nhất 4 hero trong roster để embark (hiện có "
-                            + game.meta().roster().size() + ").",
+                    I18n.t("hamlet.warn.notEnough4", game.meta().roster().size()),
                     skin);
             warn.setColor(Color.SALMON);
             root.add(warn).colspan(4).pad(10);
@@ -106,16 +131,15 @@ public class HamletScreen implements Screen {
 
     private Label rosterLabel() {
         MetaState meta = game.meta();
-        StringBuilder sb = new StringBuilder("Roster (" + meta.roster().size() + "):  ");
+        StringBuilder sb = new StringBuilder(I18n.t("hamlet.roster.label", meta.roster().size())).append("  ");
         boolean first = true;
         for (HeroState h : meta.roster()) {
             if (!first) sb.append("   |   ");
             first = false;
             var data = game.gameData().heroes().get(h.heroId());
-            String name = data != null ? data.nameVn() : h.heroId();
-            sb.append(name).append(" Lv").append(h.level())
-                    .append(" HP ").append(h.currentHp())
-                    .append(" Stress ").append(h.currentStress());
+            String name = data != null ? data.displayName() : h.heroId();
+            sb.append(I18n.t("hamlet.roster.heroSummary",
+                    name, h.level(), h.currentHp(), h.currentStress()));
         }
         Label l = new Label(sb.toString(), skin);
         l.setColor(Color.LIGHT_GRAY);
@@ -138,6 +162,7 @@ public class HamletScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(uiStage);
+        if (game.audio() != null) game.audio().playMusic("hamlet_theme", true);
     }
 
     @Override

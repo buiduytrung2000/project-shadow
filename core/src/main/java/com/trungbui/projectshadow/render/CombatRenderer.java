@@ -2,6 +2,8 @@ package com.trungbui.projectshadow.render;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Disposable;
 import com.trungbui.projectshadow.domain.Combatant;
@@ -24,6 +26,12 @@ public class CombatRenderer implements Disposable {
     private static final float STRESS_BAR_HEIGHT = 12f;
 
     private final ShapeRenderer shapes = new ShapeRenderer();
+    private final SpriteBatch spriteBatch = new SpriteBatch();
+    private final SpriteAtlas spriteAtlas = new SpriteAtlas("sprites/combatants.atlas");
+
+    public ShapeRenderer shapes() {
+        return shapes;
+    }
 
     public List<CombatantView> layoutHeroes(List<? extends Combatant> heroes) {
         return layoutColumn(heroes, HERO_X);
@@ -35,10 +43,16 @@ public class CombatRenderer implements Disposable {
 
     private List<CombatantView> layoutColumn(List<? extends Combatant> combatants, float baseX) {
         return java.util.stream.IntStream.range(0, combatants.size())
-                .mapToObj(i -> new CombatantView(
-                        combatants.get(i),
-                        baseX,
-                        ROW_TOP_Y - i * ROW_GAP_Y - CombatantView.HEIGHT))
+                .mapToObj(i -> {
+                    CombatantView v = new CombatantView(
+                            combatants.get(i),
+                            baseX,
+                            ROW_TOP_Y - i * ROW_GAP_Y - CombatantView.HEIGHT);
+                    if (spriteAtlas.isLoaded()) {
+                        v.attachAnimator(new SpriteAnimator(spriteAtlas, combatants.get(i).id()));
+                    }
+                    return v;
+                })
                 .toList();
     }
 
@@ -59,6 +73,22 @@ public class CombatRenderer implements Disposable {
         for (CombatantView v : heroes) drawCombatant(v, currentActor, highlightedTargets);
         for (CombatantView v : enemies) drawCombatant(v, currentActor, highlightedTargets);
         shapes.end();
+
+        // Sprite layer (drawn on top of fallback rectangles when atlas is loaded)
+        if (spriteAtlas.isLoaded()) {
+            spriteBatch.setProjectionMatrix(camera.combined);
+            spriteBatch.begin();
+            for (CombatantView v : heroes) drawSprite(v);
+            for (CombatantView v : enemies) drawSprite(v);
+            spriteBatch.end();
+        }
+    }
+
+    private void drawSprite(CombatantView v) {
+        if (v.animator() == null || !v.animator().hasAnimations()) return;
+        TextureRegion frame = v.animator().currentFrame();
+        if (frame == null) return;
+        spriteBatch.draw(frame, v.x(), v.y(), v.width(), v.height());
     }
 
     private void drawCombatant(CombatantView v, Combatant currentActor, Set<Combatant> highlightedTargets) {
@@ -116,5 +146,7 @@ public class CombatRenderer implements Disposable {
     @Override
     public void dispose() {
         shapes.dispose();
+        spriteBatch.dispose();
+        spriteAtlas.dispose();
     }
 }

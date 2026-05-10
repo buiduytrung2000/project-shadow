@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.data.model.HeroData;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.ui.FontFactory;
@@ -66,32 +67,33 @@ public class StagecoachScreen implements Screen {
 
     private void rerollOffers(boolean firstTime) {
         currentOffers = HamletService.rollStagecoachOffers(game.meta(), game.gameData(), new Random());
-        rebuildUi(firstTime ? "Chi phí tuyển: " + HamletService.STAGECOACH_HIRE_COST + " gold/người"
-                : "Đã làm mới danh sách.");
+        rebuildUi(firstTime
+                ? I18n.t("stagecoach.cost", HamletService.STAGECOACH_HIRE_COST)
+                : I18n.t("stagecoach.refreshed"));
     }
 
     private void rebuildUi(String feedback) {
         root.clear();
-        Label title = new Label("Trạm Xe Ngựa", new Label.LabelStyle(titleFont, Color.GOLD));
+        Label title = new Label(I18n.t("stagecoach.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).colspan(3).pad(20).row();
 
-        Label gold = new Label("Gold: " + game.meta().gold(), skin);
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
         root.add(gold).colspan(3).pad(10).row();
 
         feedbackLabel.setText(feedback);
         root.add(feedbackLabel).colspan(3).pad(10).row();
 
         if (currentOffers.isEmpty()) {
-            Label none = new Label("Không còn hero nào để tuyển.", skin);
+            Label none = new Label(I18n.t("stagecoach.empty"), skin);
             none.setColor(Color.SALMON);
             root.add(none).colspan(3).pad(20).row();
         } else {
             for (String heroId : currentOffers) {
                 HeroData data = game.gameData().heroes().get(heroId);
                 String label = data != null
-                        ? data.nameVn() + "\n(" + heroId + ")"
+                        ? data.displayName() + "\n(" + heroId + ")"
                         : heroId;
-                TextButton hire = new TextButton("Tuyển " + label, skin);
+                TextButton hire = new TextButton(I18n.t("stagecoach.hire", label), skin);
                 final String idCaptured = heroId;
                 hire.addListener(new ChangeListener() {
                     @Override
@@ -101,7 +103,7 @@ public class StagecoachScreen implements Screen {
                             game.applyMeta(newMeta);
                             currentOffers = currentOffers.stream()
                                     .filter(s -> !s.equals(idCaptured)).toList();
-                            rebuildUi("Đã tuyển " + idCaptured + ".");
+                            rebuildUi(I18n.t("stagecoach.hired", idCaptured));
                         } catch (HamletService.HamletException ex) {
                             rebuildUi(ex.getMessage());
                         }
@@ -113,14 +115,14 @@ public class StagecoachScreen implements Screen {
             root.row();
         }
 
-        TextButton refresh = new TextButton("Làm mới (miễn phí)", skin);
+        TextButton refresh = new TextButton(I18n.t("stagecoach.refresh"), skin);
         refresh.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                 rerollOffers(false);
             }
         });
-        TextButton back = new TextButton("Về Hamlet", skin);
+        TextButton back = new TextButton(I18n.t("button.back"), skin);
         back.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {

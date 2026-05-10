@@ -55,6 +55,30 @@ public class RunSession {
         return new RunSession(gd, mgr, tree, party, state);
     }
 
+    /**
+     * Sprint 9 — resume an existing run from disk.
+     *
+     * <p>Regenerates the {@link StageTree} deterministically from the saved
+     * {@code (stageId, stageSeed)} so we don't need to serialize the tree itself.
+     * The party is reconstructed by mapping each {@link com.trungbui.projectshadow.save.HeroState}
+     * snapshot back to a live {@link Hero}.</p>
+     */
+    public static RunSession resume(GameData gd, SaveManager mgr, String runId) throws java.io.IOException {
+        if (gd == null) throw new IllegalArgumentException("gameData must not be null");
+        if (mgr == null) throw new IllegalArgumentException("saveManager must not be null");
+        if (runId == null || runId.isBlank()) throw new IllegalArgumentException("runId must not be blank");
+
+        com.trungbui.projectshadow.save.RunState saved = mgr.load(runId);
+        StageConfig cfg = gd.stages().get(saved.stageId());
+        if (cfg == null) {
+            throw new IllegalStateException("Stage missing for saved run: " + saved.stageId());
+        }
+        StageTree tree = StageGenerator.generate(cfg, saved.stageSeed());
+        List<Hero> party = new ArrayList<>(saved.party().size());
+        for (var hs : saved.party()) party.add(hs.toHero(gd));
+        return new RunSession(gd, mgr, tree, party, saved);
+    }
+
     private static List<Hero> buildParty(GameData gd, List<String> heroIds) {
         if (heroIds == null || heroIds.isEmpty() || heroIds.size() > 4) {
             throw new IllegalArgumentException("party size must be 1..4, got "

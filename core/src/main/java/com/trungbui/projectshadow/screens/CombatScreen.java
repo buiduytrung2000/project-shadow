@@ -19,6 +19,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ui.FontFactory;
+import com.trungbui.projectshadow.audio.AudioManager;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.combat.AttackResult;
 import com.trungbui.projectshadow.combat.CombatController;
 import com.trungbui.projectshadow.combat.CombatScenario;
@@ -30,6 +32,7 @@ import com.trungbui.projectshadow.domain.Enemy;
 import com.trungbui.projectshadow.domain.Hero;
 import com.trungbui.projectshadow.render.CombatRenderer;
 import com.trungbui.projectshadow.render.CombatantView;
+import com.trungbui.projectshadow.render.ParticleSystem;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,6 +58,7 @@ public class CombatScreen implements Screen {
 
     private final CombatRenderer renderer;
     private final CombatController controller;
+    private final ParticleSystem particles = new ParticleSystem();
     private final Runnable onWin;
     private final Runnable onLose;
 
@@ -71,10 +75,16 @@ public class CombatScreen implements Screen {
     private int pendingSkillIndex = -1;
     private final Set<Combatant> highlightedTargets = new HashSet<>();
     private boolean transitioned = false;
+    private AudioManager audio;
 
     /** Standalone combat (no run loop wiring). Used for the Sprint 5 demo. */
     public CombatScreen(GameData gameData) {
         this(gameData, CombatScenario.buildDefault(gameData), null, null);
+    }
+
+    /** Wire optional audio after construction (Sprint 9). */
+    public void setAudio(AudioManager audio) {
+        this.audio = audio;
     }
 
     /**
@@ -111,6 +121,8 @@ public class CombatScreen implements Screen {
             public void onActionResolved(Combatant attacker, Combatant target, SkillData skill, AttackResult result) {
                 triggerHitView(target);
                 pushLog(formatActionLog(attacker, target, skill, result));
+                playActionSfx(skill, result);
+                emitActionParticles(target, skill, result);
             }
 
             @Override
@@ -122,12 +134,14 @@ public class CombatScreen implements Screen {
 
             @Override
             public void onRoundStarted(int roundNumber) {
-                pushLog("--- Round " + roundNumber + " ---");
+                pushLog(I18n.t("combat.log.round", roundNumber));
             }
 
             @Override
             public void onCombatEnded(CombatEncounter.Side winner) {
-                pushLog("=== " + (winner == CombatEncounter.Side.HEROES ? "VICTORY" : "DEFEAT") + " ===");
+                pushLog(winner == CombatEncounter.Side.HEROES
+                        ? I18n.t("combat.log.victory")
+                        : I18n.t("combat.log.defeat"));
                 exitTargetMode();
                 refreshSkillButtons();
                 showContinueButton(winner);
@@ -176,7 +190,7 @@ public class CombatScreen implements Screen {
         for (int i = 0; i < skills.size(); i++) {
             SkillData skill = skills.get(i);
             final int index = i;
-            String label = (i + 1) + ". " + skill.nameVn();
+            String label = I18n.t("combat.skillButton", i + 1, skill.displayName());
             TextButton btn = new TextButton(label, skin);
             boolean disabled = hero.isOnCooldown(skill.skillId()) || !controller.skillIsSupported(index);
             btn.setDisabled(disabled);
@@ -205,8 +219,8 @@ public class CombatScreen implements Screen {
         pendingSkillIndex = skillIndex;
         highlightedTargets.clear();
         highlightedTargets.addAll(controller.skillCandidateTargets(skillIndex));
-        statusLabel.setText("Pick a target (ESC to cancel) — " +
-                controller.currentActorSkills().get(skillIndex).nameVn());
+        statusLabel.setText(I18n.t("combat.targetHint",
+                controller.currentActorSkills().get(skillIndex).displayName()));
     }
 
     private void exitTargetMode() {
@@ -228,7 +242,7 @@ public class CombatScreen implements Screen {
         skillTable.clear();
         skillButtons.clear();
         TextButton btn = new TextButton(
-                winner == CombatEncounter.Side.HEROES ? "Tiếp tục" : "Kết thúc",
+                winner == CombatEncounter.Side.HEROES ? I18n.t("combat.continue") : I18n.t("combat.end"),
                 skin);
         btn.addListener(new ChangeListener() {
             @Override
@@ -245,17 +259,22 @@ public class CombatScreen implements Screen {
     private void refreshStatus(Combatant actor) {
         if (controller.encounter().isCombatOver()) {
             CombatEncounter.Side winner = controller.encounter().winningSide();
-            statusLabel.setText("Combat over — " + (winner == CombatEncounter.Side.HEROES ? "VICTORY" : "DEFEAT"));
+            String result = winner == CombatEncounter.Side.HEROES
+                    ? I18n.t("combat.victory")
+                    : I18n.t("combat.defeat");
+            statusLabel.setText(I18n.t("combat.over", result));
             return;
         }
         if (actor == null) {
             statusLabel.setText("");
             return;
         }
-        String name = actor instanceof Hero h ? h.data().nameVn() : actor instanceof Enemy e ? e.data().name() : actor.id();
-        String side = actor instanceof Hero ? "PLAYER_TURN" : "ENEMY_TURN";
-        statusLabel.setText("Round " + controller.encounter().roundNumber()
-                + " — " + side + " — " + name + " (" + actor.id() + ")");
+        String name = actor instanceof Hero h ? h.data().displayName()
+                : actor instanceof Enemy e ? e.data().name()
+                : actor.id();
+        String side = actor instanceof Hero ? I18n.t("combat.player") : I18n.t("combat.enemy");
+        statusLabel.setText(I18n.t("combat.round",
+                controller.encounter().roundNumber(), side, name, actor.id()));
     }
 
     private void triggerHitView(Combatant target) {
@@ -273,29 +292,66 @@ public class CombatScreen implements Screen {
         logLabel.setText(String.join("\n", logBuffer));
     }
 
+    private void playActionSfx(SkillData skill, AttackResult r) {
+        if (audio == null) return;
+        if (!skill.isOffensive()) {
+            audio.playSfx("heal");
+        } else if (!r.hit()) {
+            audio.playSfx("miss");
+        } else if (r.crit()) {
+            audio.playSfx("crit");
+        } else {
+            audio.playSfx("hit");
+        }
+    }
+
+    private void emitActionParticles(Combatant target, SkillData skill, AttackResult r) {
+        CombatantView v = findView(target);
+        if (v == null) return;
+        float cx = v.x() + v.width() / 2f;
+        float cy = v.y() + v.height() / 2f;
+        if (!skill.isOffensive()) {
+            particles.emitHealGlow(cx, cy);
+        } else if (r.hit() && r.crit()) {
+            particles.emitCritBurst(cx, cy);
+        } else if (r.hit()) {
+            particles.emitHitSplash(cx, cy);
+        }
+    }
+
+    private CombatantView findView(Combatant c) {
+        for (CombatantView v : heroViews) if (v.combatant() == c) return v;
+        for (CombatantView v : enemyViews) if (v.combatant() == c) return v;
+        return null;
+    }
+
     private static String formatActionLog(Combatant attacker, Combatant target, SkillData skill, AttackResult r) {
         if (skill.isOffensive() && !r.hit()) {
-            return attacker.id() + " used " + skill.nameVn() + " on " + target.id() + " — MISS";
+            return I18n.t("combat.log.miss", attacker.id(), skill.displayName(), target.id());
         }
         if (skill.isOffensive()) {
-            String crit = r.crit() ? " CRIT!" : "";
-            return attacker.id() + " hit " + target.id()
-                    + " for " + r.hpDamage() + " HP" + crit
-                    + " (" + skill.nameVn() + ")";
+            return r.crit()
+                    ? I18n.t("combat.log.crit", attacker.id(), target.id(), r.hpDamage())
+                    : I18n.t("combat.log.hit", attacker.id(), target.id(), r.hpDamage());
         }
-        return attacker.id() + " used " + skill.nameVn() + " on " + target.id();
+        return I18n.t("combat.log.support", attacker.id(), skill.displayName(), target.id());
     }
 
     @Override
     public void render(float delta) {
         for (CombatantView v : heroViews) v.update(delta);
         for (CombatantView v : enemyViews) v.update(delta);
+        particles.update(delta);
 
         renderer.renderBackground();
         camera.update();
 
         renderer.renderCombatants(camera, heroViews, enemyViews,
                 controller.currentActor().orElse(null), highlightedTargets);
+
+        // Particles drawn on top of combatants but under UI
+        renderer.shapes().setProjectionMatrix(camera.combined);
+        particles.render(renderer.shapes());
 
         uiStage.act(delta);
         uiStage.draw();
@@ -312,6 +368,7 @@ public class CombatScreen implements Screen {
         mux.addProcessor(uiStage);
         mux.addProcessor(new CombatInputAdapter());
         Gdx.input.setInputProcessor(mux);
+        if (audio != null) audio.playMusic("combat_theme", true);
     }
 
     @Override

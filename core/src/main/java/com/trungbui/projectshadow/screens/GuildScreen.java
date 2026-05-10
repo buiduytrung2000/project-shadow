@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.data.model.HeroData;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.save.HeroState;
@@ -52,7 +53,7 @@ public class GuildScreen implements Screen {
         root.setFillParent(true);
         root.top().pad(40);
 
-        this.feedbackLabel = new Label("Click 'Level up' để tăng cấp hero (max lv " + HamletService.GUILD_MAX_LEVEL + ")", skin);
+        this.feedbackLabel = new Label(I18n.t("guild.intro", HamletService.GUILD_MAX_LEVEL), skin);
         feedbackLabel.setColor(Color.WHITE);
 
         rebuildUi();
@@ -62,29 +63,28 @@ public class GuildScreen implements Screen {
 
     private void rebuildUi() {
         root.clear();
-        Label title = new Label("Phường Hội", new Label.LabelStyle(titleFont, Color.GOLD));
+        Label title = new Label(I18n.t("guild.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).colspan(2).pad(20).row();
 
-        Label gold = new Label("Gold: " + game.meta().gold(), skin);
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
         root.add(gold).colspan(2).pad(10).row();
 
         root.add(feedbackLabel).colspan(2).pad(10).row();
 
         MetaState meta = game.meta();
         if (meta.roster().isEmpty()) {
-            Label none = new Label("Roster trống.", skin);
+            Label none = new Label(I18n.t("guild.empty"), skin);
             none.setColor(Color.SALMON);
             root.add(none).colspan(2).pad(20).row();
         } else {
             for (HeroState rs : meta.roster()) {
                 HeroData data = game.gameData().heroes().get(rs.heroId());
-                String name = data != null ? data.nameVn() : rs.heroId();
-                String info = name + " (Lv " + rs.level() + ")";
-                Label heroLabel = new Label(info, skin);
+                String name = data != null ? data.displayName() : rs.heroId();
+                Label heroLabel = new Label(I18n.t("guild.heroLine", name, rs.level()), skin);
 
                 int cost = HamletService.levelUpCost(rs.level());
                 boolean atMax = rs.level() >= HamletService.GUILD_MAX_LEVEL;
-                String btnText = atMax ? "Đã max" : "Level up (" + cost + " gold)";
+                String btnText = atMax ? I18n.t("guild.maxed") : I18n.t("guild.levelup", cost);
                 TextButton btn = new TextButton(btnText, skin);
                 btn.setDisabled(atMax || meta.gold() < cost);
                 final String idCaptured = rs.heroId();
@@ -93,7 +93,7 @@ public class GuildScreen implements Screen {
                     public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                         try {
                             game.applyMeta(HamletService.levelUpHero(game.meta(), idCaptured, game.gameData()));
-                            feedbackLabel.setText("Đã tăng cấp " + idCaptured);
+                            feedbackLabel.setText(I18n.t("guild.success", idCaptured));
                             rebuildUi();
                         } catch (HamletService.HamletException ex) {
                             feedbackLabel.setText(ex.getMessage());
@@ -108,7 +108,7 @@ public class GuildScreen implements Screen {
             }
         }
 
-        TextButton back = new TextButton("Về Hamlet", skin);
+        TextButton back = new TextButton(I18n.t("button.back"), skin);
         back.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {

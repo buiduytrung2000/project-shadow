@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.run.RunSession;
 import com.trungbui.projectshadow.stage.CombatNode;
 import com.trungbui.projectshadow.stage.EliteNode;
@@ -150,21 +151,22 @@ public class StageMapScreen implements Screen {
 
     private String headerText() {
         StageNode cur = run.currentNode();
-        String pos = cur == null ? "khởi đầu" : cur.label() + " (" + describeType(cur.type()) + ")";
-        return "Stage: " + run.stageTree().stageId()
-                + "  —  Vị trí: " + pos
-                + "  —  Gold: " + run.state().gold();
+        String pos = cur == null
+                ? I18n.t("map.start")
+                : cur.label() + " (" + describeType(cur.type()) + ")";
+        return I18n.t("map.header", run.stageTree().stageId(), pos, run.state().gold());
     }
 
     private String partyText() {
-        StringBuilder sb = new StringBuilder("Đội hình:  ");
+        StringBuilder sb = new StringBuilder(I18n.t("map.party")).append("  ");
         boolean first = true;
         for (var h : run.party()) {
             if (!first) sb.append("   |   ");
             first = false;
-            sb.append(h.data().nameVn())
-                    .append(" HP ").append(h.currentHp()).append("/").append(h.maxHp())
-                    .append(" Stress ").append(h.currentStress()).append("/").append(h.maxStress());
+            sb.append(I18n.t("map.partyHero",
+                    h.data().displayName(),
+                    h.currentHp(), h.maxHp(),
+                    h.currentStress(), h.maxStress()));
         }
         return sb.toString();
     }
@@ -211,20 +213,20 @@ public class StageMapScreen implements Screen {
 
     private static String describeType(NodeType t) {
         return switch (t) {
-            case COMBAT -> "Chiến đấu";
-            case EVENT -> "Sự kiện";
-            case REST -> "Nghỉ ngơi";
-            case REWARD -> "Phần thưởng";
-            case ELITE -> "Elite";
-            case MINIBOSS -> "Miniboss";
-            case BOSS -> "BOSS";
+            case COMBAT -> I18n.t("map.nodeType.combat");
+            case EVENT -> I18n.t("map.nodeType.event");
+            case REST -> I18n.t("map.nodeType.rest");
+            case REWARD -> I18n.t("map.nodeType.reward");
+            case ELITE -> I18n.t("map.nodeType.elite");
+            case MINIBOSS -> I18n.t("map.nodeType.miniboss");
+            case BOSS -> I18n.t("map.nodeType.boss");
         };
     }
 
     private static String describeNode(StageNode n) {
         return switch (n) {
-            case CombatNode c -> "Chiến đấu (" + c.enemies().size() + ")";
-            case EliteNode e -> "Elite (" + e.enemies().size() + ")";
+            case CombatNode c -> I18n.t("map.nodeDesc.combat", c.enemies().size());
+            case EliteNode e -> I18n.t("map.nodeDesc.elite", e.enemies().size());
             default -> describeType(n.type());
         };
     }
@@ -262,6 +264,7 @@ public class StageMapScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(uiStage);
+        if (game.audio() != null) game.audio().playMusic("map_theme", true);
     }
 
     @Override

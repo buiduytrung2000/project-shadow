@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.stage.EventNode;
 import com.trungbui.projectshadow.stage.RestNode;
 import com.trungbui.projectshadow.stage.RestOption;
@@ -65,14 +66,14 @@ public class NodeInfoScreen implements Screen {
         Label title = new Label(headerForType(), skin);
         title.setColor(Color.GOLD);
 
-        Label subtitle = new Label("Nút: " + node.label(), skin);
+        Label subtitle = new Label(I18n.t("node.subtitle", node.label()), skin);
         subtitle.setColor(Color.LIGHT_GRAY);
 
         Label body = new Label(bodyText(), skin);
         body.setColor(Color.WHITE);
         body.setWrap(true);
 
-        TextButton continueBtn = new TextButton("Tiếp tục", skin);
+        TextButton continueBtn = new TextButton(I18n.t("button.continue"), skin);
         continueBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
@@ -89,46 +90,42 @@ public class NodeInfoScreen implements Screen {
 
     private String headerForType() {
         return switch (node) {
-            case EventNode e -> "Sự kiện — " + e.eventId();
-            case RestNode r -> "Nghỉ ngơi";
-            case RewardNode r -> "Phần thưởng";
-            default -> "Nút " + node.type();
+            case EventNode e -> I18n.t("node.title.event", e.eventId());
+            case RestNode r -> I18n.t("node.title.rest");
+            case RewardNode r -> I18n.t("node.title.reward");
+            default -> I18n.t("node.title.generic", node.type());
         };
     }
 
     private String bodyText() {
         return switch (node) {
-            case EventNode e ->
-                    "Bạn gặp một sự kiện trên đường đi.\n"
-                            + "(Sprint 8 sẽ thêm cơ chế chọn lựa cho sự kiện này.)";
+            case EventNode e -> I18n.t("node.body.event");
             case RestNode r -> {
-                StringBuilder sb = new StringBuilder("Một nơi yên bình để dừng chân.\n\nLựa chọn:\n");
-                if (r.options().isEmpty()) sb.append("  • (chưa có lựa chọn được sinh ra)\n");
+                StringBuilder sb = new StringBuilder(I18n.t("node.body.restHeader")).append("\n");
+                if (r.options().isEmpty()) sb.append(I18n.t("node.body.restEmpty")).append("\n");
                 for (RestOption o : r.options()) {
-                    sb.append("  • ").append(o.label())
-                            .append(" — ").append(o.effect())
-                            .append(" (").append(o.target()).append(", ")
-                            .append(o.valueMin()).append("..").append(o.valueMax()).append(")\n");
+                    sb.append(I18n.t("node.body.restOption",
+                            o.label(), o.effect(), o.target(), o.valueMin(), o.valueMax())).append("\n");
                 }
-                sb.append("\n(Sprint 8 sẽ thêm cơ chế áp dụng từng lựa chọn.)");
+                sb.append(I18n.t("node.body.restFooter"));
                 yield sb.toString();
             }
             case RewardNode r -> {
-                StringBuilder sb = new StringBuilder("Bạn nhận được:\n\n");
-                if (r.drops().isEmpty()) sb.append("  • (không có gì)\n");
+                StringBuilder sb = new StringBuilder(I18n.t("node.body.rewardHeader")).append("\n");
+                if (r.drops().isEmpty()) sb.append(I18n.t("node.body.rewardEmpty")).append("\n");
                 for (DropEntry d : r.drops()) {
-                    sb.append("  • ").append(d.type());
-                    if (d.itemId() != null) sb.append(" — ").append(d.itemId());
-                    if (d.category() != null) sb.append(" — ").append(d.category());
+                    StringBuilder line = new StringBuilder(d.type());
+                    if (d.itemId() != null) line.append(" — ").append(d.itemId());
+                    if (d.category() != null) line.append(" — ").append(d.category());
                     if (d.valueMin() != null && d.valueMax() != null) {
-                        sb.append(" (").append(d.valueMin()).append("..").append(d.valueMax()).append(")");
+                        line.append(" (").append(d.valueMin()).append("..").append(d.valueMax()).append(")");
                     }
-                    sb.append("\n");
+                    sb.append(I18n.t("node.body.rewardEntry", line.toString())).append("\n");
                 }
-                sb.append("\n(Sprint 8 sẽ thêm cơ chế cộng vàng/đồ vào kho.)");
+                sb.append(I18n.t("node.body.rewardFooter"));
                 yield sb.toString();
             }
-            default -> "Nút " + node.type() + " — nội dung sẽ được bổ sung Sprint 8.";
+            default -> I18n.t("node.body.generic", node.type());
         };
     }
 

@@ -17,6 +17,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.data.model.HeroData;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.save.HeroState;
@@ -53,11 +54,10 @@ public class CaretakerScreen implements Screen {
         root.setFillParent(true);
         root.top().pad(40);
 
-        this.feedbackLabel = new Label(
-                "Chữa bệnh: " + HamletService.CARETAKER_DISEASE_CURE_COST + " gold/lần. "
-                        + "Giảm " + HamletService.CARETAKER_STRESS_RELIEF_BLOCK + " stress: "
-                        + HamletService.CARETAKER_STRESS_RELIEF_COST + " gold.",
-                skin);
+        this.feedbackLabel = new Label(I18n.t("caretaker.intro",
+                HamletService.CARETAKER_DISEASE_CURE_COST,
+                HamletService.CARETAKER_STRESS_RELIEF_BLOCK,
+                HamletService.CARETAKER_STRESS_RELIEF_COST), skin);
         feedbackLabel.setColor(Color.WHITE);
 
         rebuildUi();
@@ -67,10 +67,10 @@ public class CaretakerScreen implements Screen {
 
     private void rebuildUi() {
         root.clear();
-        Label title = new Label("Người Chăm Sóc", new Label.LabelStyle(titleFont, Color.GOLD));
+        Label title = new Label(I18n.t("caretaker.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).colspan(3).pad(20).row();
 
-        Label gold = new Label("Gold: " + game.meta().gold(), skin);
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
         root.add(gold).colspan(3).pad(10).row();
 
         root.add(feedbackLabel).colspan(3).pad(10).row();
@@ -78,7 +78,7 @@ public class CaretakerScreen implements Screen {
         Table list = new Table();
         MetaState meta = game.meta();
         if (meta.roster().isEmpty()) {
-            list.add(new Label("Roster trống.", skin)).pad(20).row();
+            list.add(new Label(I18n.t("caretaker.empty"), skin)).pad(20).row();
         } else {
             for (HeroState rs : meta.roster()) {
                 addHeroRow(list, rs);
@@ -90,7 +90,7 @@ public class CaretakerScreen implements Screen {
         scroll.setFadeScrollBars(false);
         root.add(scroll).colspan(3).width(1500).height(600).pad(20).row();
 
-        TextButton back = new TextButton("Về Hamlet", skin);
+        TextButton back = new TextButton(I18n.t("button.back"), skin);
         back.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
@@ -102,17 +102,18 @@ public class CaretakerScreen implements Screen {
 
     private void addHeroRow(Table list, HeroState rs) {
         HeroData data = game.gameData().heroes().get(rs.heroId());
-        String name = data != null ? data.nameVn() : rs.heroId();
-        String info = name + "  HP " + rs.currentHp() + "  Stress " + rs.currentStress()
-                + "  Bệnh: " + (rs.diseases().isEmpty() ? "không" : String.join(",", rs.diseases()));
+        String name = data != null ? data.displayName() : rs.heroId();
+        String diseases = rs.diseases().isEmpty()
+                ? I18n.t("caretaker.noDisease")
+                : String.join(",", rs.diseases());
+        String info = I18n.t("caretaker.heroLine", name, rs.currentHp(), rs.currentStress(), diseases);
         Label heroLabel = new Label(info, skin);
         list.add(heroLabel).left().pad(8);
 
         // stress relief button
-        TextButton stress = new TextButton(
-                "-" + HamletService.CARETAKER_STRESS_RELIEF_BLOCK + " stress ("
-                        + HamletService.CARETAKER_STRESS_RELIEF_COST + "g)",
-                skin);
+        TextButton stress = new TextButton(I18n.t("caretaker.stress",
+                HamletService.CARETAKER_STRESS_RELIEF_BLOCK,
+                HamletService.CARETAKER_STRESS_RELIEF_COST), skin);
         stress.setDisabled(rs.currentStress() == 0
                 || game.meta().gold() < HamletService.CARETAKER_STRESS_RELIEF_COST);
         final String idCaptured = rs.heroId();
@@ -121,7 +122,7 @@ public class CaretakerScreen implements Screen {
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                 try {
                     game.applyMeta(HamletService.reduceStress(game.meta(), idCaptured, game.gameData()));
-                    feedbackLabel.setText("Đã giảm stress cho " + idCaptured);
+                    feedbackLabel.setText(I18n.t("caretaker.stressed", idCaptured));
                 } catch (HamletService.HamletException ex) {
                     feedbackLabel.setText(ex.getMessage());
                 }
@@ -133,8 +134,8 @@ public class CaretakerScreen implements Screen {
         // disease cure button (one button per disease)
         Table diseaseCol = new Table();
         for (String d : rs.diseases()) {
-            TextButton cure = new TextButton(
-                    "Chữa " + d + " (" + HamletService.CARETAKER_DISEASE_CURE_COST + "g)", skin);
+            TextButton cure = new TextButton(I18n.t("caretaker.cure",
+                    d, HamletService.CARETAKER_DISEASE_CURE_COST), skin);
             cure.setDisabled(game.meta().gold() < HamletService.CARETAKER_DISEASE_CURE_COST);
             final String diseaseCaptured = d;
             cure.addListener(new ChangeListener() {
@@ -143,7 +144,7 @@ public class CaretakerScreen implements Screen {
                     try {
                         game.applyMeta(HamletService.cureDisease(
                                 game.meta(), idCaptured, diseaseCaptured, game.gameData()));
-                        feedbackLabel.setText("Đã chữa " + diseaseCaptured + " cho " + idCaptured);
+                        feedbackLabel.setText(I18n.t("caretaker.cured", diseaseCaptured, idCaptured));
                     } catch (HamletService.HamletException ex) {
                         feedbackLabel.setText(ex.getMessage());
                     }

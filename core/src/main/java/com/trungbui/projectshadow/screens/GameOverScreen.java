@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.ui.FontFactory;
 
 /**
@@ -48,22 +49,19 @@ public class GameOverScreen implements Screen {
         root.setFillParent(true);
         root.center();
 
-        Label title = new Label("THẤT BẠI", new Label.LabelStyle(titleFont, Color.SCARLET));
-        Label body = new Label(
-                "Đội của bạn đã ngã xuống.\n\n"
-                        + "Run đã được lưu vào kho lưu trữ (permadeath).",
-                skin);
+        Label title = new Label(I18n.t("combat.defeat"), new Label.LabelStyle(titleFont, Color.SCARLET));
+        Label body = new Label(I18n.t("gameover.body"), skin);
         body.setColor(Color.WHITE);
         body.setAlignment(com.badlogic.gdx.utils.Align.center);
 
-        TextButton hamlet = new TextButton("Về Hamlet", skin);
+        TextButton hamlet = new TextButton(I18n.t("button.hamlet"), skin);
         hamlet.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                 game.returnToHamlet();
             }
         });
-        TextButton quit = new TextButton("Thoát", skin);
+        TextButton quit = new TextButton(I18n.t("button.quit"), skin);
         quit.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
@@ -98,6 +96,7 @@ public class GameOverScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(uiStage);
+        if (game.audio() != null) game.audio().playMusic("gameover", false);
     }
 
     @Override

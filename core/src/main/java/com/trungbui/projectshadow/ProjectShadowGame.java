@@ -3,6 +3,7 @@ package com.trungbui.projectshadow;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.trungbui.projectshadow.audio.AudioManager;
 import com.trungbui.projectshadow.combat.CombatScenario;
 import com.trungbui.projectshadow.data.GameData;
 import com.trungbui.projectshadow.domain.CombatEncounter;
@@ -48,6 +49,7 @@ public class ProjectShadowGame extends Game {
     private MetaStateManager metaManager;
     private MetaState meta;
     private RunSession runSession;
+    private AudioManager audio;
 
     @Override
     public void create() {
@@ -55,6 +57,7 @@ public class ProjectShadowGame extends Game {
         Path savesDir = Gdx.files.local("saves").file().toPath();
         saveManager = new SaveManager(savesDir);
         metaManager = new MetaStateManager(savesDir);
+        audio = new AudioManager();
         try {
             meta = metaManager.loadOrInit(gameData, DEFAULT_ROSTER);
             metaManager.save(meta);
@@ -62,6 +65,16 @@ public class ProjectShadowGame extends Game {
             throw new RuntimeException("Failed to load/save meta state", e);
         }
         setScreen(new HamletScreen(this));
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (audio != null) audio.dispose();
+    }
+
+    public AudioManager audio() {
+        return audio;
     }
 
     public GameData gameData() {
@@ -135,6 +148,29 @@ public class ProjectShadowGame extends Game {
 
     // ---------- Run lifecycle ----------
 
+    /** Resume the most-recently-saved active run if any exists. */
+    public void resumeLatestRun() {
+        try {
+            List<String> active = saveManager.listActiveSaves();
+            if (active.isEmpty()) return;
+            String runId = active.get(active.size() - 1); // most recent
+            runSession = RunSession.resume(gameData, saveManager, runId);
+            Screen prev = getScreen();
+            setScreen(new StageMapScreen(this));
+            if (prev != null && prev != getScreen()) prev.dispose();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to resume run", e);
+        }
+    }
+
+    public boolean hasActiveRun() {
+        try {
+            return !saveManager.listActiveSaves().isEmpty();
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     /** Start a new run with the chosen 4 heroes (must already be in the meta roster). */
     public void startNewRun(List<String> heroIds) {
         Screen prev = getScreen();
@@ -193,7 +229,9 @@ public class ProjectShadowGame extends Game {
         Runnable onWin = () -> handleCombatWin(nodeLabel);
         Runnable onLose = () -> handleCombatLoss(nodeLabel);
         Screen prev = getScreen();
-        setScreen(new CombatScreen(gameData, encounter, onWin, onLose));
+        CombatScreen cs = new CombatScreen(gameData, encounter, onWin, onLose);
+        cs.setAudio(audio); // must be before setScreen so show() picks it up
+        setScreen(cs);
         if (prev != null && prev != getScreen()) prev.dispose();
     }
 

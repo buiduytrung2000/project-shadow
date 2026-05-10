@@ -47,3 +47,27 @@ tasks.register('runDemo', JavaExec) {
   standardOutput = System.out
   errorOutput = System.err
 }
+
+// Sprint 9 — pack PNGs in assets/sprites/raw/ into a single combatants.atlas.
+// Keeps gdx-tools out of the runtime classpath via a dedicated configuration.
+configurations {
+  packAssetsTool
+}
+
+dependencies {
+  packAssetsTool "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
+}
+
+tasks.register('packAssets', JavaExec) {
+  group = 'build'
+  description = 'Pack Aseprite-exported PNGs (assets/sprites/raw/*.png) into combatants.atlas + combatants.png.'
+  classpath = configurations.packAssetsTool
+  mainClass = 'com.badlogic.gdx.tools.texturepacker.TexturePacker'
+  args = [
+    "${rootProject.projectDir}/assets/sprites/raw",
+    "${rootProject.projectDir}/assets/sprites",
+    'combatants'
+  ]
+  // Don't fail the task if input dir is empty — Sprint 9 ships with no sprites yet.
+  ignoreExitValue = true
+}

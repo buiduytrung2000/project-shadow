@@ -1,5 +1,7 @@
 package com.trungbui.projectshadow.data.model;
 
+import com.trungbui.projectshadow.i18n.I18n;
+
 import java.util.List;
 
 public record HeroData(
@@ -24,4 +26,8 @@ public record HeroData(
         List<String> availableSkills,
         String notes
 ) {
+    /** Returns the locale-appropriate name (EN if {@link I18n#isEnglish()}, else VN). */
+    public String displayName() {
+        return I18n.isEnglish() && nameEn != null && !nameEn.isBlank() ? nameEn : nameVn;
+    }
 }

@@ -19,12 +19,21 @@ public class CombatantView {
 
     private float shakeTimer = 0f;
     private float flashTimer = 0f;
+    private SpriteAnimator animator; // null if no atlas — caller falls back to rectangle
 
     public CombatantView(Combatant combatant, float baseX, float baseY) {
         this.combatant = combatant;
         this.baseX = baseX;
         this.baseY = baseY;
         this.color = colorFor(combatant);
+    }
+
+    public void attachAnimator(SpriteAnimator animator) {
+        this.animator = animator;
+    }
+
+    public SpriteAnimator animator() {
+        return animator;
     }
 
     public Combatant combatant() {
@@ -61,11 +70,17 @@ public class CombatantView {
     public void triggerHit() {
         shakeTimer = SHAKE_DURATION;
         flashTimer = 0.2f;
+        if (animator != null) animator.setState(SpriteAnimator.State.HURT);
+    }
+
+    public void triggerAttack() {
+        if (animator != null) animator.setState(SpriteAnimator.State.ATTACKING);
     }
 
     public void update(float delta) {
         if (shakeTimer > 0f) shakeTimer = Math.max(0f, shakeTimer - delta);
         if (flashTimer > 0f) flashTimer = Math.max(0f, flashTimer - delta);
+        if (animator != null) animator.update(delta);
     }
 
     private static Color colorFor(Combatant c) {

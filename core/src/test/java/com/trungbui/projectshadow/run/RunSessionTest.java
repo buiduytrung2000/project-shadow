@@ -189,4 +189,61 @@ class RunSessionTest {
         RunState reloaded = saveManager.load(run.state().runId());
         assertThat(reloaded.archived()).isTrue();
     }
+
+    // ---------- Sprint 9 — RunSession.resume() ----------
+
+    @Test
+    void resume_throwsOnUnknownRunId() {
+        assertThatThrownBy(() -> RunSession.resume(gd, saveManager, "nonexistent-run-id"))
+                .isInstanceOf(IOException.class);
+    }
+
+    @Test
+    void resume_throwsOnBlankId() {
+        assertThatThrownBy(() -> RunSession.resume(gd, saveManager, ""))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void resume_loadsExistingRun_treeMatchesSeed() throws IOException {
+        RunSession original = newRun();
+        String first = original.stageTree().firstNode().get().label();
+        original.completeNode(first);
+
+        RunSession resumed = RunSession.resume(gd, saveManager, original.state().runId());
+        // Same seed → identical generated tree
+        assertThat(resumed.stageTree().stageId()).isEqualTo(original.stageTree().stageId());
+        assertThat(resumed.stageTree().seed()).isEqualTo(original.stageTree().seed());
+        assertThat(resumed.stageTree().size()).isEqualTo(original.stageTree().size());
+        assertThat(resumed.stageTree().nodes().keySet())
+                .containsExactlyElementsOf(original.stageTree().nodes().keySet());
+    }
+
+    @Test
+    void resume_partyHpStressMatchesSavedSnapshot() throws IOException {
+        RunSession original = newRun();
+        Hero h0 = original.party().get(0);
+        h0.takeHpDamage(7);
+        h0.takeStressDamage(20);
+        String first = original.stageTree().firstNode().get().label();
+        original.completeNode(first);
+
+        RunSession resumed = RunSession.resume(gd, saveManager, original.state().runId());
+        Hero r0 = resumed.party().get(0);
+        assertThat(r0.id()).isEqualTo(h0.id());
+        assertThat(r0.currentHp()).isEqualTo(h0.currentHp());
+        assertThat(r0.currentStress()).isEqualTo(h0.currentStress());
+    }
+
+    @Test
+    void resume_currentNodeRetained() throws IOException {
+        RunSession original = newRun();
+        String first = original.stageTree().firstNode().get().label();
+        original.completeNode(first);
+
+        RunSession resumed = RunSession.resume(gd, saveManager, original.state().runId());
+        assertThat(resumed.state().currentNodeLabel()).isEqualTo(first);
+        assertThat(resumed.currentNode()).isNotNull();
+        assertThat(resumed.currentNode().label()).isEqualTo(first);
+    }
 }

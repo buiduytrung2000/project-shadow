@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.data.model.ItemData;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.ui.FontFactory;
 
@@ -52,8 +53,7 @@ public class SurvivalistScreen implements Screen {
         root.setFillParent(true);
         root.top().pad(40);
 
-        this.feedbackLabel = new Label("Chế tác trinket ngẫu nhiên: "
-                + HamletService.SURVIVALIST_CRAFT_COST + " gold", skin);
+        this.feedbackLabel = new Label(I18n.t("survivalist.intro", HamletService.SURVIVALIST_CRAFT_COST), skin);
         feedbackLabel.setColor(Color.WHITE);
 
         rebuildUi();
@@ -63,20 +63,20 @@ public class SurvivalistScreen implements Screen {
 
     private void rebuildUi() {
         root.clear();
-        Label title = new Label("Thợ Thủ Công", new Label.LabelStyle(titleFont, Color.GOLD));
+        Label title = new Label(I18n.t("survivalist.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).pad(20).row();
 
-        Label gold = new Label("Gold: " + game.meta().gold(), skin);
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
         root.add(gold).pad(10).row();
         root.add(feedbackLabel).pad(10).row();
 
-        Label invHeader = new Label("Kho trinket (" + game.meta().trinketInventory().size() + "):", skin);
+        Label invHeader = new Label(I18n.t("survivalist.inventory", game.meta().trinketInventory().size()), skin);
         invHeader.setColor(Color.LIGHT_GRAY);
         root.add(invHeader).pad(20).row();
 
         StringBuilder invSb = new StringBuilder();
         if (game.meta().trinketInventory().isEmpty()) {
-            invSb.append("(trống)");
+            invSb.append(I18n.t("survivalist.empty"));
         } else {
             boolean first = true;
             for (String itemId : game.meta().trinketInventory()) {
@@ -90,8 +90,7 @@ public class SurvivalistScreen implements Screen {
         Label invBody = new Label(invSb.toString(), skin);
         root.add(invBody).pad(10).row();
 
-        TextButton craft = new TextButton(
-                "Chế tác (" + HamletService.SURVIVALIST_CRAFT_COST + " gold)", skin);
+        TextButton craft = new TextButton(I18n.t("survivalist.craft", HamletService.SURVIVALIST_CRAFT_COST), skin);
         craft.setDisabled(game.meta().gold() < HamletService.SURVIVALIST_CRAFT_COST);
         craft.addListener(new ChangeListener() {
             @Override
@@ -101,7 +100,7 @@ public class SurvivalistScreen implements Screen {
                     game.applyMeta(newMeta);
                     String latest = newMeta.trinketInventory().get(newMeta.trinketInventory().size() - 1);
                     ItemData it = game.gameData().items().get(latest);
-                    feedbackLabel.setText("Đã chế tác: " + (it != null ? it.nameVn() : latest));
+                    feedbackLabel.setText(I18n.t("survivalist.crafted", it != null ? it.nameVn() : latest));
                     rebuildUi();
                 } catch (HamletService.HamletException ex) {
                     feedbackLabel.setText(ex.getMessage());
@@ -111,7 +110,7 @@ public class SurvivalistScreen implements Screen {
         });
         root.add(craft).pad(20).width(360).height(70).row();
 
-        TextButton back = new TextButton("Về Hamlet", skin);
+        TextButton back = new TextButton(I18n.t("button.back"), skin);
         back.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {

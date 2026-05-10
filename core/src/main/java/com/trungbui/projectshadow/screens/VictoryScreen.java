@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.ui.FontFactory;
 
 /**
@@ -48,22 +49,21 @@ public class VictoryScreen implements Screen {
         root.setFillParent(true);
         root.center();
 
-        Label title = new Label("CHIẾN THẮNG", new Label.LabelStyle(titleFont, Color.GOLD));
+        Label title = new Label(I18n.t("combat.victory"), new Label.LabelStyle(titleFont, Color.GOLD));
         Label body = new Label(
-                "Bạn đã đánh bại trùm Stage " + game.runSession().stageTree().stageId() + ".\n\n"
-                        + "Stage 2 sẽ được mở khóa ở Sprint sau.",
+                I18n.t("victory.body", game.runSession().stageTree().stageId()),
                 skin);
         body.setColor(Color.WHITE);
         body.setAlignment(com.badlogic.gdx.utils.Align.center);
 
-        TextButton hamlet = new TextButton("Về Hamlet", skin);
+        TextButton hamlet = new TextButton(I18n.t("button.hamlet"), skin);
         hamlet.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                 game.returnToHamlet();
             }
         });
-        TextButton quit = new TextButton("Thoát", skin);
+        TextButton quit = new TextButton(I18n.t("button.quit"), skin);
         quit.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
@@ -98,6 +98,7 @@ public class VictoryScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(uiStage);
+        if (game.audio() != null) game.audio().playMusic("victory", false);
     }
 
     @Override
