@@ -105,7 +105,14 @@ class CombatControllerTest {
             if (c.currentActor().orElseThrow() instanceof Hero) {
                 boolean acted = false;
                 for (int i = 0; i < 4 && !acted; i++) {
-                    acted = c.executePlayerSkill(i);
+                    if (c.skillRequiresTargetPick(i)) {
+                        var picks = c.skillCandidateTargets(i);
+                        if (!picks.isEmpty()) {
+                            acted = c.executePlayerSkill(i, picks.get(0));
+                        }
+                    } else {
+                        acted = c.executePlayerSkill(i);
+                    }
                 }
                 if (!acted) break;
             }

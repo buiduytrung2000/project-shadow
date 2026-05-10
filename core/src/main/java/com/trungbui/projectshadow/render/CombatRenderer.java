@@ -8,6 +8,7 @@ import com.trungbui.projectshadow.domain.Combatant;
 import com.trungbui.projectshadow.domain.Hero;
 
 import java.util.List;
+import java.util.Set;
 
 public class CombatRenderer implements Disposable {
 
@@ -50,21 +51,27 @@ public class CombatRenderer implements Disposable {
             com.badlogic.gdx.graphics.OrthographicCamera camera,
             List<CombatantView> heroes,
             List<CombatantView> enemies,
-            Combatant currentActor
+            Combatant currentActor,
+            Set<Combatant> highlightedTargets
     ) {
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (CombatantView v : heroes) drawCombatant(v, currentActor);
-        for (CombatantView v : enemies) drawCombatant(v, currentActor);
+        for (CombatantView v : heroes) drawCombatant(v, currentActor, highlightedTargets);
+        for (CombatantView v : enemies) drawCombatant(v, currentActor, highlightedTargets);
         shapes.end();
     }
 
-    private void drawCombatant(CombatantView v, Combatant currentActor) {
+    private void drawCombatant(CombatantView v, Combatant currentActor, Set<Combatant> highlightedTargets) {
         Combatant c = v.combatant();
         boolean alive = c.isAlive();
+        boolean targetable = highlightedTargets != null && highlightedTargets.contains(c);
 
         if (alive && currentActor == c) {
             shapes.setColor(0.95f, 0.85f, 0.20f, 1f);
+            float pad = 6f;
+            shapes.rect(v.x() - pad, v.y() - pad, v.width() + 2 * pad, v.height() + 2 * pad);
+        } else if (targetable) {
+            shapes.setColor(0.20f, 0.85f, 0.95f, 1f);
             float pad = 6f;
             shapes.rect(v.x() - pad, v.y() - pad, v.width() + 2 * pad, v.height() + 2 * pad);
         }

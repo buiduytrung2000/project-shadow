@@ -74,6 +74,10 @@ public class CombatController {
     }
 
     public boolean executePlayerSkill(int skillIndex) {
+        return executePlayerSkill(skillIndex, null);
+    }
+
+    public boolean executePlayerSkill(int skillIndex, Combatant pickedTarget) {
         if (encounter.isCombatOver()) return false;
         Combatant actor = encounter.currentActor();
         if (!(actor instanceof Hero hero)) return false;
@@ -83,14 +87,44 @@ public class CombatController {
         SkillData skill = skills.get(skillIndex);
         if (hero.isOnCooldown(skill.skillId())) return false;
 
-        Combatant target = pickTargetForSkill(hero, skill);
-        if (target == null) return false;
+        TargetType targetType = TargetType.parse(skill.targetType());
+        if (!targetType.isSupported()) return false;
 
-        resolveAction(hero, target, skill);
+        List<Combatant> targets = targetType.requiresPlayerPick()
+                ? TargetSelector.resolveWithPick(targetType, hero, encounter, pickedTarget, rng)
+                : TargetSelector.autoResolve(targetType, hero, encounter, rng);
+
+        if (targets.isEmpty()) return false;
+
+        for (Combatant t : targets) {
+            resolveAction(hero, t, skill);
+        }
         if (skill.cooldown() > 0) hero.putOnCooldown(skill.skillId(), skill.cooldown());
 
         advanceTurn();
         return true;
+    }
+
+    public boolean skillRequiresTargetPick(int skillIndex) {
+        List<SkillData> skills = currentActorSkills();
+        if (skillIndex < 0 || skillIndex >= skills.size()) return false;
+        return TargetType.parse(skills.get(skillIndex).targetType()).requiresPlayerPick();
+    }
+
+    public List<Combatant> skillCandidateTargets(int skillIndex) {
+        Combatant actor = encounter.currentActor();
+        if (!(actor instanceof Hero hero)) return List.of();
+        List<SkillData> skills = currentActorSkills();
+        if (skillIndex < 0 || skillIndex >= skills.size()) return List.of();
+        SkillData skill = skills.get(skillIndex);
+        TargetType type = TargetType.parse(skill.targetType());
+        return TargetSelector.candidates(type, hero, encounter);
+    }
+
+    public boolean skillIsSupported(int skillIndex) {
+        List<SkillData> skills = currentActorSkills();
+        if (skillIndex < 0 || skillIndex >= skills.size()) return false;
+        return TargetType.parse(skills.get(skillIndex).targetType()).isSupported();
     }
 
     private void advanceTurn() {
@@ -122,14 +156,25 @@ public class CombatController {
             advanceTurn();
             return;
         }
-        Combatant target = pickFirstAliveHero();
-        if (target == null) {
-            advanceTurn();
-            return;
-        }
 
         SkillData wrapped = wrapEnemySkill(skillData);
-        resolveAction(enemy, target, wrapped);
+        TargetType type = TargetType.parse(wrapped.targetType());
+        List<Combatant> targets = type.isSupported()
+                ? TargetSelector.autoResolve(type, enemy, encounter, rng)
+                : List.of();
+
+        if (targets.isEmpty()) {
+            Combatant fallback = pickFirstAliveHero();
+            if (fallback == null) {
+                advanceTurn();
+                return;
+            }
+            targets = List.of(fallback);
+        }
+
+        for (Combatant t : targets) {
+            resolveAction(enemy, t, wrapped);
+        }
         advanceTurn();
     }
 
@@ -159,32 +204,11 @@ public class CombatController {
         listener.onActionResolved(attacker, target, skill, result);
     }
 
-    private Combatant pickTargetForSkill(Hero attacker, SkillData skill) {
-        if (skill.isOffensive()) return pickFrontEnemy();
-        return pickLowestHpAlly(attacker);
-    }
-
-    private Combatant pickFrontEnemy() {
-        for (Enemy e : encounter.enemies()) {
-            if (e.isAlive()) return e;
-        }
-        return null;
-    }
-
     private Combatant pickFirstAliveHero() {
         for (Hero h : encounter.heroes()) {
             if (h.isAlive()) return h;
         }
         return null;
-    }
-
-    private Combatant pickLowestHpAlly(Hero self) {
-        Hero lowest = null;
-        for (Hero h : encounter.heroes()) {
-            if (!h.isAlive()) continue;
-            if (lowest == null || h.currentHp() < lowest.currentHp()) lowest = h;
-        }
-        return lowest != null ? lowest : self;
     }
 
     private void tickEndOfRound() {

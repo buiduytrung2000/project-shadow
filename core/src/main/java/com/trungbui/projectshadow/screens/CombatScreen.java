@@ -1,10 +1,15 @@
 package com.trungbui.projectshadow.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -13,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.trungbui.projectshadow.ui.FontFactory;
 import com.trungbui.projectshadow.combat.AttackResult;
 import com.trungbui.projectshadow.combat.CombatController;
 import com.trungbui.projectshadow.combat.CombatScenario;
@@ -26,17 +32,24 @@ import com.trungbui.projectshadow.render.CombatRenderer;
 import com.trungbui.projectshadow.render.CombatantView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public class CombatScreen implements Screen {
 
+    private enum UiState { IDLE, AWAITING_TARGET }
+
     private static final int LOG_LINES = 4;
+
+    private static final int FONT_SIZE_PX = 24;
 
     private final GameData gameData;
     private final OrthographicCamera camera;
     private final Viewport viewport;
     private final SpriteBatch batch;
+    private final FontFactory fontFactory;
     private final Skin skin;
     private final Stage uiStage;
 
@@ -51,14 +64,21 @@ public class CombatScreen implements Screen {
     private final Label logLabel;
     private final List<String> logBuffer = new ArrayList<>();
     private final List<TextButton> skillButtons = new ArrayList<>();
-    private float autoAdvanceTimer = 0f;
+
+    private UiState uiState = UiState.IDLE;
+    private int pendingSkillIndex = -1;
+    private final Set<Combatant> highlightedTargets = new HashSet<>();
 
     public CombatScreen(GameData gameData) {
         this.gameData = gameData;
         this.camera = new OrthographicCamera();
         this.viewport = new FitViewport(CombatRenderer.VIRTUAL_WIDTH, CombatRenderer.VIRTUAL_HEIGHT, camera);
         this.batch = new SpriteBatch();
+        this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
+        BitmapFont vnFont = fontFactory.create(FONT_SIZE_PX);
         this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        skin.get(Label.LabelStyle.class).font = vnFont;
+        skin.get(TextButton.TextButtonStyle.class).font = vnFont;
         this.uiStage = new Stage(viewport, batch);
         this.renderer = new CombatRenderer();
 
@@ -81,6 +101,7 @@ public class CombatScreen implements Screen {
 
             @Override
             public void onTurnAdvanced(Combatant nextActor) {
+                exitTargetMode();
                 refreshSkillButtons();
                 refreshStatus(nextActor);
             }
@@ -93,6 +114,7 @@ public class CombatScreen implements Screen {
             @Override
             public void onCombatEnded(CombatEncounter.Side winner) {
                 pushLog("=== " + (winner == CombatEncounter.Side.HEROES ? "VICTORY" : "DEFEAT") + " ===");
+                exitTargetMode();
                 refreshSkillButtons();
             }
         });
@@ -141,17 +163,49 @@ public class CombatScreen implements Screen {
             final int index = i;
             String label = (i + 1) + ". " + skill.nameVn();
             TextButton btn = new TextButton(label, skin);
-            btn.setDisabled(hero.isOnCooldown(skill.skillId()));
+            boolean disabled = hero.isOnCooldown(skill.skillId()) || !controller.skillIsSupported(index);
+            btn.setDisabled(disabled);
             btn.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                     if (btn.isDisabled()) return;
-                    controller.executePlayerSkill(index);
+                    onSkillButtonClicked(index);
                 }
             });
             skillTable.add(btn).pad(8).width(280).height(60);
             skillButtons.add(btn);
         }
+    }
+
+    private void onSkillButtonClicked(int skillIndex) {
+        if (controller.skillRequiresTargetPick(skillIndex)) {
+            enterTargetMode(skillIndex);
+        } else {
+            controller.executePlayerSkill(skillIndex);
+        }
+    }
+
+    private void enterTargetMode(int skillIndex) {
+        uiState = UiState.AWAITING_TARGET;
+        pendingSkillIndex = skillIndex;
+        highlightedTargets.clear();
+        highlightedTargets.addAll(controller.skillCandidateTargets(skillIndex));
+        statusLabel.setText("Pick a target (ESC to cancel) — " +
+                controller.currentActorSkills().get(skillIndex).nameVn());
+    }
+
+    private void exitTargetMode() {
+        uiState = UiState.IDLE;
+        pendingSkillIndex = -1;
+        highlightedTargets.clear();
+    }
+
+    private void confirmTarget(Combatant target) {
+        if (uiState != UiState.AWAITING_TARGET) return;
+        if (!highlightedTargets.contains(target)) return;
+        int idx = pendingSkillIndex;
+        exitTargetMode();
+        controller.executePlayerSkill(idx, target);
     }
 
     private void refreshStatus(Combatant actor) {
@@ -200,14 +254,14 @@ public class CombatScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        autoAdvanceTimer = Math.max(0f, autoAdvanceTimer - delta);
         for (CombatantView v : heroViews) v.update(delta);
         for (CombatantView v : enemyViews) v.update(delta);
 
         renderer.renderBackground();
         camera.update();
 
-        renderer.renderCombatants(camera, heroViews, enemyViews, controller.currentActor().orElse(null));
+        renderer.renderCombatants(camera, heroViews, enemyViews,
+                controller.currentActor().orElse(null), highlightedTargets);
 
         uiStage.act(delta);
         uiStage.draw();
@@ -220,7 +274,10 @@ public class CombatScreen implements Screen {
 
     @Override
     public void show() {
-        Gdx.input.setInputProcessor(uiStage);
+        InputMultiplexer mux = new InputMultiplexer();
+        mux.addProcessor(uiStage);
+        mux.addProcessor(new CombatInputAdapter());
+        Gdx.input.setInputProcessor(mux);
     }
 
     @Override
@@ -241,6 +298,47 @@ public class CombatScreen implements Screen {
         renderer.dispose();
         uiStage.dispose();
         skin.dispose();
+        fontFactory.dispose();
         batch.dispose();
+    }
+
+    private class CombatInputAdapter extends InputAdapter {
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+            if (uiState != UiState.AWAITING_TARGET) return false;
+            Vector3 world = new Vector3(screenX, screenY, 0);
+            viewport.unproject(world);
+            Combatant clicked = combatantAt(world.x, world.y);
+            if (clicked != null && highlightedTargets.contains(clicked)) {
+                confirmTarget(clicked);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean keyDown(int keycode) {
+            if (keycode == Input.Keys.ESCAPE && uiState == UiState.AWAITING_TARGET) {
+                exitTargetMode();
+                refreshStatus(controller.currentActor().orElse(null));
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private Combatant combatantAt(float worldX, float worldY) {
+        for (CombatantView v : heroViews) {
+            if (within(v, worldX, worldY)) return v.combatant();
+        }
+        for (CombatantView v : enemyViews) {
+            if (within(v, worldX, worldY)) return v.combatant();
+        }
+        return null;
+    }
+
+    private static boolean within(CombatantView v, float x, float y) {
+        return x >= v.x() && x <= v.x() + v.width()
+                && y >= v.y() && y <= v.y() + v.height();
     }
 }
