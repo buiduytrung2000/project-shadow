@@ -4,416 +4,807 @@ size: 1024, 1024
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
+enemy_01_attack
+  rotate: false
+  xy: 2, 872
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+enemy_01_dead
+  rotate: false
+  xy: 2, 872
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+enemy_01_hurt
+  rotate: false
+  xy: 2, 872
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+enemy_01_idle
+  rotate: false
+  xy: 2, 872
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
 enemy_01_special_attack
   rotate: false
-  xy: 2, 848
+  xy: 96, 108
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 0
+enemy_01_special_attack
+  rotate: false
+  xy: 202, 108
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 1
+enemy_01_special_attack
+  rotate: false
+  xy: 308, 108
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 2
+enemy_01_special_attack
+  rotate: false
+  xy: 414, 108
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 3
+enemy_01_special_attack
+  rotate: false
+  xy: 520, 108
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 4
+enemy_01_special_attack
+  rotate: false
+  xy: 626, 108
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 5
+enemy_01_special_dead
+  rotate: false
+  xy: 732, 108
   size: 104, 104
   orig: 104, 104
   offset: 0, 0
   index: 0
 enemy_01_special_dead
   rotate: false
-  xy: 2, 848
+  xy: 838, 108
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 1
+enemy_01_special_dead
+  rotate: false
+  xy: 2, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 2
+enemy_01_special_dead
+  rotate: false
+  xy: 108, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 3
+enemy_01_special_dead
+  rotate: false
+  xy: 214, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 4
+enemy_01_special_dead
+  rotate: false
+  xy: 320, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 5
+enemy_01_special_dead
+  rotate: false
+  xy: 426, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 6
+enemy_01_special_hurt
+  rotate: false
+  xy: 532, 2
   size: 104, 104
   orig: 104, 104
   offset: 0, 0
   index: 0
 enemy_01_special_hurt
   rotate: false
-  xy: 2, 848
+  xy: 638, 2
   size: 104, 104
   orig: 104, 104
   offset: 0, 0
-  index: 0
-enemy_01_special_idle
+  index: 1
+enemy_01_special_hurt
   rotate: false
-  xy: 2, 848
+  xy: 744, 2
   size: 104, 104
   orig: 104, 104
   offset: 0, 0
-  index: 0
+  index: 2
+enemy_01_special_hurt
+  rotate: false
+  xy: 850, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 3
 hero_01_attack
   rotate: false
-  xy: 2, 754
+  xy: 96, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_01_attack
   rotate: false
-  xy: 108, 860
+  xy: 190, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_01_attack
   rotate: false
-  xy: 2, 660
+  xy: 284, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_01_attack
   rotate: false
-  xy: 202, 860
+  xy: 378, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_01_attack
   rotate: false
-  xy: 2, 566
+  xy: 472, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 4
 hero_01_attack
   rotate: false
-  xy: 296, 860
+  xy: 566, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 5
 hero_01_dead
   rotate: false
-  xy: 2, 472
+  xy: 660, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_01_dead
   rotate: false
-  xy: 390, 860
+  xy: 754, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_01_dead
   rotate: false
-  xy: 2, 378
+  xy: 848, 872
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_01_dead
   rotate: false
-  xy: 484, 860
+  xy: 2, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_01_dead
   rotate: false
-  xy: 2, 284
+  xy: 96, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 4
 hero_01_dead
   rotate: false
-  xy: 578, 860
+  xy: 190, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 5
 hero_01_dead
   rotate: false
-  xy: 2, 190
+  xy: 284, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 6
 hero_01_hurt
   rotate: false
-  xy: 672, 860
+  xy: 378, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_01_hurt
   rotate: false
-  xy: 2, 96
+  xy: 472, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_01_hurt
   rotate: false
-  xy: 766, 860
+  xy: 566, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_01_hurt
   rotate: false
-  xy: 2, 2
+  xy: 660, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_01_hurt
   rotate: false
-  xy: 860, 860
+  xy: 754, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 4
 hero_01_hurt
   rotate: false
-  xy: 96, 754
+  xy: 848, 778
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 5
 hero_01_idle
   rotate: false
-  xy: 96, 660
+  xy: 2, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_01_idle
   rotate: false
-  xy: 96, 566
+  xy: 96, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_01_idle
   rotate: false
-  xy: 96, 472
+  xy: 190, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_01_idle
   rotate: false
-  xy: 96, 378
+  xy: 284, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_01_idle
   rotate: false
-  xy: 96, 284
+  xy: 378, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 4
 hero_01_idle
   rotate: false
-  xy: 96, 190
+  xy: 472, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 5
 hero_01_idle
   rotate: false
-  xy: 96, 96
+  xy: 566, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 6
 hero_01_idle
   rotate: false
-  xy: 96, 2
+  xy: 660, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 7
 hero_03_attack
   rotate: false
-  xy: 190, 766
+  xy: 754, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_03_attack
   rotate: false
-  xy: 190, 672
+  xy: 848, 684
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_03_attack
   rotate: false
-  xy: 284, 766
+  xy: 2, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_03_attack
   rotate: false
-  xy: 190, 578
+  xy: 96, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_03_attack
   rotate: false
-  xy: 284, 672
+  xy: 190, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 4
 hero_03_attack
   rotate: false
-  xy: 378, 766
+  xy: 284, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 5
 hero_03_attack
   rotate: false
-  xy: 190, 484
+  xy: 378, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 6
 hero_03_dead
   rotate: false
-  xy: 284, 578
+  xy: 472, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_03_dead
   rotate: false
-  xy: 378, 672
+  xy: 566, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_03_dead
   rotate: false
-  xy: 472, 766
+  xy: 660, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_03_dead
   rotate: false
-  xy: 190, 390
+  xy: 754, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_03_dead
   rotate: false
-  xy: 284, 484
+  xy: 848, 590
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 4
 hero_03_dead
   rotate: false
-  xy: 378, 578
+  xy: 2, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 5
 hero_03_dead
   rotate: false
-  xy: 472, 672
+  xy: 96, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 6
 hero_03_hurt
   rotate: false
-  xy: 566, 766
+  xy: 190, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_03_hurt
   rotate: false
-  xy: 190, 296
+  xy: 284, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_03_hurt
   rotate: false
-  xy: 284, 390
+  xy: 378, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_03_hurt
   rotate: false
-  xy: 378, 484
+  xy: 472, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_03_hurt
   rotate: false
-  xy: 472, 578
+  xy: 566, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 4
 hero_03_hurt
   rotate: false
-  xy: 566, 672
+  xy: 660, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 5
 hero_03_idle
   rotate: false
-  xy: 660, 766
+  xy: 754, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_03_idle
   rotate: false
-  xy: 190, 202
+  xy: 848, 496
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 1
 hero_03_idle
   rotate: false
-  xy: 284, 296
+  xy: 2, 402
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 2
 hero_03_idle
   rotate: false
-  xy: 378, 390
+  xy: 96, 402
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 3
 hero_05_attack
   rotate: false
-  xy: 472, 484
+  xy: 190, 402
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+hero_05_attack
+  rotate: false
+  xy: 284, 402
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 1
+hero_05_attack
+  rotate: false
+  xy: 378, 402
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 2
+hero_05_attack
+  rotate: false
+  xy: 472, 402
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 3
+hero_05_attack
+  rotate: false
+  xy: 566, 402
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 4
+hero_05_attack
+  rotate: false
+  xy: 660, 402
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 5
+hero_05_attack
+  rotate: false
+  xy: 754, 402
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 6
+hero_05_dead
+  rotate: false
+  xy: 848, 402
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_05_dead
   rotate: false
-  xy: 472, 484
+  xy: 2, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 1
+hero_05_dead
+  rotate: false
+  xy: 96, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 2
+hero_05_dead
+  rotate: false
+  xy: 190, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 3
+hero_05_dead
+  rotate: false
+  xy: 284, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 4
+hero_05_dead
+  rotate: false
+  xy: 378, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 5
+hero_05_dead
+  rotate: false
+  xy: 472, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 6
+hero_05_hurt
+  rotate: false
+  xy: 566, 308
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_05_hurt
   rotate: false
-  xy: 472, 484
+  xy: 660, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 1
+hero_05_hurt
+  rotate: false
+  xy: 754, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 2
+hero_05_hurt
+  rotate: false
+  xy: 848, 308
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 3
+hero_05_hurt
+  rotate: false
+  xy: 2, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 4
+hero_05_hurt
+  rotate: false
+  xy: 96, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 5
+hero_05_idle
+  rotate: false
+  xy: 190, 214
   size: 92, 92
   orig: 92, 92
   offset: 0, 0
   index: 0
 hero_05_idle
   rotate: false
-  xy: 472, 484
+  xy: 284, 214
   size: 92, 92
   orig: 92, 92
+  offset: 0, 0
+  index: 1
+hero_05_idle
+  rotate: false
+  xy: 378, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 2
+hero_05_idle
+  rotate: false
+  xy: 472, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 3
+hero_05_idle
+  rotate: false
+  xy: 566, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 4
+hero_05_idle
+  rotate: false
+  xy: 660, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 5
+hero_05_idle
+  rotate: false
+  xy: 754, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 6
+hero_05_idle
+  rotate: false
+  xy: 848, 214
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 7
+hero_13_attack
+  rotate: false
+  xy: 2, 120
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+hero_13_dead
+  rotate: false
+  xy: 2, 120
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+hero_13_hurt
+  rotate: false
+  xy: 2, 120
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+hero_13_idle
+  rotate: false
+  xy: 2, 120
+  size: 92, 92
+  orig: 92, 92
+  offset: 0, 0
+  index: 0
+
+combatants2.png
+size: 1024, 128
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+enemy_01_special_hurt
+  rotate: false
+  xy: 2, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 4
+enemy_01_special_hurt
+  rotate: false
+  xy: 108, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 5
+enemy_01_special_idle
+  rotate: false
+  xy: 214, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 0
+enemy_01_special_idle
+  rotate: false
+  xy: 320, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 1
+enemy_01_special_idle
+  rotate: false
+  xy: 426, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 2
+enemy_01_special_idle
+  rotate: false
+  xy: 532, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 3
+enemy_01_tank_attack
+  rotate: false
+  xy: 638, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 0
+enemy_01_tank_dead
+  rotate: false
+  xy: 638, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 0
+enemy_01_tank_hurt
+  rotate: false
+  xy: 638, 2
+  size: 104, 104
+  orig: 104, 104
+  offset: 0, 0
+  index: 0
+enemy_01_tank_idle
+  rotate: false
+  xy: 638, 2
+  size: 104, 104
+  orig: 104, 104
   offset: 0, 0
   index: 0
