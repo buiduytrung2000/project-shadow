@@ -172,6 +172,14 @@ public class Hero implements Combatant {
         return List.copyOf(equippedSkills);
     }
 
+    public Map<String, Integer> skillCooldownsMap() {
+        return Map.copyOf(skillCooldowns);
+    }
+
+    public void setCurrentStress(int stress) {
+        this.currentStress = Math.max(0, Math.min(STRESS_MAX, stress));
+    }
+
     public Set<String> traits() {
         return Set.copyOf(traits);
     }
