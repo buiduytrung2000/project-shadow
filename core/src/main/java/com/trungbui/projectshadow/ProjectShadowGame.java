@@ -223,16 +223,24 @@ public class ProjectShadowGame extends Game {
         if (prev != null && prev != getScreen()) prev.dispose();
     }
 
+    /**
+     * Switch to a {@link CombatScreen} for the given node label and enemy roster.
+     *
+     * <p><strong>Caller owns the dispose lifecycle.</strong> This method only swaps the active
+     * screen — it deliberately does NOT call {@code prev.dispose()}. Previously both this
+     * method and {@link #enterNode(StageNode)} disposed the outgoing screen, which caused
+     * a double-dispose crash on the {@link StageMapScreen}'s internal {@code SpriteBatch}
+     * ({@code "buffer not allocated with newUnsafeByteBuffer or already disposed"}).</p>
+     */
     private void startCombat(String nodeLabel, List<String> enemyIds) {
         CombatEncounter encounter = CombatScenario.buildWithHeroes(
                 gameData, runSession.party(), enemyIds);
         Runnable onWin = () -> handleCombatWin(nodeLabel);
         Runnable onLose = () -> handleCombatLoss(nodeLabel);
-        Screen prev = getScreen();
         CombatScreen cs = new CombatScreen(gameData, encounter, onWin, onLose);
         cs.setAudio(audio); // must be before setScreen so show() picks it up
         setScreen(cs);
-        if (prev != null && prev != getScreen()) prev.dispose();
+        // dispose is handled by enterNode() — single ownership
     }
 
     private void handleCombatWin(String nodeLabel) {
