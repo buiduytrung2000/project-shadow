@@ -27,11 +27,19 @@ public final class I18n {
     private static final ResourceBundle.Control NO_FALLBACK =
             ResourceBundle.Control.getNoFallbackControl(ResourceBundle.Control.FORMAT_DEFAULT);
 
-    public static final Locale VI = new Locale("vi");
-    public static final Locale EN = new Locale("en");
+    /** Sprint 9+ B3 polish: {@code Locale.of} (Java 19+) replaces deprecated
+     *  {@code new Locale(String)}. */
+    public static final Locale VI = Locale.of("vi");
+    public static final Locale EN = Locale.of("en");
 
-    private static Locale current = VI;
-    private static ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_PATH, current, NO_FALLBACK);
+    /** Sprint 9+ B3 polish: {@code volatile} on the mutable static bundle/locale
+     *  fields makes setter→reader visibility correct across threads. libGDX
+     *  audio/asset loading runs on a worker thread; the render thread reads the
+     *  bundle in {@link #t}. Single render thread today, but {@code volatile}
+     *  is cheap insurance against the JMM hazard. */
+    private static volatile Locale current = VI;
+    private static volatile ResourceBundle bundle =
+            ResourceBundle.getBundle(BUNDLE_PATH, current, NO_FALLBACK);
 
     private I18n() {
     }

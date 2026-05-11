@@ -5,6 +5,7 @@ import com.trungbui.projectshadow.data.model.HeroData;
 import com.trungbui.projectshadow.data.model.ItemData;
 import com.trungbui.projectshadow.domain.Hero;
 import com.trungbui.projectshadow.domain.Position;
+import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.run.RunSession;
 import com.trungbui.projectshadow.save.HeroState;
 
@@ -127,13 +128,13 @@ public final class HamletService {
 
     public static MetaState hireHero(MetaState meta, String heroId, GameData gd) {
         if (meta.hasInRoster(heroId)) {
-            throw new HamletException("Hero đã có trong roster: " + heroId);
+            throw new HamletException(I18n.t("error.heroDuplicate", heroId));
         }
         HeroData data = gd.heroes().get(heroId);
-        if (data == null) throw new HamletException("Unknown heroId: " + heroId);
+        if (data == null) throw new HamletException(I18n.t("error.unknownHero", heroId));
         int cost = hireCost(heroId, gd);
         if (meta.gold() < cost) {
-            throw new HamletException("Không đủ gold (cần " + cost + " cho " + data.rarity() + ", có " + meta.gold() + ")");
+            throw new HamletException(I18n.t("error.notEnoughGold", cost, meta.gold()));
         }
         Hero fresh = new Hero(data, Position.POS_1, gd.effects());
         List<HeroState> newRoster = new ArrayList<>(meta.roster());
@@ -150,13 +151,13 @@ public final class HamletService {
 
     public static MetaState levelUpHero(MetaState meta, String heroId, GameData gd) {
         HeroState rs = meta.heroInRoster(heroId)
-                .orElseThrow(() -> new HamletException("Hero không có trong roster: " + heroId));
+                .orElseThrow(() -> new HamletException(I18n.t("error.heroNotInRoster", heroId)));
         if (rs.level() >= GUILD_MAX_LEVEL) {
-            throw new HamletException("Hero đã đạt level tối đa (" + GUILD_MAX_LEVEL + ")");
+            throw new HamletException(I18n.t("error.maxLevel", GUILD_MAX_LEVEL));
         }
         int cost = levelUpCost(rs.level());
         if (meta.gold() < cost) {
-            throw new HamletException("Không đủ gold (cần " + cost + ", có " + meta.gold() + ")");
+            throw new HamletException(I18n.t("error.notEnoughGold", cost, meta.gold()));
         }
         Hero h = rs.toHero(gd);
         h.setLevel(rs.level() + 1);
@@ -170,7 +171,7 @@ public final class HamletService {
     /** Crafts a random trinket (item type {@code trinket}) and adds it to inventory. */
     public static MetaState craftRandomTrinket(MetaState meta, GameData gd, RandomGenerator rng) {
         if (meta.gold() < SURVIVALIST_CRAFT_COST) {
-            throw new HamletException("Không đủ gold (cần " + SURVIVALIST_CRAFT_COST + ", có " + meta.gold() + ")");
+            throw new HamletException(I18n.t("error.notEnoughGold", SURVIVALIST_CRAFT_COST, meta.gold()));
         }
         List<String> trinkets = new ArrayList<>();
         for (ItemData it : gd.items().values()) {
@@ -180,7 +181,7 @@ public final class HamletService {
             }
         }
         if (trinkets.isEmpty()) {
-            throw new HamletException("Không có trinket nào trong items.csv để craft");
+            throw new HamletException(I18n.t("error.noTrinket"));
         }
         String picked = trinkets.get(rng.nextInt(trinkets.size()));
         List<String> newInv = new ArrayList<>(meta.trinketInventory());
@@ -192,12 +193,12 @@ public final class HamletService {
 
     public static MetaState cureDisease(MetaState meta, String heroId, String diseaseId, GameData gd) {
         HeroState rs = meta.heroInRoster(heroId)
-                .orElseThrow(() -> new HamletException("Hero không có trong roster: " + heroId));
+                .orElseThrow(() -> new HamletException(I18n.t("error.heroNotInRoster", heroId)));
         if (!rs.diseases().contains(diseaseId)) {
-            throw new HamletException("Hero không mắc bệnh: " + diseaseId);
+            throw new HamletException(I18n.t("error.noDisease", diseaseId));
         }
         if (meta.gold() < CARETAKER_DISEASE_CURE_COST) {
-            throw new HamletException("Không đủ gold (cần " + CARETAKER_DISEASE_CURE_COST + ", có " + meta.gold() + ")");
+            throw new HamletException(I18n.t("error.notEnoughGold", CARETAKER_DISEASE_CURE_COST, meta.gold()));
         }
         Hero h = rs.toHero(gd);
         h.removeDisease(diseaseId);
@@ -209,12 +210,12 @@ public final class HamletService {
     /** Reduces the hero's stress by {@link #CARETAKER_STRESS_RELIEF_BLOCK} for one fixed cost. */
     public static MetaState reduceStress(MetaState meta, String heroId, GameData gd) {
         HeroState rs = meta.heroInRoster(heroId)
-                .orElseThrow(() -> new HamletException("Hero không có trong roster: " + heroId));
+                .orElseThrow(() -> new HamletException(I18n.t("error.heroNotInRoster", heroId)));
         if (rs.currentStress() <= 0) {
-            throw new HamletException("Hero không có stress");
+            throw new HamletException(I18n.t("error.noStress"));
         }
         if (meta.gold() < CARETAKER_STRESS_RELIEF_COST) {
-            throw new HamletException("Không đủ gold (cần " + CARETAKER_STRESS_RELIEF_COST + ", có " + meta.gold() + ")");
+            throw new HamletException(I18n.t("error.notEnoughGold", CARETAKER_STRESS_RELIEF_COST, meta.gold()));
         }
         Hero h = rs.toHero(gd);
         h.reduceStress(CARETAKER_STRESS_RELIEF_BLOCK);
