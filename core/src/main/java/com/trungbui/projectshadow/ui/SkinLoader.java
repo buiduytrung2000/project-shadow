@@ -2,6 +2,7 @@ package com.trungbui.projectshadow.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -10,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextTooltip;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 
@@ -69,10 +71,15 @@ public final class SkinLoader {
                 TextureAtlas components = new TextureAtlas(atlasFile);
                 skin.addRegions(components);
                 registerComponentStyles(skin);
+                Gdx.app.log("SkinLoader",
+                        "Loaded components atlas: " + components.getRegions().size + " regions, "
+                                + "btn-up style registered: " + hasComponents(skin));
             } catch (RuntimeException e) {
-                // Atlas exists but failed to load — log and continue with defaults.
                 Gdx.app.error("SkinLoader", "Failed to load components atlas: " + e.getMessage());
             }
+        } else {
+            Gdx.app.log("SkinLoader", "components.atlas NOT FOUND at " + atlasFile.path()
+                    + " (using default uiskin only)");
         }
         return skin;
     }
@@ -111,13 +118,19 @@ public final class SkinLoader {
         TextureAtlas.AtlasRegion r = findRegion(skin, regionName);
         if (r == null) return;
         NinePatch patch = new NinePatch(r, margin, margin, margin, margin);
-        skin.add(drawableName, new NinePatchDrawable(patch), NinePatchDrawable.class);
+        NinePatchDrawable d = new NinePatchDrawable(patch);
+        // Register under both NinePatchDrawable and Drawable so skin.has(name, Drawable.class)
+        // and skin.getDrawable(name) both succeed without surprises.
+        skin.add(drawableName, d, NinePatchDrawable.class);
+        skin.add(drawableName, d, Drawable.class);
     }
 
     private static void registerIcon(Skin skin, String drawableName, String regionName) {
         TextureAtlas.AtlasRegion r = findRegion(skin, regionName);
         if (r == null) return;
-        skin.add(drawableName, new TextureRegionDrawable(r), TextureRegionDrawable.class);
+        TextureRegionDrawable d = new TextureRegionDrawable(r);
+        skin.add(drawableName, d, TextureRegionDrawable.class);
+        skin.add(drawableName, d, Drawable.class);
     }
 
     /** Resolve a region from any atlas registered on the skin (scans both default + components). */
@@ -196,5 +209,21 @@ public final class SkinLoader {
     /** True iff the PixelLab components have been packed and loaded successfully. */
     public static boolean hasComponents(Skin skin) {
         return skin.has(DRAWABLE_BTN_UP, NinePatchDrawable.class);
+    }
+
+    /**
+     * Overrides the font on the "primary" button/image-button styles. Screens load a
+     * Vietnamese-capable BitmapFont via FontFactory and call this to ensure custom
+     * button styles render VN characters (default ASCII font causes glyph misses).
+     *
+     * <p>Safe no-op if components atlas wasn't loaded.</p>
+     */
+    public static void overrideFont(Skin skin, BitmapFont font) {
+        if (skin.has(STYLE_PRIMARY_BUTTON, TextButton.TextButtonStyle.class)) {
+            skin.get(STYLE_PRIMARY_BUTTON, TextButton.TextButtonStyle.class).font = font;
+        }
+        if (skin.has(STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class)) {
+            skin.get(STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class).font = font;
+        }
     }
 }

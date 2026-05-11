@@ -45,6 +45,7 @@ android/assets/  # symlink, not real
 
 # ─── Project Shadow specific ───
 saves/                     # local save files (permadeath state)
+assets/saves/              # lwjgl3 runtime save dir (workingDir=assets)
 test-data/                 # ad-hoc test data
 *.bak
 *.tmp
