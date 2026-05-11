@@ -40,6 +40,7 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
 | [docs/pathway_stage1.html](docs/pathway_stage1.html) | **Stage 1 pathway** — JSON đầy đủ, pools, rules, thuật toán sinh stage (pseudocode) |
 | [docs/project_plan.html](docs/project_plan.html) | **Kế hoạch &amp; Scope** — Sprint plan 9 sprints, Roadmap 48 tuần, Feature List với status |
 | [docs/notes_and_considerations.html](docs/notes_and_considerations.html) | **Notes** — Out-of-scope, có thể phát triển thêm (post-MVP), còn mơ hồ |
+| [docs/test_plan.html](docs/test_plan.html) | **Test Plan** — Checklist test thủ công chi tiết cho 9 sprints + extras + regression suite |
 
 ### Source data (CSV/JSON)
 - `assets/data/heroes.csv` — 14 heroes

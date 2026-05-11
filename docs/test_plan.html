@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Project Shadow — Test Plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+<div class="breadcrumb"><a href="../claude.md">← claude.md</a> &middot; docs / test_plan</div>
+
+<div class="banner">
+  <h1>🧪 Test Plan chi tiết</h1>
+  <p class="subtitle">Checklist test thủ công cho từng Sprint đã hoàn thiện · 9 Sprints + extras</p>
+</div>
+
+<div class="card info">
+<p><strong>Cách dùng:</strong> Mỗi section là 1 Sprint. Trong section là checklist các case <em>cần verify thủ công</em> (cộng thêm 247 unit test tự động đã pass). Đánh dấu ☐ → ✅ sau khi test PASS. Nếu FAIL → tạo bug ticket + ghi vào "Known issues" cuối doc.</p>
+<p><strong>Save data:</strong> <code>./gradlew lwjgl3:run</code> → save vào <code>assets/saves/</code>. IDE chạy từ root → save vào <code>saves/</code>.</p>
+</div>
+
+<hr>
+
+<h1>Sprint 1 — Data Layer</h1>
+<p><strong>Deliverable:</strong> Load 14 heroes + 140 skills + 134 effects + 50 items + 15 enemies + 23 enemy skills + 11 events + 14 traits + 3 stages từ CSV/JSON vào POJO.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">DataIntegrityTest.loadCounts_match_expected — pass</li>
+  <li class="done">DataIntegrityTest.heroDefaultSkills_referValidSkills</li>
+  <li class="done">DataIntegrityTest.skillPrimaryEffectIds_referValidEffects</li>
+  <li class="done">DataIntegrityTest.itemEffectIds_referValidEffects</li>
+  <li class="done">DataIntegrityTest.enemySkillRefs_referValidEnemySkills</li>
+  <li class="done">DataIntegrityTest.enemyDropItems_referValidItems_orPseudo</li>
+  <li class="done">DataIntegrityTest.stageEnemyRefs_referValidEnemies_orTodo</li>
+  <li class="done">DataIntegrityTest.allValidations_clean</li>
+</ul>
+
+<h2>Manual checklist</h2>
+<ul class="checklist">
+  <li>Chạy <code>./gradlew core:runDemo</code> → console in ra "Loaded 14 heroes, ..., all FK valid ✅"</li>
+  <li>Thêm 1 hero giả vào <code>heroes.csv</code> với <code>defaultSkills="sk_invalid"</code> → chạy test → expect FAIL với message rõ ràng</li>
+  <li>Restore CSV → test PASS lại</li>
+  <li>Edit <code>enemies.csv</code> đổi <code>dropItem</code> của enemy_01 thành "item_zzz_fake" → chạy test → expect FAIL "dropItem not found"</li>
+  <li>Restore → PASS</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 2 — Domain Models + Combat Logic</h1>
+<p><strong>Deliverable:</strong> Hero/Combatant/CombatEncounter classes. Turn order theo speed. Damage formula đầy đủ.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">DamageFormulaTest — verify công thức: base × skill_mult + flat × crit × armor × random_range</li>
+  <li class="done">CombatantStateTest — HP, stress, position, alive state</li>
+  <li class="done">CombatEncounterTest — turn order generation</li>
+  <li class="done">TargetSelectorTest — front/back/single/random/aoe targeting</li>
+  <li class="done">CombatControllerTest — high-level turn loop</li>
+  <li class="done">HealSkillTest — heal skills target ally đúng + magnitude đúng</li>
+</ul>
+
+<h2>Manual checklist (in-game)</h2>
+<ul class="checklist">
+  <li>Embark party 4 hero → enter combat node L1.A (Goblin) → expect grid 4 vs 1</li>
+  <li>Check turn order panel: hero với speed cao nhất đi trước (Sát Thủ speed=8 trước Chiến Binh speed=3)</li>
+  <li>Click skill button → target picker hiển thị → pick enemy → damage được tính theo formula</li>
+  <li>Trigger crit (lặp combat nhiều lần) → khi crit, hiển thị visual highlight + damage gấp 1.5×</li>
+  <li>Hero HP về 0 → hero state = dead, không thể chọn skill</li>
+  <li>Hero stress lên 100 → check Affliction/Virtue resolution trigger (70/30 chance)</li>
+  <li>Enemy HP về 0 → removed khỏi combat grid</li>
+  <li>Tất cả enemies dead → win callback → trở về StageMapScreen</li>
+  <li>Tất cả heroes dead → lose callback → GameOverScreen</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 3 — Effect Resolver</h1>
+<p><strong>Deliverable:</strong> 134 effects implementable via data-driven dispatcher.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">EffectInstanceTest — apply/tick/dispel lifecycle</li>
+  <li class="done">ActiveEffectsTest — stacking (max stacks, refresh duration)</li>
+  <li class="done">CombatScenarioTest — full combat with effects applied</li>
+</ul>
+
+<h2>Manual checklist</h2>
+<ul class="checklist">
+  <li>Hero dùng skill có effect <code>eff_poison</code> → enemy: -X HP/lượt × 3 lượt → verify HP giảm đều mỗi turn</li>
+  <li>Áp 3 stack poison cùng 1 enemy → check max_stacks=3 (không chồng quá)</li>
+  <li>Hero dùng <code>eff_stun</code> → enemy skip lượt tiếp theo (verify trong turn order)</li>
+  <li>Hero dùng <code>eff_dmg_buff</code> trên đồng đội → 2 lượt sau attack → damage tăng đúng %</li>
+  <li>Hero bị <code>eff_burn</code> 5 stacks → 5 lượt sau → mỗi lượt -2×5=10 HP</li>
+  <li>Hero có <code>eff_dodge</code> 20% → mò khoảng 5 đòn → ~1 đòn miss (visual indicator)</li>
+  <li>Effect duration giảm sau mỗi lượt → khi reach 0 → effect dispel + visual marker biến mất</li>
+  <li>Permanent effect (eff_perm_dmg) → không tự dispel sau combat</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 4 — Stage Generator</h1>
+<p><strong>Deliverable:</strong> Sinh ngẫu nhiên StageTree từ stage_*.json với rules + pools.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">StageGeneratorIntegrationTest — generate stage_1 với seed cố định → tree đúng spec</li>
+  <li class="done">StageRulesTest — no_consecutive_rest/reward, max_combat, min_event</li>
+  <li class="done">StageTreeTest — graph topology, edges, reachability</li>
+</ul>
+
+<h2>Manual checklist</h2>
+<ul class="checklist">
+  <li>Generate stage_1 với 5 seed khác nhau → verify mỗi seed cho tree khác → đảm bảo randomness</li>
+  <li>Mỗi tree đều có đúng 6 nodes (L1.A fixed + 2 L2 + 2 L3 + BOSS)</li>
+  <li>Edges đầy đủ: L1.A nối tới cả L2.1 và L2.2; mỗi L2 nối tới cả L3.1 và L3.2; L3 nối tới BOSS</li>
+  <li>Count combat nodes per path ≤ 3 (rule)</li>
+  <li>Mỗi path có ≥ 1 event node (rule)</li>
+  <li>L1.A luôn là combat với 1 enemy_01 Goblin (tutorial)</li>
+  <li>BOSS luôn là enemy_b01 Giant Zombie</li>
+  <li>Edge case: nếu L3 đường tới boss = combat → enemy pool = pre_boss (1 goblin only)</li>
+  <li>Edge case: party HP full → spawn extra reward node thay 1 L3 node</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 5 — Rendering &amp; UI</h1>
+<p><strong>Deliverable:</strong> Combat scene 4v4 với sprite, HP bar, stress bar, skill row.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">SpriteAnimatorTest — frame timing, looping, completion callback</li>
+  <li class="done">SpriteAtlasTest (implicit) — atlas region lookup</li>
+  <li class="done">ParticleSystemTest — particle spawn, decay, color</li>
+  <li class="done">CombatantViewTest (implicit thru CombatRenderer)</li>
+</ul>
+
+<h2>Manual checklist (in-game visual)</h2>
+<ul class="checklist">
+  <li>Start combat → 4 hero sprites bên trái (east-facing), 1-3 enemy sprites bên phải (west-facing)</li>
+  <li>Mỗi sprite hiển thị đúng character (Chiến Binh có giáp đỏ, Pháp Sư có robe xanh, ...)</li>
+  <li>HP bar phía trên mỗi sprite hiển thị HP/maxHP đúng tỷ lệ + màu (xanh / vàng / đỏ theo %)</li>
+  <li>Stress bar phía dưới mỗi hero hiển thị stress (0-100, màu trắng → đỏ)</li>
+  <li>Idle animation tự loop liên tục (sprite breath/sway)</li>
+  <li>Hero turn → 4 skill button row hiển thị + tên skill VN đúng</li>
+  <li>Click skill → highlight, target picker (chỉ enemy hợp lệ)</li>
+  <li>Click target → attack animation play 1 lần → impact frame</li>
+  <li>Damage number popup (-X) bay lên từ target sprite</li>
+  <li>Enemy turn → enemy sprite play attack animation</li>
+  <li>Hero bị đòn → hurt animation 1 lần → quay lại idle</li>
+  <li>Hero/enemy chết → dead animation play 1 lần → sprite stay ở frame cuối</li>
+  <li>Stress lên 100 → resolve animation (Affliction/Virtue visual)</li>
+  <li>Sprite atlas load không lỗi (console không có "missing region" warning)</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 6 — Save System</h1>
+<p><strong>Deliverable:</strong> Save/load run state JSON với permadeath archive.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">SaveManagerTest — save/load/list/archive lifecycle</li>
+  <li class="done">RunStateTest — serialization, version field</li>
+  <li class="done">HeroStateTest — snapshot/restore Hero ↔ HeroState</li>
+  <li class="done">MetaStateManagerTest — meta.json save/load</li>
+</ul>
+
+<h2>Manual checklist</h2>
+<ul class="checklist">
+  <li>Bắt đầu fresh: xóa <code>saves/</code> folder → launch game → expect tự tạo <code>saves/meta.json</code> với FRESH_GOLD=200 + 2 default heroes</li>
+  <li>Embark stage 1 → check <code>saves/run_&lt;timestamp&gt;.json</code> được tạo (active run)</li>
+  <li>Hoàn thành 1 combat → run.json update (currentNode changed, gold updated)</li>
+  <li>Đóng game giữa run → reopen → "Continue Run" button enabled trên HamletScreen</li>
+  <li>Click "Continue Run" → load đúng state (đúng node, HP heroes, gold)</li>
+  <li>Hoàn thành stage (kill boss) → run.json move sang <code>saves/archive/run_&lt;ts&gt;.json</code></li>
+  <li>Game Over (party wipe) → run.json archive luôn + meta lưu gold=0 (forfeit) + dead heroes removed</li>
+  <li>Mở <code>meta.json</code> → check format: { "gold": ..., "roster": [...], "trinketInventory": [...], "createdAt": ..., "lastSavedAt": ... }</li>
+  <li>Mở 1 archive run.json → check chứa full state lúc kết thúc</li>
+  <li>Edit meta.json manually → set gold = 999999 → relaunch → expect game đọc đúng (no crash, gold = 999999)</li>
+  <li>Corrupt meta.json (invalid JSON) → relaunch → expect graceful error, NOT crash silent</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 7 — Stage Map + Run Loop</h1>
+<p><strong>Deliverable:</strong> Full Stage 1 playthrough từ embark → combat → events → boss → end.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">RunSessionTest — startNew, resume, completeNode, isPartyDead, isOnBossNode</li>
+</ul>
+
+<h2>Manual checklist — full Stage 1 playthrough</h2>
+<ul class="checklist">
+  <li>Hamlet → Embark → chọn 4 hero → enter stage</li>
+  <li>StageMapScreen render: tree visualizer với 6 nodes + edges</li>
+  <li>L1.A node màu YELLOW + label "Hiện tại"; L2 nodes CYAN (reachable); L3 + BOSS GRAY (unreachable)</li>
+  <li>Click L1.A → enter combat (1 Goblin)</li>
+  <li>Win combat → trở lại StageMapScreen → L1.A DARK_GRAY (visited), L2 nodes vẫn CYAN (current = L1.A done, next = L2)</li>
+  <li>Click L2 node (combat/event/rest/reward) → enter đúng screen</li>
+  <li>Sau L2 → L3 nodes reachable</li>
+  <li>Sau L3 → BOSS reachable</li>
+  <li>Click BOSS → combat với enemy_b01 → phase trigger HP&lt;30% (Enrage)</li>
+  <li>Kill boss → VictoryScreen → "Trở về Hamlet" → meta state updated (gold +200, items dropped)</li>
+  <li>Trở về Hamlet → có thể embark lại stage 1 (replay)</li>
+  <li><strong>Bug fix verify:</strong> Click L1.A → KHÔNG crash với "buffer not allocated" (commit 1ae5e44 fix)</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 8 — Hamlet + Meta Progression</h1>
+<p><strong>Deliverable:</strong> 4 building screens, roster management, gold wallet.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">HamletServiceTest — hire, levelUp, craft, cureDisease, stressRelief, applyRunOutcome</li>
+  <li class="done">Hire-by-rarity backward compat (hero_05 Common = 50g)</li>
+</ul>
+
+<h2>Manual checklist</h2>
+<h3>Stagecoach (Trại tuyển mộ)</h3>
+<ul class="checklist">
+  <li>Click Stagecoach → list 3 hero offers (random, không trùng roster)</li>
+  <li>Hire 1 hero Common → -50g từ meta, hero added to roster</li>
+  <li>Hire 1 hero Rare (hero_07/08/09/10/11) → -80g</li>
+  <li>Hire 1 hero Legendary (hero_12/13/14) → -150g</li>
+  <li>Thiếu gold → button disabled hoặc error message</li>
+</ul>
+
+<h3>Guild</h3>
+<ul class="checklist">
+  <li>Click Guild → list roster heroes với current level</li>
+  <li>Level up hero level 1 → 2 → tốn 200g (base × (1+1)=200)</li>
+  <li>Level up hero level 4 → 5 → tốn 500g</li>
+  <li>Level 5 (max default) → "Đã max level" message, không thể up nữa</li>
+</ul>
+
+<h3>Survivalist</h3>
+<ul class="checklist">
+  <li>Craft trinket → 80g → random Common trinket vào inventory</li>
+</ul>
+
+<h3>Caretaker</h3>
+<ul class="checklist">
+  <li>Hero có disease → cure 30g → disease removed</li>
+  <li>Hero có 50 stress → relief 30g → -10 stress (40 stress remaining)</li>
+</ul>
+
+<h3>Roster</h3>
+<ul class="checklist">
+  <li>HamletScreen hiển thị roster: tên, HP/maxHP, stress, traits, diseases</li>
+  <li>Roster < 4 heroes → "Embark" button disabled với warning "cần ≥ 4 heroes"</li>
+  <li>Hero chết trong run → removed khỏi roster sau khi return Hamlet</li>
+  <li>Hero sống sót → stress/HP carryover về Hamlet (verify trong meta.json)</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 9 — Polish (i18n, audio, sprite atlas, particles)</h1>
+<p><strong>Deliverable:</strong> VN+EN, music+SFX, sprite atlas, particle effects.</p>
+
+<h2>Auto tests</h2>
+<ul class="checklist">
+  <li class="done">I18nTest — locale switching, key lookup, fallback</li>
+  <li class="done">AudioManagerTest — music/sfx stub interface</li>
+</ul>
+
+<h2>Manual checklist — i18n</h2>
+<ul class="checklist">
+  <li>Launch game → default locale Vietnamese (text trên HamletScreen tiếng Việt)</li>
+  <li>Click language toggle (top-right "VN/EN") → toàn bộ UI chuyển sang English</li>
+  <li>Click lại → quay về Vietnamese</li>
+  <li>Combat screen, skill names, item names, hero names — đều đổi đúng locale</li>
+  <li>Dấu tiếng Việt hiển thị đúng (không bị mã hóa sai — verify với "Chiến Binh", "Sát Thủ", "Tăng Lữ")</li>
+  <li>Font BeVietnamPro-Regular load OK (không fall back về font mặc định gây mất dấu)</li>
+</ul>
+
+<h2>Manual checklist — audio</h2>
+<ul class="checklist">
+  <li>Hamlet screen → music "hamlet_theme" play (nếu file tồn tại)</li>
+  <li>StageMapScreen → music "map_theme" play</li>
+  <li>Combat → music "combat_theme" play</li>
+  <li>Music missing (chưa import file thật) → console log "Music missing, skipping: &lt;name&gt;" — không crash</li>
+  <li>SFX: click button → "click" SFX (nếu loaded)</li>
+  <li>Combat: hit → "hit" SFX; crit → "crit" SFX (TODO khi audio import đầy đủ)</li>
+</ul>
+
+<h2>Manual checklist — sprite atlas</h2>
+<ul class="checklist">
+  <li>Combat screen render tất cả 14 hero + 11 enemy + 5 boss với PixelLab sprite (không phải rectangle placeholder)</li>
+  <li>Mỗi sprite có 4 animation (idle/attack/hurt/dead) loop đúng frame count:
+    <ul>
+      <li>idle: 4 frames (breathing-idle) hoặc 8 frames (fight-stance-idle-8-frames)</li>
+      <li>attack: 6-7 frames</li>
+      <li>hurt: 6 frames</li>
+      <li>dead: 7 frames (trừ hero_02 = 1 frame static fallback)</li>
+    </ul>
+  </li>
+  <li>Frame timing: idle ~150ms/frame, attack/hurt/dead ~100ms/frame (smooth, không giật)</li>
+  <li>Hero facing east (sprite quay phải), enemy facing west (quay trái)</li>
+  <li>Boss sprites lớn hơn (size 80-96) — verify visual scale</li>
+  <li>Atlas load 8 PNG pages (combatants.png → combatants8.png) — không crash khi switch page</li>
+  <li>Pack lại atlas (<code>./gradlew core:packAssets</code>) sau khi thêm sprite mới → atlas rebuilt OK</li>
+</ul>
+
+<h2>Manual checklist — particles</h2>
+<ul class="checklist">
+  <li>Hero crit → sparkle particle effect ở target</li>
+  <li>Stress overflow (Affliction trigger) → dark aura particle quanh hero</li>
+  <li>Skill effect (heal/poison/fire) → particle visual phù hợp (chưa làm hết — TODO Sprint 10)</li>
+</ul>
+
+<hr>
+
+<h1>Extras — Design Lock 2026-05-11</h1>
+
+<h2>Hamlet economy (3-tier upgrade plan)</h2>
+<p>Constants đã add vào <code>HamletService.java</code>. UI screens + wire-up logic = Sprint 8.5 followup.</p>
+
+<ul class="checklist">
+  <li>Verify constants visible via test: <code>STAGECOACH_UPGRADE_LV2_GOLD == 300</code>, <code>HEIRLOOM_BOSS_STAGE_3 == 4</code>, ...</li>
+  <li><strong>TODO Sprint 8.5:</strong> MetaState fields cho <code>heirloom</code> + 4 building levels</li>
+  <li><strong>TODO Sprint 8.5:</strong> UI upgrade screens cho 4 building</li>
+  <li><strong>TODO Sprint 8.5:</strong> Apply supplies tax 100/200/400g khi embark stage</li>
+  <li><strong>TODO Sprint 8.5:</strong> Cure slot tracking per Hamlet visit (1/2/4 heroes by lvl)</li>
+  <li><strong>TODO Sprint 8.5:</strong> Boss drop heirloom 1/2/4 trong <code>applyRunOutcome</code></li>
+</ul>
+
+<h2>Boss HP scaling</h2>
+<ul class="checklist">
+  <li>enemy_b01 HP = 80 (CSV verified)</li>
+  <li>enemy_b02 HP = 110 (CSV verified, was 90)</li>
+  <li>enemy_b03 HP = 150 (CSV verified, was 130)</li>
+  <li>Manual: load Stage 3 boss fight → boss HP bar khởi đầu 150</li>
+</ul>
+
+<h2>Bugfix: StageMapScreen double-dispose</h2>
+<ul class="checklist">
+  <li>Reproduce attempt: embark stage 1 → click L1.A combat → expect NO crash (was: <code>IllegalArgumentException: buffer not allocated</code>)</li>
+  <li>Click qua nhiều combat nodes liên tiếp → no crash, screens dispose đúng 1 lần mỗi cái</li>
+  <li>NodeInfoScreen path (event/rest/reward node) → no regression, dispose normal</li>
+</ul>
+
+<hr>
+
+<h1>Known Issues (acceptable cho MVP)</h1>
+<table>
+<thead><tr><th>Issue</th><th>Impact</th><th>Workaround</th></tr></thead>
+<tbody>
+<tr><td>hero_02 thiếu dead animation</td><td>Visual: khi Pháp Sư chết, sprite không animate, chỉ static</td><td>Static frame fallback từ rotations/east.png</td></tr>
+<tr><td>Audio files chưa import</td><td>Không có nhạc/SFX khi chơi</td><td>Console log "Music missing" — sẽ wire khi có file</td></tr>
+<tr><td>3-tier Hamlet upgrade UI chưa có</td><td>Player chỉ dùng được Lv1 (default flat cost)</td><td>Sprint 8.5 followup</td></tr>
+<tr><td>Supplies tax chưa apply khi embark</td><td>Player không bị trừ gold up-front</td><td>Sprint 8.5 followup</td></tr>
+<tr><td>Heirloom currency chưa drop</td><td>Boss kill chỉ drop gold, chưa drop Heirloom token</td><td>Sprint 8.5 followup</td></tr>
+<tr><td>Particle effects một số skill chưa wire</td><td>Skill visual đơn giản</td><td>Sprint 10 polish task</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h1>Regression Test Suite (chạy trước mỗi build)</h1>
+
+<div class="card warn">
+<p><strong>Quy trình:</strong></p>
+<ol>
+  <li><code>./gradlew core:test</code> → 247 tests phải PASS</li>
+  <li><code>./gradlew core:runDemo</code> → CLI verify FK valid</li>
+  <li><code>./gradlew core:packAssets</code> → atlas regen không lỗi</li>
+  <li><code>./gradlew lwjgl3:run</code> → game launch không crash, đến HamletScreen</li>
+  <li>Embark stage 1 → playthrough trên 1 path → kill boss → about Hamlet → check meta.json đúng</li>
+  <li>Toggle VN/EN → verify text đổi</li>
+  <li>Quit + relaunch → "Continue Run" hoặc fresh state OK</li>
+</ol>
+</div>
+
+<h2>CI pipeline (TODO Sprint 10)</h2>
+<ul class="checklist">
+  <li>GitHub Actions: chạy <code>./gradlew core:test</code> trên push/PR</li>
+  <li>Auto build LWJGL jar artifact</li>
+  <li>Auto run packAssets + verify atlas size không tăng vượt 5 MB</li>
+  <li>Lint check: no debug println, no TODO blocking</li>
+</ul>
+
+<footer>Project Shadow Test Plan &middot; cập nhật 2026-05-11</footer>
+</div>
+</body>
+</html>
