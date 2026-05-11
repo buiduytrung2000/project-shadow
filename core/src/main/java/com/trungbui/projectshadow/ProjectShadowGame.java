@@ -153,7 +153,7 @@ public class ProjectShadowGame extends Game {
         try {
             List<String> active = saveManager.listActiveSaves();
             if (active.isEmpty()) return;
-            String runId = active.get(active.size() - 1); // most recent
+            String runId = active.getLast(); // most recent
             runSession = RunSession.resume(gameData, saveManager, runId);
             Screen prev = getScreen();
             setScreen(new StageMapScreen(this));
