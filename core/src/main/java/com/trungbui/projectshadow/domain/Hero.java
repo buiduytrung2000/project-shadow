@@ -44,6 +44,15 @@ public class Hero implements Combatant {
     /** Sprint 9+ B2: latched once stress hits {@link #HEART_ATTACK_THRESHOLD}.
      *  HP is forced to 0 and {@link #isAlive()} flips to false. */
     private boolean heartAttacked = false;
+    /** Sprint 11 B2 — Cowardly trait sets this true when stress > 50 and 20% RNG
+     *  check passes. Consumed at next {@code executePlayerSkill} call → hero
+     *  loses turn. Cleared after consumption. */
+    private boolean skipNextAction = false;
+    /** Sprint 11 B2 — Bloodthirsty (Affliction) trait stacks +5% dmg per kill,
+     *  max 5. Reset to 0 at combat start (CombatEncounter constructor or
+     *  start round 1). Applied to effective damage via getter for ConditionResolver
+     *  to read. */
+    private int bloodthirstyStacks = 0;
 
     public Hero(HeroData data, Position position) {
         this(data, 0, position, new ArrayList<>(data.defaultSkills()), Collections.emptyMap());
@@ -140,6 +149,25 @@ public class Hero implements Combatant {
     @Override
     public int dmgMax() {
         return data.baseDmgMax() + level * data.levelUpDmg();
+    }
+
+    /** Sprint 11 B2 — overrides {@link Combatant#effectiveDmgMin()} to apply
+     *  the Bloodthirsty (+5% per kill stack) bonus on top of stat effects. */
+    @Override
+    public int effectiveDmgMin() {
+        return applyBloodthirsty(Combatant.super.effectiveDmgMin());
+    }
+
+    @Override
+    public int effectiveDmgMax() {
+        return applyBloodthirsty(Combatant.super.effectiveDmgMax());
+    }
+
+    private int applyBloodthirsty(int base) {
+        if (bloodthirstyStacks <= 0) return base;
+        // 5% per stack, max 5 stacks → max +25% dmg.
+        double mult = 1d + 0.05d * bloodthirstyStacks;
+        return (int) Math.round(base * mult);
     }
 
     @Override
@@ -274,6 +302,47 @@ public class Hero implements Combatant {
 
     public void removeDisease(String diseaseId) {
         diseases.remove(diseaseId);
+    }
+
+    // ───── Sprint 11 B2 — Cowardly skip-turn flag ─────
+
+    /** Sprint 11 B2: latched true when Cowardly trait fires (20% chance, stress > 50).
+     *  Caller (CombatController) should call {@link #consumeSkipNextAction()} to read
+     *  + clear in one shot. */
+    public boolean skipNextAction() {
+        return skipNextAction;
+    }
+
+    /** Set the skip flag (used by ConditionResolver.onTurnStart). */
+    public void setSkipNextAction(boolean v) {
+        this.skipNextAction = v;
+    }
+
+    /** Read + clear in one operation. Returns true if the hero should lose this turn. */
+    public boolean consumeSkipNextAction() {
+        boolean was = skipNextAction;
+        skipNextAction = false;
+        return was;
+    }
+
+    // ───── Sprint 11 B2 — Bloodthirsty kill stacks ─────
+
+    /** Sprint 11 B2: current Bloodthirsty stack count (0..5). Each kill in this
+     *  combat adds 1. Caps at 5. Reset at combat start. Read by
+     *  ConditionResolver / effective-dmg accessors to apply +5%/stack bonus. */
+    public int bloodthirstyStacks() {
+        return bloodthirstyStacks;
+    }
+
+    /** Sprint 11 B2: called by ConditionResolver.onKill when this hero has trait_07
+     *  Bloodthirsty. Caps at 5. */
+    public void addBloodthirstyStack() {
+        if (bloodthirstyStacks < 5) bloodthirstyStacks++;
+    }
+
+    /** Sprint 11 B2: called at combat start to reset stacks (per-combat counter). */
+    public void resetBloodthirstyStacks() {
+        bloodthirstyStacks = 0;
     }
 
     public HeroData data() {

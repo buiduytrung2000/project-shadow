@@ -42,6 +42,13 @@ public class CombatController {
          *  normal HP-zero path. */
         default void onHeroHeartAttack(Hero hero) {
         }
+
+        /** Sprint 11 B2 — fired when a hero's Cowardly trait causes them to
+         *  lose their turn. UI shows a log entry + plays a "stagger" anim.
+         *  Note: turn advance already triggered by the controller; this is
+         *  notification-only. */
+        default void onCowardlySkip(Hero hero) {
+        }
     }
 
     private final CombatEncounter encounter;
@@ -80,10 +87,23 @@ public class CombatController {
     }
 
     public void start() {
+        // Sprint 11 B2 — reset per-combat condition counters (Bloodthirsty stacks etc).
+        ConditionResolver.onCombatStart(encounter);
         encounter.startRound();
         listener.onRoundStarted(encounter.roundNumber());
-        listener.onTurnAdvanced(encounter.currentActor());
+        Combatant first = encounter.currentActor();
+        applyOnTurnStartCondition(first);
+        listener.onTurnAdvanced(first);
         autoRunIfNotPlayer();
+    }
+
+    /** Sprint 11 B2 — fires ConditionResolver.onTurnStart for hero actors.
+     *  Sets Cowardly skip flag if conditions met. Caller (advanceTurn / start)
+     *  invokes BEFORE listener.onTurnAdvanced so UI can reflect any state change. */
+    private void applyOnTurnStartCondition(Combatant actor) {
+        if (actor instanceof Hero hero) {
+            ConditionResolver.onTurnStart(hero, encounter, rng);
+        }
     }
 
     public List<SkillData> currentActorSkills() {
@@ -105,6 +125,26 @@ public class CombatController {
         if (encounter.isCombatOver()) return false;
         Combatant actor = encounter.currentActor();
         if (!(actor instanceof Hero hero)) return false;
+
+        // Sprint 11 B2 — Cowardly skip-turn: consume + advance without action.
+        if (hero.consumeSkipNextAction()) {
+            log.add(hero.id() + " bị Hèn nhát — bỏ lượt");
+            listener.onCowardlySkip(hero);
+            advanceTurn();
+            return true;
+        }
+
+        // Sprint 11 B2 — Bloodthirsty forced-attack: ignore caller's skillIndex
+        // if hero has trait_07; auto-pick first available offensive skill.
+        if (ConditionResolver.hasForcedAttack(hero)) {
+            int forced = ConditionResolver.pickForcedAttackSkill(hero, data);
+            if (forced >= 0) {
+                skillIndex = forced;
+                pickedTarget = null; // auto-resolve target
+            }
+            // else: no offensive available → fall through; if skill is non-offensive
+            // it'll proceed normally (rare edge case).
+        }
 
         List<SkillData> skills = currentActorSkills();
         if (skillIndex < 0 || skillIndex >= skills.size()) return false;
@@ -161,6 +201,9 @@ public class CombatController {
             listener.onRoundStarted(encounter.roundNumber());
         }
         Combatant next = encounter.currentActor();
+        // Sprint 11 B2 — fire on-turn-start condition hook before UI sees the actor,
+        // so any flags (Cowardly skip) are set when CombatScreen builds skill buttons.
+        applyOnTurnStartCondition(next);
         listener.onTurnAdvanced(next);
         autoRunIfNotPlayer();
     }
@@ -255,6 +298,9 @@ public class CombatController {
         Hero pendingAfflictionHero = null;
         Hero heartAttackHero = null;
         if (skill.isOffensive()) {
+            // Sprint 11 B2: capture target alive state pre-hit so we can detect "kill"
+            // for the Bloodthirsty stack trigger.
+            boolean targetWasAlive = target.isAlive();
             result = resolveOffensiveHits(attacker, target, skill, hitCount);
             if (result.hit()) {
                 target.takeHpDamage(result.hpDamage());
@@ -267,6 +313,11 @@ public class CombatController {
                     if (wasAlive && h.isHeartAttacked()) {
                         heartAttackHero = h;
                     }
+                }
+                // Sprint 11 B2: on-kill trigger for hero attackers. Bloodthirsty
+                // gains a stack here; other on_kill effects could hook in later.
+                if (targetWasAlive && !target.isAlive() && attacker instanceof Hero killer) {
+                    ConditionResolver.onKill(killer);
                 }
             }
         } else {
