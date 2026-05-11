@@ -6,10 +6,13 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -18,6 +21,7 @@ import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.save.HeroState;
 import com.trungbui.projectshadow.ui.FontFactory;
+import com.trungbui.projectshadow.ui.SkinLoader;
 
 /**
  * Sprint 8 — Hamlet hub. Shows 4 building buttons + roster summary + Embark CTA.
@@ -42,7 +46,7 @@ public class HamletScreen implements Screen {
         this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
         var titleFont = fontFactory.create(56);
         var bodyFont = fontFactory.create(FONT_SIZE_PX);
-        this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = bodyFont;
         skin.get(TextButton.TextButtonStyle.class).font = bodyFont;
         this.uiStage = new Stage(viewport);
@@ -69,10 +73,14 @@ public class HamletScreen implements Screen {
         root.add(gold).colspan(4).pad(10).row();
         root.add(rosterLabel()).colspan(4).pad(20).row();
 
-        TextButton stagecoach = button(I18n.t("hamlet.button.stagecoach"), () -> game.openStagecoach());
-        TextButton guild = button(I18n.t("hamlet.button.guild"), () -> game.openGuild());
-        TextButton survivalist = button(I18n.t("hamlet.button.survivalist"), () -> game.openSurvivalist());
-        TextButton caretaker = button(I18n.t("hamlet.button.caretaker"), () -> game.openCaretaker());
+        Actor stagecoach = buildingButton(I18n.t("hamlet.button.stagecoach"),
+                SkinLoader.ICON_STAGECOACH, () -> game.openStagecoach());
+        Actor guild = buildingButton(I18n.t("hamlet.button.guild"),
+                SkinLoader.ICON_GUILD, () -> game.openGuild());
+        Actor survivalist = buildingButton(I18n.t("hamlet.button.survivalist"),
+                SkinLoader.ICON_SURVIVALIST, () -> game.openSurvivalist());
+        Actor caretaker = buildingButton(I18n.t("hamlet.button.caretaker"),
+                SkinLoader.ICON_CARETAKER, () -> game.openCaretaker());
 
         root.add(stagecoach).pad(10).width(280).height(120);
         root.add(guild).pad(10).width(280).height(120);
@@ -140,6 +148,34 @@ public class HamletScreen implements Screen {
                 onClick.run();
             }
         });
+        return b;
+    }
+
+    /**
+     * Returns an icon + text button using the PixelLab "primary" style if the
+     * components atlas has been packed; falls back to a plain TextButton otherwise.
+     */
+    private Actor buildingButton(String text, String iconDrawable, Runnable onClick) {
+        ChangeListener listener = new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                onClick.run();
+            }
+        };
+        if (SkinLoader.hasComponents(skin)
+                && skin.has(SkinLoader.STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class)
+                && skin.has(iconDrawable, Drawable.class)) {
+            ImageTextButton.ImageTextButtonStyle base =
+                    skin.get(SkinLoader.STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class);
+            ImageTextButton.ImageTextButtonStyle style = new ImageTextButton.ImageTextButtonStyle(base);
+            style.imageUp = skin.getDrawable(iconDrawable);
+            ImageTextButton b = new ImageTextButton(text, style);
+            b.getImageCell().size(48f).padRight(12f);
+            b.addListener(listener);
+            return b;
+        }
+        TextButton b = new TextButton(text, skin);
+        b.addListener(listener);
         return b;
     }
 

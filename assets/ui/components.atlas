@@ -1,0 +1,111 @@
+
+components.png
+size: 512, 256
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+ui_btn_disabled
+  rotate: false
+  xy: 2, 2
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+ui_btn_down
+  rotate: false
+  xy: 262, 132
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+ui_btn_over
+  rotate: false
+  xy: 100, 2
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+ui_btn_up
+  rotate: false
+  xy: 360, 132
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+ui_icon_caretaker
+  rotate: false
+  xy: 458, 180
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_icon_close
+  rotate: false
+  xy: 346, 98
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+ui_icon_gold
+  rotate: false
+  xy: 346, 64
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+ui_icon_guild
+  rotate: false
+  xy: 458, 130
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_icon_heirloom
+  rotate: false
+  xy: 380, 98
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+ui_icon_settings
+  rotate: false
+  xy: 380, 64
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+ui_icon_stagecoach
+  rotate: false
+  xy: 296, 82
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_icon_survivalist
+  rotate: false
+  xy: 296, 32
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_panel_main
+  rotate: false
+  xy: 2, 100
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+ui_panel_tooltip
+  rotate: false
+  xy: 198, 2
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+ui_popup_bg
+  rotate: false
+  xy: 132, 100
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1

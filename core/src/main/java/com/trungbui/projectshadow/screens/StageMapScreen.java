@@ -23,6 +23,7 @@ import com.trungbui.projectshadow.stage.NodeType;
 import com.trungbui.projectshadow.stage.StageNode;
 import com.trungbui.projectshadow.stage.StageTree;
 import com.trungbui.projectshadow.ui.FontFactory;
+import com.trungbui.projectshadow.ui.SkinLoader;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -78,7 +79,7 @@ public class StageMapScreen implements Screen {
         this.viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
         this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
         var vnFont = fontFactory.create(FONT_SIZE_PX);
-        this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = vnFont;
         skin.get(TextButton.TextButtonStyle.class).font = vnFont;
         this.uiStage = new Stage(viewport);

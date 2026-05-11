@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.ui.FontFactory;
+import com.trungbui.projectshadow.ui.SkinLoader;
 
 /**
  * Sprint 7 — terminal screen after defeating the boss. Shows a victory banner and
@@ -40,7 +41,7 @@ public class VictoryScreen implements Screen {
         this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
         var titleFont = fontFactory.create(72);
         var bodyFont = fontFactory.create(28);
-        this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = bodyFont;
         skin.get(TextButton.TextButtonStyle.class).font = bodyFont;
         this.uiStage = new Stage(viewport);
