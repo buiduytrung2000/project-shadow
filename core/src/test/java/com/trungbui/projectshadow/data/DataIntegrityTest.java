@@ -48,7 +48,7 @@ class DataIntegrityTest {
         assertThat(gd.enemies()).hasSize(15);
         assertThat(gd.enemySkills()).hasSize(23);
         assertThat(gd.events()).hasSize(11);
-        assertThat(gd.diseasesTraits()).hasSize(14);
+        assertThat(gd.diseasesTraits()).hasSize(18);
         assertThat(gd.stages()).hasSize(3);
     }
 

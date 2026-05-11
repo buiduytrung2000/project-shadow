@@ -50,10 +50,18 @@ public record SkillData(
             sb.append("  |  ").append(I18n.t("skill.tooltip.stress", stressDamage));
         }
         if (primaryEffectId != null && !primaryEffectId.isBlank()) {
-            sb.append("\n").append(I18n.t("skill.tooltip.effect",
-                    primaryEffectId,
-                    effectMagnitude == null ? "" : effectMagnitude,
-                    effectDuration == null ? "" : effectDuration));
+            // Sprint 9+ B2: gate the "(magnitude duration)" suffix so we don't render
+            // ugly "(  )" when both are blank. If either is present we still show it.
+            boolean hasMag = effectMagnitude != null && !effectMagnitude.isBlank();
+            boolean hasDur = effectDuration != null && !effectDuration.isBlank();
+            if (hasMag || hasDur) {
+                sb.append("\n").append(I18n.t("skill.tooltip.effect",
+                        primaryEffectId,
+                        hasMag ? effectMagnitude : "",
+                        hasDur ? effectDuration : ""));
+            } else {
+                sb.append("\n").append(I18n.t("skill.tooltip.effectOnly", primaryEffectId));
+            }
         }
         return sb.toString();
     }

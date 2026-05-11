@@ -233,9 +233,12 @@ public class ProjectShadowGame extends Game {
         if (prev != null && prev != getScreen()) prev.dispose();
     }
 
-    /** Apply each {@code DropEntry} on a reward node to the run state. */
+    /** Apply each {@code DropEntry} on a reward node to the run state.
+     *  Sprint 9+ B2: RNG is now seeded from {@code stageSeed ^ nodeLabel.hashCode()}
+     *  so the same run on the same seed produces deterministic reward drops. */
     private void applyRewardNodeDrops(com.trungbui.projectshadow.stage.RewardNode rn) {
-        java.util.Random rng = new java.util.Random();
+        long seed = runSession.state().stageSeed() ^ rn.label().hashCode();
+        java.util.Random rng = new java.util.Random(seed);
         int goldDelta = 0;
         List<String> items = new ArrayList<>();
         for (var drop : rn.drops()) {
@@ -249,7 +252,11 @@ public class ProjectShadowGame extends Game {
                     if (drop.itemId() != null) items.add(drop.itemId());
                 }
                 case "item_random" -> {
-                    if (drop.category() != null) items.add(drop.category());
+                    // Sprint 9+ B2: resolve category to an actual item ID via the shared
+                    // helper in CombatRewardRoller. Previously this added the raw category
+                    // string ("trinket_common") to inventory.
+                    String resolved = CombatRewardRoller.resolveRandomItem(drop.category(), gameData, rng);
+                    if (resolved != null) items.add(resolved);
                 }
                 default -> {
                     // unknown drop type, ignore
@@ -305,7 +312,10 @@ public class ProjectShadowGame extends Game {
         if (prev != null && prev != getScreen()) prev.dispose();
     }
 
-    /** Compute the reward for a freshly-defeated combat node. Returns empty if node is null. */
+    /** Compute the reward for a freshly-defeated combat node. Returns empty if node is null.
+     *  Sprint 9+ B2: seeds the RNG from {@code stageSeed ^ nodeLabel.hashCode()} so the
+     *  same (run, node) always rolls the same reward — fixes the bug where a crash
+     *  mid-combat could produce different rewards on replay. */
     private CombatReward rollRewardForNode(StageNode node) {
         if (node == null) return CombatReward.empty();
         // Defeated enemy IDs (works for Combat/Elite/Miniboss/Boss nodes)
@@ -319,7 +329,8 @@ public class ProjectShadowGame extends Game {
         // Live (alive) heroes for stress-relief targeting
         List<com.trungbui.projectshadow.domain.Hero> alive = runSession.party().stream()
                 .filter(h -> h.currentHp() > 0).toList();
-        return CombatRewardRoller.roll(node, defeated, alive, gameData, new java.util.Random());
+        long seed = runSession.state().stageSeed() ^ node.label().hashCode();
+        return CombatRewardRoller.roll(node, defeated, alive, gameData, new java.util.Random(seed));
     }
 
     private void handleCombatLoss(String nodeLabel) {

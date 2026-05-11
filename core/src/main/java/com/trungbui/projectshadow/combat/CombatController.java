@@ -27,6 +27,21 @@ public class CombatController {
 
         default void onCombatEnded(CombatEncounter.Side winner) {
         }
+
+        /** Sprint 9+ B2 — fired when a hero crosses stress 100 for the first time
+         *  and rolls Affliction/Virtue. {@code traitId} is the chosen trait
+         *  (already added to the hero); {@code affliction} distinguishes the
+         *  side rolled (true=affliction, false=virtue) so the UI can pick the
+         *  right popup style. */
+        default void onAfflictionResolved(Hero hero, String traitId, boolean affliction) {
+        }
+
+        /** Sprint 9+ B2 — fired when a hero dies from a heart attack
+         *  (stress reached {@link Hero#HEART_ATTACK_THRESHOLD}). Combat log
+         *  shows a distinct entry; the dead animation still fires via the
+         *  normal HP-zero path. */
+        default void onHeroHeartAttack(Hero hero) {
+        }
     }
 
     private final CombatEncounter encounter;
@@ -179,16 +194,29 @@ public class CombatController {
     }
 
     private void resolveAction(Combatant attacker, Combatant target, SkillData skill) {
-        attacker.activeEffects().onTurnStart(attacker, rng);
-        attacker.tickCooldowns();
+        int round = encounter.roundNumber();
+        // Sprint 9+ B2 (hybrid tick): per-actor tick at action start, deduped by round
+        // so AoE skills calling resolveAction per-target don't double-tick the attacker's
+        // own DoTs. Cooldown ticking moved to end-of-round (was also double-ticking on
+        // AoE before).
+        attacker.activeEffects().onTurnStart(attacker, rng, round);
 
         AttackResult result;
+        Hero pendingAfflictionHero = null;
+        Hero heartAttackHero = null;
         if (skill.isOffensive()) {
             result = DamageFormula.resolve(attacker, target, skill, rng);
             if (result.hit()) {
                 target.takeHpDamage(result.hpDamage());
                 if (result.stressDamage() > 0 && target instanceof Hero h) {
+                    boolean wasAlive = h.isAlive();
                     h.takeStressDamage(result.stressDamage());
+                    if (h.consumePendingAfflictionRoll()) {
+                        pendingAfflictionHero = h;
+                    }
+                    if (wasAlive && h.isHeartAttacked()) {
+                        heartAttackHero = h;
+                    }
                 }
             }
         } else {
@@ -197,12 +225,31 @@ public class CombatController {
 
         if (skill.primaryEffectId() != null && data.effects().containsKey(skill.primaryEffectId())) {
             target.activeEffects().apply(
-                    skill.primaryEffectId(), attacker, target, rng, skill.effectMagnitude()
+                    skill.primaryEffectId(), attacker, target, rng, skill.effectMagnitude(), round
             );
         }
 
         log.add(formatLogEntry(attacker, target, skill, result));
         listener.onActionResolved(attacker, target, skill, result);
+        // Sprint 9+ B2: fire stress-resolution events AFTER the action-resolved
+        // event so the UI can sequence: damage popup → affliction popup.
+        if (pendingAfflictionHero != null) {
+            String traitId = AfflictionResolver.roll(
+                    pendingAfflictionHero, data.diseasesTraits().values(), rng);
+            if (traitId != null) {
+                boolean affliction = isAfflictionTrait(traitId);
+                listener.onAfflictionResolved(pendingAfflictionHero, traitId, affliction);
+            }
+        }
+        if (heartAttackHero != null) {
+            log.add(heartAttackHero.id() + " — HEART ATTACK!");
+            listener.onHeroHeartAttack(heartAttackHero);
+        }
+    }
+
+    private boolean isAfflictionTrait(String traitId) {
+        var t = data.diseasesTraits().get(traitId);
+        return t != null && t.isAffliction();
     }
 
     private Combatant pickFirstAliveHero() {
@@ -212,17 +259,24 @@ public class CombatController {
         return null;
     }
 
+    /**
+     * Sprint 9+ B2 (hybrid tick): end-of-round used to call {@code onTurnStart} on every
+     * combatant — which double-ticked DoTs already ticked by per-actor {@code resolveAction}.
+     * Now end-of-round (a) ticks cooldowns once per combatant and (b) clears the per-round
+     * effect-tick dedup set so the next round's per-actor tick is allowed to fire.
+     * Per-actor effect tick happens at action start in {@link #resolveAction}.
+     */
     private void tickEndOfRound() {
         for (Hero h : encounter.heroes()) {
             if (h.isAlive()) {
-                h.activeEffects().onTurnStart(h, rng);
                 h.tickCooldowns();
+                h.activeEffects().endRoundReset();
             }
         }
         for (Enemy e : encounter.enemies()) {
             if (e.isAlive()) {
-                e.activeEffects().onTurnStart(e, rng);
                 e.tickCooldowns();
+                e.activeEffects().endRoundReset();
             }
         }
     }

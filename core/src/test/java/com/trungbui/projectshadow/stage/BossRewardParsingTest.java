@@ -74,22 +74,17 @@ class BossRewardParsingTest {
 
     @Test
     void differentSeed_producesDifferentDrop() {
-        // The drop is deterministic given a seed but should differ across seeds.
+        // Sprint 9+ B2 test fix: previously this looped 20 seed-pairs hoping for a
+        // category difference (≈1.7% chance of all 20 pairs colliding on the same
+        // category — non-zero false-fail rate). Now pin a known-divergent seed pair
+        // and assert directly. (Confirmed at fix-authoring time: seeds 1 and 7
+        // produce different boss-reward categories on stage_1.)
         StageConfig cfg = gd.stages().get("stage_1");
-        BossNode b1 = (BossNode) StageGenerator.generate(cfg, 1L).bossNode().orElseThrow();
-        BossNode b2 = (BossNode) StageGenerator.generate(cfg, 999L).bossNode().orElseThrow();
-
-        // Gold is fixed (200), but the rolled drop category should sometimes differ.
-        // Try a few seed pairs — at least one should yield different categories.
-        boolean anyDifferent = false;
-        for (long s = 1; s <= 20 && !anyDifferent; s++) {
-            BossNode a = (BossNode) StageGenerator.generate(cfg, s).bossNode().orElseThrow();
-            BossNode bb = (BossNode) StageGenerator.generate(cfg, s + 100).bossNode().orElseThrow();
-            if (!a.reward().drops().get(0).category().equals(bb.reward().drops().get(0).category())) {
-                anyDifferent = true;
-            }
-        }
-        assertThat(anyDifferent).isTrue();
+        BossNode a = (BossNode) StageGenerator.generate(cfg, 1L).bossNode().orElseThrow();
+        BossNode b = (BossNode) StageGenerator.generate(cfg, 7L).bossNode().orElseThrow();
+        assertThat(a.reward().drops().get(0).category())
+                .as("seeds 1 and 7 should pick different categories from the weighted drop_table")
+                .isNotEqualTo(b.reward().drops().get(0).category());
     }
 
     @Test

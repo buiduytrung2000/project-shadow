@@ -11,6 +11,11 @@ import java.util.Random;
 
 public final class StageGenerator {
 
+    /** Sprint 9+ B2: dedicated boss-reward RNG stream derived from the same seed
+     *  but mixed with a constant, so adding/removing reward rolls doesn't shift
+     *  the layout-RNG sequence (preserves seed→map stability). */
+    private static final long BOSS_REWARD_RNG_SALT = 0xB055_05ABL;
+
     public static StageTree generate(StageConfig config, long seed) {
         Random rng = new Random(seed);
         StageTree tree = new StageTree(config.id(), seed);
@@ -45,7 +50,10 @@ public final class StageGenerator {
             prevLayer = generateMinibossLayer(minibossSpec, prevLayer, tree, rng);
         }
 
-        BossNode boss = generateBossNode(layout.path("last_node_fixed"), config.bossNode(), rng);
+        // Sprint 9+ B2: boss reward uses a derived sub-RNG (seed ^ salt) so reward
+        // pre-rolls don't consume from the shared layout stream and change topology.
+        Random bossRewardRng = new Random(seed ^ BOSS_REWARD_RNG_SALT);
+        BossNode boss = generateBossNode(layout.path("last_node_fixed"), config.bossNode(), rng, bossRewardRng);
         tree.addNode(boss);
         for (StageNode prev : prevLayer) {
             tree.addEdge(prev.label(), boss.label());
@@ -61,10 +69,11 @@ public final class StageGenerator {
         return generateCombatNode(label, firstSpec, rng, false);
     }
 
-    private static BossNode generateBossNode(JsonNode bossSpec, JsonNode bossNodeBlock, Random rng) {
+    private static BossNode generateBossNode(JsonNode bossSpec, JsonNode bossNodeBlock,
+                                             Random layoutRng, Random rewardRng) {
         String label = bossSpec.path("label").asText("BOSS");
         String bossId = bossSpec.path("boss_id").asText();
-        BossReward reward = parseBossReward(bossNodeBlock, rng);
+        BossReward reward = parseBossReward(bossNodeBlock, rewardRng);
         return new BossNode(label, bossId, reward);
     }
 

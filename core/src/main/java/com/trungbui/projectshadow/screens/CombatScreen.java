@@ -150,6 +150,22 @@ public class CombatScreen implements Screen {
                 refreshSkillButtons();
                 showContinueButton(winner);
             }
+
+            @Override
+            public void onAfflictionResolved(Hero hero, String traitId, boolean affliction) {
+                // Sprint 9+ B2: trait name lookup via GameData (best-effort — fall back
+                // to traitId if not in catalog). Push to combat log as a notable event.
+                String traitName = traitId;
+                var t = gameData.diseasesTraits().get(traitId);
+                if (t != null) traitName = t.name();
+                String key = affliction ? "combat.affliction.resolved" : "combat.virtue.resolved";
+                pushLog(I18n.t(key, hero.data().displayName(), traitName));
+            }
+
+            @Override
+            public void onHeroHeartAttack(Hero hero) {
+                pushLog(I18n.t("combat.log.heartAttack", hero.data().displayName()));
+            }
         });
 
         layoutCombatants();
@@ -185,6 +201,32 @@ public class CombatScreen implements Screen {
                 CombatRenderer.VIRTUAL_HEIGHT - 360f
         );
         uiStage.addActor(skillTooltip);
+
+        // Sprint 9+ B2 fix: attach a hide-tooltip listener on the parent skill row so
+        // cursor leaving the row (in any direction, onto any non-button actor) hides
+        // the panel. Previously per-button "exit" only hid when toActor == null,
+        // leaving the tooltip stuck when the cursor moved sideways onto e.g. statusLabel.
+        skillTable.addListener(new InputListener() {
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer,
+                             com.badlogic.gdx.scenes.scene2d.Actor toActor) {
+                // Only hide if pointer truly left the skill table (not just moved onto a
+                // child actor of it).
+                if (skillTooltip == null) return;
+                if (toActor == null || !isDescendantOf(toActor, skillTable)) {
+                    skillTooltip.hide();
+                }
+            }
+        });
+    }
+
+    /** Returns true if {@code actor} is the same as {@code ancestor} or a descendant of it. */
+    private static boolean isDescendantOf(com.badlogic.gdx.scenes.scene2d.Actor actor,
+                                          com.badlogic.gdx.scenes.scene2d.Actor ancestor) {
+        for (com.badlogic.gdx.scenes.scene2d.Actor cur = actor; cur != null; cur = cur.getParent()) {
+            if (cur == ancestor) return true;
+        }
+        return false;
     }
 
     private void layoutCombatants() {

@@ -14,8 +14,14 @@ import java.util.Set;
 
 public class Hero implements Combatant {
 
+    /** Stress hard-cap. Crossing this triggers an instant heart-attack death
+     *  (Sprint 9+ B2 stress lock). */
     public static final int STRESS_MAX = 200;
+    /** First threshold — crossing this for the first time triggers the
+     *  Affliction/Virtue 70/30 roll via {@code AfflictionResolver}. */
     public static final int AFFLICTION_THRESHOLD = 100;
+    /** Heart-attack threshold — crossing this kills the hero instantly. */
+    public static final int HEART_ATTACK_THRESHOLD = STRESS_MAX;
 
     private final HeroData data;
     private int level;
@@ -27,6 +33,17 @@ public class Hero implements Combatant {
     private final Set<String> diseases;
     private final Map<String, Integer> skillCooldowns;
     private final ActiveEffects activeEffects;
+    /** Sprint 9+ B2 stress system: latched to true the first time stress crosses
+     *  {@link #AFFLICTION_THRESHOLD} until {@link #consumePendingAfflictionRoll()}
+     *  reads it. CombatController polls this after a stress-damage hit and rolls
+     *  an Affliction/Virtue trait via {@code AfflictionResolver}. */
+    private boolean pendingAfflictionRoll = false;
+    /** Sprint 9+ B2: latched once the hero has resolved their Affliction/Virtue
+     *  roll for this run — prevents re-rolling if stress drops below 100 and rises again. */
+    private boolean afflictionResolved = false;
+    /** Sprint 9+ B2: latched once stress hits {@link #HEART_ATTACK_THRESHOLD}.
+     *  HP is forced to 0 and {@link #isAlive()} flips to false. */
+    private boolean heartAttacked = false;
 
     public Hero(HeroData data, Position position) {
         this(data, 0, position, new ArrayList<>(data.defaultSkills()), Collections.emptyMap());
@@ -157,10 +174,65 @@ public class Hero implements Combatant {
         return currentStress >= AFFLICTION_THRESHOLD;
     }
 
+    /**
+     * Apply stress damage. Sprint 9+ B2 stress system:
+     * <ul>
+     *   <li>Damage is reduced by {@link #stressResist()} then clamped to
+     *       {@code [0, STRESS_MAX]}.</li>
+     *   <li>First time the hero crosses {@link #AFFLICTION_THRESHOLD} (and hasn't
+     *       resolved yet), {@code pendingAfflictionRoll} is latched true so
+     *       {@code CombatController} can roll Affliction/Virtue via
+     *       {@code AfflictionResolver}.</li>
+     *   <li>If stress reaches {@link #HEART_ATTACK_THRESHOLD}, HP is set to 0
+     *       (instant death) and {@code heartAttacked} is latched.</li>
+     * </ul>
+     */
     public void takeStressDamage(int amount) {
         if (amount <= 0) return;
         int reduced = (int) Math.round(amount * (1.0 - stressResist()));
+        boolean wasUnderThreshold = currentStress < AFFLICTION_THRESHOLD;
         currentStress = Math.min(STRESS_MAX, currentStress + Math.max(0, reduced));
+
+        if (wasUnderThreshold && currentStress >= AFFLICTION_THRESHOLD && !afflictionResolved) {
+            pendingAfflictionRoll = true;
+        }
+        if (currentStress >= HEART_ATTACK_THRESHOLD && !heartAttacked) {
+            heartAttacked = true;
+            setCurrentHp(0);
+        }
+    }
+
+    /**
+     * Returns true exactly once per stress-cross-100 event, then resets.
+     * Used by {@code CombatController} to know when to invoke
+     * {@code AfflictionResolver}. After consumption, {@link #afflictionResolved}
+     * is also latched so the same hero won't re-roll in a later combat.
+     */
+    public boolean consumePendingAfflictionRoll() {
+        if (!pendingAfflictionRoll) return false;
+        pendingAfflictionRoll = false;
+        afflictionResolved = true;
+        return true;
+    }
+
+    /** True if a heart-attack death has been triggered (stress hit
+     *  {@link #HEART_ATTACK_THRESHOLD}). HP is already 0 at this point. */
+    public boolean isHeartAttacked() {
+        return heartAttacked;
+    }
+
+    public boolean afflictionResolved() {
+        return afflictionResolved;
+    }
+
+    /** Restore the affliction-resolved flag (used by save/load to rehydrate). */
+    public void setAfflictionResolved(boolean resolved) {
+        this.afflictionResolved = resolved;
+    }
+
+    /** Restore the heart-attacked flag (used by save/load to rehydrate). */
+    public void setHeartAttacked(boolean attacked) {
+        this.heartAttacked = attacked;
     }
 
     public void reduceStress(int amount) {

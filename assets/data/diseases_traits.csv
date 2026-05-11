@@ -1,15 +1,19 @@
-Name,Type,Disease/Trait ID,Effect Stat,Effect Value,Trigger,Condition,Remove Cost,Description,Severity,Duration,Status
-Fever,Disease,dis_01,max_hp,-15%,,,100,Giảm 15% HP tối đa.,Medium,Until healed,Live
-Blindness,Disease,dis_02,accuracy,-20,,,150,-20 chính xác.,High,Until healed,Live
-Nightmare,Disease,dis_03,stress_taken,+2/turn,,,200,Mỗi lượt nhận 2 stress.,High,Until healed,Live
-Paranoia,Disease,dis_04,action_fail_chance,15%,,,180,15% khả năng hành động sai.,Medium,Until healed,Live
-Confident,Trait,trait_01,crit,+5%,on_crit,when HP > 50%,0,Tự tin: crit tăng 5% trong 2 lượt sau khi chí mạng.,Low,2 turns,Live
-Cowardly,Trait,trait_02,skip_turn,20%,on_stress,when stress > 50,0,Hèn nhát: 20% mất lượt nếu stress > 50.,Medium,Permanent,Live
-Loyal,Trait,trait_03,dmg,+10%,on_ally_hit,next attack,0,Trung thành: đồng đội bị đòn → tăng sát thương 10% cho đòn tiếp theo.,Low,Next attack,Live
-Masochist,Trait,trait_04,stress_to_all,+5,on_self_damage,when self takes damage from own skill (e.g. HP cost skills),0,"Mỗi khi hero tự nhận sát thương (do skill HP cost), tăng 5 stress cho cả đội.",High,Permanent,Live
-Plague,Disease,dis_05,max_hp,-25%,,,300,"Bệnh dịch nghiêm trọng, giảm 25% HP tối đa và lây lan cho đồng đội.",Critical,Until healed,Testing
-Cursed,Disease,dis_06,dodge,-30,,,250,"Bị nguyền rủa, giảm 30 khả năng né tránh.",High,Until healed,In Development
-Brave,Trait,trait_05,dmg,+15%,on_high_stress,when stress > 50,0,"Dũng cảm: stress cao càng đánh mạnh — khi stress > 50, sát thương +15%. Đối nghịch với Cowardly.",Low,Permanent,Live
-Vengeful,Trait,trait_06,dmg,+20%,on_ally_death,next 3 turns after ally falls,0,"Báo Thù: khi 1 đồng đội ngã xuống, hero này được +20% dmg trong 3 lượt kế tiếp. Tốt cho late-fight comeback.",Medium,3 turns,Live
-Bloodthirsty,Trait,trait_07,dmg,+5% per kill,on_kill,"stacks within combat, max 5 stacks",0,"Khát Máu: mỗi lần tiêu diệt địch tăng 5% dmg, cộng dồn tối đa 5 stacks/trận. Reset đầu trận sau.",Medium,Permanent (per combat),Live
-Stoic,Trait,trait_08,stress_taken,-25%,on_stress_apply,always,0,Lạnh Lùng: hero này nhận ít hơn 25% stress từ mọi nguồn. Cực kỳ giá trị cho hero ở vai trò DPS hàng sau.,Low,Permanent,Live
+Name,Type,Disease/Trait ID,Effect Stat,Effect Value,Trigger,Condition,Remove Cost,Description,Severity,Duration,Resolution,Status
+Fever,Disease,dis_01,max_hp,-15%,,,100,Giảm 15% HP tối đa.,Medium,Until healed,,Live
+Blindness,Disease,dis_02,accuracy,-20,,,150,-20 chính xác.,High,Until healed,,Live
+Nightmare,Disease,dis_03,stress_taken,+2/turn,,,200,Mỗi lượt nhận 2 stress.,High,Until healed,,Live
+Paranoia,Disease,dis_04,action_fail_chance,15%,,,180,15% khả năng hành động sai.,Medium,Until healed,,Live
+Confident,Trait,trait_01,crit,+5%,on_crit,when HP > 50%,0,Tự tin: crit tăng 5% trong 2 lượt sau khi chí mạng.,Low,2 turns,Virtue,Live
+Cowardly,Trait,trait_02,skip_turn,20%,on_stress,when stress > 50,0,Hèn nhát: 20% mất lượt nếu stress > 50.,Medium,Permanent,Affliction,Live
+Loyal,Trait,trait_03,dmg,+10%,on_ally_hit,next attack,0,Trung thành: đồng đội bị đòn → tăng sát thương 10% cho đòn tiếp theo.,Low,Next attack,Virtue,Live
+Masochist,Trait,trait_04,stress_to_all,+5,on_self_damage,when self takes damage from own skill (e.g. HP cost skills),0,"Mỗi khi hero tự nhận sát thương (do skill HP cost), tăng 5 stress cho cả đội.",High,Permanent,Affliction,Live
+Plague,Disease,dis_05,max_hp,-25%,,,300,"Bệnh dịch nghiêm trọng, giảm 25% HP tối đa và lây lan cho đồng đội.",Critical,Until healed,,Testing
+Cursed,Disease,dis_06,dodge,-30,,,250,"Bị nguyền rủa, giảm 30 khả năng né tránh.",High,Until healed,,In Development
+Brave,Trait,trait_05,dmg,+15%,on_high_stress,when stress > 50,0,"Dũng cảm: stress cao càng đánh mạnh — khi stress > 50, sát thương +15%. Đối nghịch với Cowardly.",Low,Permanent,Virtue,Live
+Vengeful,Trait,trait_06,dmg,+20%,on_ally_death,next 3 turns after ally falls,0,"Báo Thù: khi 1 đồng đội ngã xuống, hero này được +20% dmg trong 3 lượt kế tiếp. Tốt cho late-fight comeback.",Medium,3 turns,Virtue,Live
+Bloodthirsty,Trait,trait_07,dmg,+5% per kill,on_kill,"stacks within combat, max 5 stacks",0,"Khát Máu: mỗi lần tiêu diệt địch tăng 5% dmg, cộng dồn tối đa 5 stacks/trận. Reset đầu trận sau.",Medium,Permanent (per combat),Virtue,Live
+Stoic,Trait,trait_08,stress_taken,-25%,on_stress_apply,always,0,Lạnh Lùng: hero này nhận ít hơn 25% stress từ mọi nguồn. Cực kỳ giá trị cho hero ở vai trò DPS hàng sau.,Low,Permanent,Virtue,Live
+Paranoid,Trait,trait_a01,stress_aura,+1/turn,on_turn_start,always,0,"Hoang Tưởng (Affliction): mỗi lượt, mọi đồng đội nhận thêm 1 stress.",High,Permanent,Affliction,Live
+Selfish,Trait,trait_a02,refuse_heal,100%,on_heal_target,when targeted by a heal skill,0,Vị Kỷ (Affliction): không nhận heal từ skill đồng đội.,High,Permanent,Affliction,Live
+Fearful,Trait,trait_a03,dmg,-20%,on_attack,always,0,Sợ Sệt (Affliction): tất cả sát thương giảm 20%.,Medium,Permanent,Affliction,Live
+Hopeless,Trait,trait_a04,accuracy,-10,on_attack,always,0,Tuyệt Vọng (Affliction): -10 chính xác trong combat.,Medium,Permanent,Affliction,Live
