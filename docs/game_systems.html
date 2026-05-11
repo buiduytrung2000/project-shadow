@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Project Shadow — Hệ thống &amp; Cân bằng</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+<div class="breadcrumb"><a href="../claude.md">← claude.md</a> &middot; docs / game_systems</div>
+
+<div class="banner">
+  <h1>⚔️ Hệ thống &amp; Cân bằng</h1>
+  <p class="subtitle">14 heroes, 140 skills, 15 enemies, 50 items, 14 traits/diseases, công thức damage</p>
+</div>
+
+<h1>1. Heroes (14 lớp)</h1>
+<p>Mỗi lớp có 10 skill, người chơi chọn 4 trang bị cho mỗi run. Nguồn dữ liệu: <code>assets/data/heroes.csv</code>.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr>
+  <th>ID</th><th>Tên VN</th><th>Tên EN</th><th>Rarity</th><th>Role</th><th>Pos</th>
+  <th>HP</th><th>DMG</th><th>ACC</th><th>Crit</th><th>SPD</th><th>SR</th>
+</tr></thead>
+<tbody>
+<tr><td>hero_01</td><td>Chiến Binh</td><td>Warrior</td><td>Common</td><td>Tank/DPS</td><td>Front</td><td>31</td><td>6-10</td><td>85</td><td>8%</td><td>3</td><td>20%</td></tr>
+<tr><td>hero_02</td><td>Pháp Sư</td><td>Mage</td><td>Common</td><td>DPS AoE</td><td>Back</td><td>20</td><td>8-14</td><td>82</td><td>10%</td><td>5</td><td>12%</td></tr>
+<tr><td>hero_03</td><td>Tăng Lữ</td><td>Cleric</td><td>Common</td><td>Heal/Sup</td><td>Back</td><td>24</td><td>3-6</td><td>83</td><td>5%</td><td>4</td><td>28%</td></tr>
+<tr><td>hero_04</td><td>Sát Thủ</td><td>Assassin</td><td>Common</td><td>DPS</td><td>Any</td><td>18</td><td>9-16</td><td>88</td><td>15%</td><td>8</td><td>10%</td></tr>
+<tr><td>hero_05</td><td>Cung Thủ</td><td>Archer</td><td>Common</td><td>DPS</td><td>Back</td><td>22</td><td>6-11</td><td>91</td><td>12%</td><td>6</td><td>15%</td></tr>
+<tr><td>hero_06</td><td>Cuồng Chiến</td><td>Berserker</td><td>Common</td><td>DPS</td><td>Front</td><td>28</td><td>7-13</td><td>80</td><td>10%</td><td>5</td><td>8%</td></tr>
+<tr><td>hero_07</td><td>Thánh Kỵ Sĩ</td><td>Paladin</td><td>Rare</td><td>Tank/Sup</td><td>Front</td><td>34</td><td>6-10</td><td>85</td><td>8%</td><td>3</td><td>30%</td></tr>
+<tr><td>hero_08</td><td>Pháp Sư Hỏa</td><td>Pyromancer</td><td>Rare</td><td>DPS DoT</td><td>Back</td><td>18</td><td>9-15</td><td>85</td><td>12%</td><td>6</td><td>10%</td></tr>
+<tr><td>hero_09</td><td>Thầy Cúng</td><td>Shaman</td><td>Rare</td><td>Sup/Util</td><td>Back</td><td>22</td><td>5-8</td><td>80</td><td>7%</td><td>5</td><td>22%</td></tr>
+<tr><td>hero_10</td><td>Thuật Sĩ Ký Ước</td><td>Warlock</td><td>Rare</td><td>DPS/Debuf</td><td>Back</td><td>20</td><td>8-14</td><td>85</td><td>10%</td><td>6</td><td>12%</td></tr>
+<tr><td>hero_11</td><td>Du Ca</td><td>Bard</td><td>Rare</td><td>Support</td><td>Back</td><td>22</td><td>3-6</td><td>82</td><td>6%</td><td>7</td><td>28%</td></tr>
+<tr><td>hero_12</td><td>Tử Linh Sư</td><td>Necromancer</td><td>Legend</td><td>DPS/Sum</td><td>Back</td><td>22</td><td>7-12</td><td>85</td><td>10%</td><td>5</td><td>15%</td></tr>
+<tr><td>hero_13</td><td>Võ Thánh</td><td>Monk</td><td>Legend</td><td>DPS/Util</td><td>Front</td><td>26</td><td>5-9</td><td>90</td><td>12%</td><td>8</td><td>25%</td></tr>
+<tr><td>hero_14</td><td>Pháp Sư Tự Nhiên</td><td>Druid</td><td>Legend</td><td>Hybrid</td><td>Any</td><td>28</td><td>5-9</td><td>84</td><td>8%</td><td>5</td><td>22%</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr>
+
+<h1>2. Skills (140 — 14 lớp × 10)</h1>
+<p>Mỗi skill có format: <code>sk_&lt;class_code&gt;&lt;index&gt;</code>. Ví dụ <code>sk_w1</code>...<code>sk_w10</code> cho Warrior. Đầy đủ trong <code>assets/data/skills.csv</code>.</p>
+
+<h3>Skill schema</h3>
+<pre><code>Skill ID,Name (VN),Name (EN),Hero Class,Is Offensive,Target Type,
+Damage Multiplier,Accuracy Modifier,Cooldown,Effect ID,Effect Value,
+Stress Damage,Rarity,Description (VN)</code></pre>
+
+<h3>Class code mapping</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Lớp</th><th>Skill prefix</th><th>Default 4 skills</th></tr></thead>
+<tbody>
+<tr><td>Warrior</td><td><code>sk_w*</code></td><td>sk_w1, sk_w2, sk_w3, sk_w4</td></tr>
+<tr><td>Mage</td><td><code>sk_m*</code></td><td>sk_m1...sk_m4</td></tr>
+<tr><td>Cleric</td><td><code>sk_c*</code></td><td>sk_c1...sk_c4</td></tr>
+<tr><td>Assassin</td><td><code>sk_a*</code></td><td>sk_a1...sk_a4</td></tr>
+<tr><td>Archer</td><td><code>sk_ar*</code></td><td>sk_ar1...sk_ar4</td></tr>
+<tr><td>Berserker</td><td><code>sk_b*</code></td><td>sk_b1...sk_b4</td></tr>
+<tr><td>Paladin</td><td><code>sk_p*</code></td><td>sk_p1...sk_p4</td></tr>
+<tr><td>Pyromancer</td><td><code>sk_py*</code></td><td>sk_py1...sk_py4</td></tr>
+<tr><td>Shaman</td><td><code>sk_sh*</code></td><td>sk_sh1...sk_sh4</td></tr>
+<tr><td>Warlock</td><td><code>sk_wl*</code></td><td>sk_wl1...sk_wl4</td></tr>
+<tr><td>Bard</td><td><code>sk_bd*</code></td><td>sk_bd1...sk_bd4</td></tr>
+<tr><td>Necromancer</td><td><code>sk_n*</code></td><td>sk_n1...sk_n4</td></tr>
+<tr><td>Monk</td><td><code>sk_mk*</code></td><td>sk_mk1...sk_mk4</td></tr>
+<tr><td>Druid</td><td><code>sk_dr*</code></td><td>sk_dr1...sk_dr4</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr>
+
+<h1>3. Enemies (15)</h1>
+<p>Bao gồm 11 enemy thường + 1 boss Stage 1 + 1 boss Stage 2 + 1 boss Stage 3 + 2 miniboss Stage 3. Nguồn: <code>assets/data/enemies.csv</code>.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>ID</th><th>Name</th><th>HP</th><th>DMG</th><th>Crit</th><th>SR</th><th>Acc</th><th>Variant</th></tr></thead>
+<tbody>
+<tr><td>enemy_01</td><td>Goblin</td><td>12</td><td>3-6</td><td>5%</td><td>10%</td><td>80</td><td>Base</td></tr>
+<tr><td>enemy_01_assassin</td><td>Goblin Assassin</td><td>8</td><td>4-8</td><td>5%</td><td>10%</td><td>80</td><td>Assassin (0.7×HP, 1.4×DMG)</td></tr>
+<tr><td>enemy_01_special</td><td>Goblin Shaman</td><td>12</td><td>3-6</td><td>5%</td><td>10%</td><td>80</td><td>Special (self-heal)</td></tr>
+<tr><td>enemy_01_tank</td><td>Goblin Tank</td><td>18</td><td>2-5</td><td>5%</td><td>10%</td><td>80</td><td>Tank (1.5×HP, 0.8×DMG)</td></tr>
+<tr><td>enemy_02</td><td>Skeleton</td><td>18</td><td>5-8</td><td>6%</td><td>20%</td><td>75</td><td>Base</td></tr>
+<tr><td>enemy_02_assassin</td><td>Skeleton Assassin</td><td>13</td><td>7-11</td><td>6%</td><td>20%</td><td>75</td><td>Assassin</td></tr>
+<tr><td>enemy_02_special</td><td>Skeleton Mage</td><td>18</td><td>5-8</td><td>6%</td><td>20%</td><td>75</td><td>Special (dark bolt)</td></tr>
+<tr><td>enemy_02_tank</td><td>Skeleton Tank</td><td>27</td><td>4-6</td><td>6%</td><td>20%</td><td>75</td><td>Tank</td></tr>
+<tr><td>enemy_03</td><td>Shadow Wisp</td><td>8</td><td>2-5</td><td>15%</td><td>30%</td><td>85</td><td>Base (dual skill)</td></tr>
+<tr><td>enemy_03_tank</td><td>Shadow Wisp Tank</td><td>12</td><td>2-4</td><td>15%</td><td>30%</td><td>85</td><td>Tank</td></tr>
+<tr><td><strong>enemy_b01</strong></td><td>Giant Zombie</td><td>80</td><td>8-14</td><td>5%</td><td>40%</td><td>78</td><td><strong>BOSS Stage 1</strong></td></tr>
+<tr><td><strong>enemy_b02</strong></td><td>The Whispering Shade</td><td>110</td><td>9-15</td><td>10%</td><td>40%</td><td>82</td><td><strong>BOSS Stage 2</strong></td></tr>
+<tr><td><strong>enemy_b03</strong></td><td>The Black Heart</td><td>150</td><td>10-18</td><td>8%</td><td>50%</td><td>85</td><td><strong>BOSS Stage 3 FINAL</strong></td></tr>
+<tr><td>enemy_mb01</td><td>Echo Wraith</td><td>45</td><td>7-12</td><td>12%</td><td>30%</td><td>80</td><td>Miniboss Stage 3</td></tr>
+<tr><td>enemy_mb02</td><td>Plague Bearer</td><td>50</td><td>6-10</td><td>5%</td><td>35%</td><td>78</td><td>Miniboss Stage 3</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr>
+
+<h1>4. Items (50)</h1>
+<p>Phân category: <strong>consumable</strong> (c01-c12, 12), <strong>trinket</strong> (t01-t12, 12), <strong>class-specific trinket</strong> (cs01-cs14, 14), <strong>relic</strong> (r01-r05, 5 vĩnh viễn), <strong>cursed</strong> (cu01-cu07, 7).</p>
+
+<h3>Tiêu biểu — Consumables (Stage 1 dùng nhiều)</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>ID</th><th>Name VN</th><th>Effect</th><th>Rarity</th><th>Price</th></tr></thead>
+<tbody>
+<tr><td>item_c01</td><td>Bình Máu Nhỏ</td><td>Heal 15 HP instant</td><td>Common</td><td>40g</td></tr>
+<tr><td>item_c02</td><td>Bình Máu Lớn</td><td>Heal 30 HP instant</td><td>Uncommon</td><td>90g</td></tr>
+<tr><td>item_c03</td><td>Hương Trầm Tĩnh Tâm</td><td>-20 stress toàn đội</td><td>Common</td><td>60g</td></tr>
+<tr><td>item_c04</td><td>Thuốc Giải Độc</td><td>Xóa Poison/Bleed/Burn</td><td>Common</td><td>50g</td></tr>
+<tr><td>item_c07</td><td>Bùa Hộ Mệnh</td><td>Hấp thụ 20 dmg đòn tiếp</td><td>Uncommon</td><td>70g</td></tr>
+<tr><td>item_c11</td><td>Tinh Chất Hổ Phách</td><td>+25% dmg + +2 speed 3 lượt</td><td>Rare</td><td>110g</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Class-specific trinkets (1 cho mỗi lớp)</h3>
+<p><code>item_cs01</code> Khiên Phúc Lành (Paladin) ... <code>item_cs14</code> Mũ Pháp Sư Huyết (Mage). Đều Rare/Epic, drop chủ yếu từ boss.</p>
+
+<h3>Relics (5 — vĩnh viễn, không thể tháo)</h3>
+<ul>
+  <li><strong>item_r01</strong> Tim Rồng — +8 HP perm + +10% dmg perm</li>
+  <li><strong>item_r02</strong> Mắt Quỷ Đỏ — +12% crit perm / -10% SR perm</li>
+  <li><strong>item_r03</strong> Nắm Đấm Thần Thánh — +5 flat dmg perm</li>
+  <li><strong>item_r04</strong> Hào Quang Thánh — miễn mọi Curse</li>
+  <li><strong>item_r05</strong> Giọt Nước Mắt Phượng — 1× sống sót/dungeon</li>
+</ul>
+
+<h3>Cursed items (7 — trade-off vĩnh viễn)</h3>
+<ul>
+  <li><strong>item_cu01</strong>—<strong>cu07</strong>: mỗi cái có 1 nhược vĩnh viễn + 1 bonus. Chỉ Tẩy Trần xóa được.</li>
+</ul>
+
+<hr>
+
+<h1>5. Diseases &amp; Traits (14)</h1>
+<p>Nguồn: <code>assets/data/diseases_traits.csv</code>. Chia 2 nhóm: <strong>6 bệnh</strong> (negative) + <strong>8 tính cách</strong> (4 tốt / 4 xấu). Mỗi hero random 0–2 trait khi tuyển mộ.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>ID</th><th>Loại</th><th>Tên</th><th>Hiệu ứng</th><th>Cách xóa</th></tr></thead>
+<tbody>
+<tr><td>Fever</td><td>Disease</td><td>Sốt cao</td><td>-15% max HP</td><td>100g tại Caretaker</td></tr>
+<tr><td>Plague</td><td>Disease</td><td>Bệnh dịch</td><td>-2 HP/lượt + lây 10% sang đồng đội</td><td>200g</td></tr>
+<tr><td>Blindness</td><td>Disease</td><td>Mù lòa</td><td>-20 accuracy permanent</td><td>150g</td></tr>
+<tr><td>Nightmare</td><td>Disease</td><td>Ác mộng</td><td>+2 stress/lượt</td><td>200g</td></tr>
+<tr><td>Cursed</td><td>Disease</td><td>Bị nguyền</td><td>-10% mọi chỉ số</td><td>Chỉ Tẩy Trần (Paladin)</td></tr>
+<tr><td>Bloodthirsty</td><td>Disease</td><td>Khát máu</td><td>+10% dmg / -10% SR</td><td>100g (debatable nên giữ?)</td></tr>
+<tr><td>Brave</td><td>Trait+</td><td>Dũng cảm</td><td>-5 stress combat start</td><td>Không xóa</td></tr>
+<tr><td>Confident</td><td>Trait+</td><td>Tự tin</td><td>+5% crit perm</td><td>Không xóa</td></tr>
+<tr><td>Loyal</td><td>Trait+</td><td>Trung thành</td><td>-50% stress khi đồng đội ngã</td><td>Không xóa</td></tr>
+<tr><td>Stoic</td><td>Trait+</td><td>Kiên cường</td><td>+15% stress resist</td><td>Không xóa</td></tr>
+<tr><td>Cowardly</td><td>Trait-</td><td>Hèn nhát</td><td>10% bỏ qua lượt khi HP&lt;50%</td><td>Spirit Cleansing event</td></tr>
+<tr><td>Paranoia</td><td>Trait-</td><td>Hoang tưởng</td><td>+5 stress khi crit từ enemy</td><td>Hamlet Tavern (200g)</td></tr>
+<tr><td>Masochist</td><td>Trait-</td><td>Thích đau</td><td>Tự dmg 5 HP khi enter combat</td><td>Spirit Cleansing</td></tr>
+<tr><td>Vengeful</td><td>Trait-</td><td>Hận thù</td><td>Tự đánh đồng đội khi đồng đội ngã</td><td>Confession event</td></tr>
+</tbody>
+</table>
+</div>
+
+<hr>
+
+<h1>6. Công thức tính damage</h1>
+
+<div class="card info">
+<p><code>Damage = (base_dmg × skill_mult + flat_bonus) × crit_mult × armor_mult × random_range</code></p>
+</div>
+
+<h3>Các bước</h3>
+<ol>
+  <li><strong>Sát thương cơ bản</strong>: <code>dmg_base = random(base_dmg_min, base_dmg_max)</code></li>
+  <li><strong>Nhân hệ số skill</strong>: <code>dmg_skill = dmg_base × skill_multiplier</code></li>
+  <li><strong>Cộng flat bonus</strong> (từ item, buff): <code>dmg_buffed = dmg_skill + flat_damage_bonus</code></li>
+  <li><strong>Check crit</strong>:
+    <ul>
+      <li><code>crit_chance = base_crit + crit_buffs - enemy_crit_resist</code> (clamp [0%, 50%])</li>
+      <li><code>random(0,1) &lt; crit_chance</code> → <code>crit_mult = 1.5</code>, else <code>1.0</code></li>
+    </ul>
+  </li>
+  <li><strong>Giáp enemy</strong>: <code>dmg_after_armor = max(1, dmg_buffed - enemy_armor)</code></li>
+  <li><strong>Random variance</strong>: <code>final = round(dmg_after_armor × random(0.95, 1.05))</code></li>
+  <li><strong>Stress dmg lên hero</strong>: <code>stress_dmg = (skill_stress + hero_stress_bonus) × (1 - enemy_stress_resist)</code></li>
+</ol>
+
+<h3>Ví dụ minh họa</h3>
+<pre><code>Hero: Warrior, base_dmg=8, base_crit=8%
+Skill: Shield Slam, dmg_mult=1.2, stress_dmg=5
+Enemy: Goblin, armor=0, stress_resist=10%
+
+→ dmg_base   = random(6,10) = 9
+→ dmg_skill  = 9 × 1.2 = 10.8
+→ dmg_buffed = 10.8 (no flat bonus)
+→ crit       = false (random > 0.08)
+→ dmg_armor  = 10.8 - 0 = 10.8
+→ final      = round(10.8 × 1.02) = 11 HP
+→ stress     = 5 × (1 - 0.1) = 4.5 → 5 stress</code></pre>
+
+<hr>
+
+<h1>7. Effects (134 — engine dữ liệu hóa)</h1>
+<p>Mỗi effect là 1 row trong <code>effects.csv</code>. Engine đọc category + modifier_type để áp dụng động — không hard-code 134 class. Nguyên tắc: <strong>"data-driven effect resolver"</strong>.</p>
+
+<h3>Categories</h3>
+<table>
+<thead><tr><th>Category</th><th>Mô tả</th><th>Examples</th></tr></thead>
+<tbody>
+<tr><td><code>dot</code></td><td>Damage over time</td><td>eff_burn, eff_poison, eff_bleed</td></tr>
+<tr><td><code>buff</code></td><td>Tăng chỉ số tạm</td><td>eff_dmg_buff, eff_crit_buff, eff_dodge</td></tr>
+<tr><td><code>debuff</code></td><td>Giảm chỉ số tạm</td><td>eff_acc_debuff, eff_stun, eff_slow</td></tr>
+<tr><td><code>permanent_buff</code></td><td>Vĩnh viễn (relic)</td><td>eff_perm_dmg, eff_perm_hp, eff_perm_crit</td></tr>
+<tr><td><code>permanent_debuff</code></td><td>Vĩnh viễn (cursed)</td><td>eff_perm_sr_down, eff_perm_aggro</td></tr>
+<tr><td><code>heal</code></td><td>Hồi HP</td><td>eff_heal, eff_regen</td></tr>
+<tr><td><code>stress</code></td><td>Tăng/giảm stress</td><td>eff_stress_tick, eff_stress_reduce</td></tr>
+<tr><td><code>cc</code></td><td>Crowd control</td><td>eff_stun, eff_taunt, eff_confusion</td></tr>
+</tbody>
+</table>
+
+<footer>Project Shadow GDD &middot; cập nhật 2026-05-11 &middot; <a href="../assets/data/">→ CSV nguồn</a></footer>
+</div>
+</body>
+</html>

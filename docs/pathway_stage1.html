@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Project Shadow — Pathway Stage 1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+<div class="breadcrumb"><a href="../claude.md">← claude.md</a> &middot; docs / pathway_stage1</div>
+
+<div class="banner">
+  <h1>🌳 Stage 1 — Pathway dạng cây ngẫu nhiên</h1>
+  <p class="subtitle">JSON layered_tree, pools, rules, thuật toán sinh stage</p>
+</div>
+
+<h1>1. Tổng quan thiết kế</h1>
+
+<div class="card info">
+<p><strong>Mô hình:</strong> <code>layered_tree</code> 3 lớp + boss cuối.</p>
+<p><strong>Topology:</strong> <code>fully_connected</code> giữa các lớp — mỗi node ở lớp N kết với mọi node ở lớp N+1.</p>
+<p><strong>Total nodes:</strong> 6 (1 fixed start + 2 layer-2 + 2 layer-3 + 1 boss).</p>
+<p><strong>Paths per run:</strong> 4 đường khả thi xuống boss.</p>
+</div>
+
+<h3>Sơ đồ trực quan</h3>
+<div class="flowchart">              [L1.A — Combat fixed (1 goblin)]
+                       │
+              ┌────────┴────────┐
+              ▼                 ▼
+        [L2.1 random]      [L2.2 random]
+              │                 │
+      ┌───────┼───────┐ ┌───────┼───────┐
+      ▼       ▼       ▼ ▼       ▼       ▼   (fully connected)
+        [L3.1 random]      [L3.2 random]
+              │                 │
+              └────────┬────────┘
+                       ▼
+                    [BOSS]
+              enemy_b01 Giant Zombie</div>
+
+<hr>
+
+<h1>2. JSON nguồn (Stage 1)</h1>
+<p>File: <code>assets/data/stages/stage_1.json</code></p>
+
+<pre><code>{
+  "id": "stage_1",
+  "name": "Hầm mộ khởi đầu",
+  "name_en": "Starting Catacombs",
+  "act": 1,
+  "difficulty": 1,
+  "description": "Màn chơi đầu tiên, nhẹ nhàng, dạy người chơi cơ chế cơ bản: combat, sự kiện, nghỉ, kho báu. Trục cốt truyện: giải cứu nhóm thợ mỏ bị mắc kẹt, kết thúc bằng boss Giant Zombie tiết lộ Trái Tim Đen.",
+
+  "presentation": {
+    "background": "catacombs_bg",
+    "music": "dungeon_ambient",
+    "intro_text": "Bạn xuống hầm mộ tối tăm. Tiếng rên khe khẽ vang lên từ đâu đó. Bóng tối ở đây mỏng — nhưng đủ để giấu thứ gì đó.",
+    "outro_text_win": "Giant Zombie ngã xuống. Trên ngực nó, một mảnh đá đen nhỏ rỉ máu — có lẽ là dấu vết đầu tiên của Trái Tim Đen.",
+    "outro_text_lose": "Bóng Tối nuốt chửng đoàn của bạn. Sương Mù Đen lan rộng thêm một dặm."
+  },
+
+  "layout": {
+    "type": "layered_tree",
+    "edge_topology": "fully_connected",
+    "num_layers": 3,
+    "total_nodes": 6,
+    "paths_per_run": 4,
+    "first_node_fixed": {
+      "type": "combat",
+      "label": "L1.A",
+      "enemy_pool": ["enemy_01"],
+      "min_enemies": 1, "max_enemies": 1,
+      "tutorial_hints": ["target_select", "skill_select", "stress_intro"]
+    },
+    "last_node_fixed": {
+      "type": "boss",
+      "label": "BOSS",
+      "boss_id": "enemy_b01",
+      "intro_text": "Một xác chết khổng lồ trồi lên từ đống xương..."
+    },
+    "layer_2": {
+      "label_prefix": "L2",
+      "num_nodes": 2,
+      "edges_in":  "fully_connected_from_layer_1",
+      "edges_out": "fully_connected_to_layer_3",
+      "node_generation": {
+        "type": "random_from_pool_weighted",
+        "weights": { "combat": 50, "event": 25, "rest": 15, "reward": 10 }
+      }
+    },
+    "layer_3": {
+      "label_prefix": "L3",
+      "num_nodes": 2,
+      "edges_in":  "fully_connected_from_layer_2",
+      "edges_out": "all_to_boss",
+      "node_generation": {
+        "type": "random_from_pool_weighted",
+        "weights": { "combat": 40, "event": 30, "rest": 20, "reward": 10 },
+        "constraint": "if_player_came_from_combat_node: bias_away_from_combat (combat weight halved)"
+      }
+    }
+  },
+
+  "rules": [
+    "no_consecutive_rest",
+    "no_consecutive_reward",
+    "max_combat_per_run: 3",
+    "min_event_per_run: 1",
+    "if_layer_3_node_is_combat_and_path_ends_into_boss: must_use_pre_boss_pool (1 goblin only)",
+    "if_player_has_full_party_hp_before_boss: spawn_extra_reward_node (replaces 1 layer_3 node with reward)"
+  ],
+
+  "pools": {
+    "combat": {
+      "default": {
+        "enemies": ["enemy_01", "enemy_02"],
+        "variants_allowed": ["Base", "Tank", "Assassin"],
+        "min_enemies": 2, "max_enemies": 3
+      },
+      "pre_boss": {
+        "enemies": ["enemy_01"],
+        "variants_allowed": ["Base"],
+        "min_enemies": 1, "max_enemies": 1,
+        "comment": "Trận trước boss luôn dễ để người chơi không rỗ HP/stress trước boss"
+      }
+    },
+    "event": {
+      "stage_1_pool": [
+        "event_open_tomb", "event_whispering_shadow", "event_glowing_spring",
+        "event_lost_survivor", "event_black_fog_patch", "event_old_witch_doctor"
+      ],
+      "weights": {
+        "event_open_tomb": 25, "event_whispering_shadow": 20,
+        "event_glowing_spring": 25, "event_lost_survivor": 15,
+        "event_black_fog_patch": 10, "event_old_witch_doctor": 5
+      }
+    },
+    "rest": {
+      "type": "campsite",
+      "options": [
+        { "label": "Nghỉ ngơi",  "effect": "stress_reduce", "target": "single_hero", "value_min": 10, "value_max": 20 },
+        { "label": "Cảnh giới",  "effect": "heal",          "target": "single_hero", "value_min":  8, "value_max": 15 },
+        { "label": "Trò chuyện","effect": "stress_reduce", "target": "party",       "value_min":  5, "value_max":  8 }
+      ]
+    },
+    "reward": {
+      "rolls": 2,
+      "drop_table": [
+        { "type": "gold",        "value_min": 30, "value_max": 70, "weight": 40 },
+        { "type": "item",        "item_id": "item_c01",            "weight": 25 },
+        { "type": "item",        "item_id": "item_c04",            "weight": 15 },
+        { "type": "item",        "item_id": "item_c03",            "weight": 10 },
+        { "type": "item_random", "category": "trinket_common",     "weight": 10 }
+      ]
+    }
+  },
+
+  "boss_node": {
+    "boss_id": "enemy_b01",
+    "boss_name": "Giant Zombie",
+    "phase_transitions": [
+      { "trigger": "hp_below_30%", "action": "use_skill: sk_e_b01_enrage", "once_per_combat": true }
+    ],
+    "rewards_on_kill": {
+      "gold": { "value": 200, "chance": 1.0 },
+      "items": {
+        "rolls": 1,
+        "drop_table": [
+          { "type": "item_random", "category": "trinket_common",   "weight": 35 },
+          { "type": "item_random", "category": "trinket_uncommon", "weight": 30 },
+          { "type": "item_random", "category": "consumable_rare",  "weight": 15 },
+          { "type": "item_random", "category": "relic",            "weight": 15 },
+          { "type": "item_random", "category": "cursed",           "weight":  5 }
+        ]
+      },
+      "lore": { "value": "fragment_black_heart_01" }
+    }
+  },
+
+  "validation_refs": {
+    "enemies_used":      ["enemy_01", "enemy_02", "enemy_b01"],
+    "enemy_skills_used": ["sk_e_stab", "sk_e_bone_club", "sk_e_dark_bolt", "sk_e_self_heal",
+                          "sk_e_b01_smash", "sk_e_b01_putrid_breath", "sk_e_b01_enrage"],
+    "events_used":       ["event_open_tomb", "event_whispering_shadow", "event_glowing_spring",
+                          "event_lost_survivor", "event_black_fog_patch", "event_old_witch_doctor"],
+    "items_referenced":  ["item_c01", "item_c03", "item_c04"]
+  }
+}</code></pre>
+
+<hr>
+
+<h1>3. Pools chi tiết</h1>
+
+<h3>3.1 Combat pool</h3>
+<ul>
+  <li><strong>default</strong> — dùng cho layer 2/3 nếu không phải pre-boss. Pool: <code>enemy_01</code>, <code>enemy_02</code>. Variants: Base/Tank/Assassin. 2–3 enemies/trận.</li>
+  <li><strong>pre_boss</strong> — kích hoạt nếu node L3 là combat &amp; path đi thẳng tới boss. Pool nhỏ: 1× <code>enemy_01</code> Base. Mục đích: <em>"đệm nhẹ trước boss"</em>.</li>
+</ul>
+
+<h3>3.2 Event pool — weighted</h3>
+<table>
+<thead><tr><th>Event ID</th><th>Weight</th><th>Mô tả ngắn</th></tr></thead>
+<tbody>
+<tr><td>event_open_tomb</td><td>25</td><td>Mở quan tài: 50% trúng bẫy (5-10 dmg), 50% nhận 500 gold</td></tr>
+<tr><td>event_whispering_shadow</td><td>20</td><td>Tiếng thì thầm: chọn lắng nghe (+stress) hoặc bỏ qua</td></tr>
+<tr><td>event_glowing_spring</td><td>25</td><td>Suối phát sáng: heal 1 hero hoặc heal party</td></tr>
+<tr><td>event_lost_survivor</td><td>15</td><td>Người sống sót lạc: cứu (gold/item) hoặc bỏ rơi (-stress)</td></tr>
+<tr><td>event_black_fog_patch</td><td>10</td><td>Lớp sương đen: vượt qua (HP loss) hoặc đi đường vòng (time loss)</td></tr>
+<tr><td>event_old_witch_doctor</td><td>5</td><td>Lão thầy lang: chữa bệnh (đắt) hoặc skip</td></tr>
+</tbody>
+</table>
+
+<h3>3.3 Rest pool</h3>
+<ul>
+  <li><strong>Nghỉ ngơi</strong> — single hero, -10..-20 stress</li>
+  <li><strong>Cảnh giới</strong> — single hero, +8..+15 HP</li>
+  <li><strong>Trò chuyện</strong> — party, -5..-8 stress</li>
+</ul>
+
+<h3>3.4 Reward pool</h3>
+<p>Roll 2× (có thể trùng) từ drop_table với weighted random:</p>
+<table>
+<thead><tr><th>Type</th><th>Detail</th><th>Weight</th></tr></thead>
+<tbody>
+<tr><td>gold</td><td>30-70 gold</td><td>40</td></tr>
+<tr><td>item</td><td>item_c01 (Bình Máu Nhỏ)</td><td>25</td></tr>
+<tr><td>item</td><td>item_c04 (Thuốc Giải Độc)</td><td>15</td></tr>
+<tr><td>item</td><td>item_c03 (Hương Trầm)</td><td>10</td></tr>
+<tr><td>item_random</td><td>trinket_common</td><td>10</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h1>4. Rules — ràng buộc khi sinh stage</h1>
+
+<table>
+<thead><tr><th>Rule</th><th>Mục đích</th></tr></thead>
+<tbody>
+<tr><td><code>no_consecutive_rest</code></td><td>Tránh 2 node rest liên tiếp gây trivial</td></tr>
+<tr><td><code>no_consecutive_reward</code></td><td>Tránh 2 reward liền — không cho cướp loot</td></tr>
+<tr><td><code>max_combat_per_run: 3</code></td><td>Tối đa 3 trận trong stage (kể cả boss)</td></tr>
+<tr><td><code>min_event_per_run: 1</code></td><td>Bắt buộc có ít nhất 1 event trên đường — đảm bảo flavor</td></tr>
+<tr><td><code>L3 + pre-boss path → pre_boss pool</code></td><td>Nếu L3 là combat &amp; node tiếp theo là boss → buộc dùng pre_boss pool (1 goblin)</td></tr>
+<tr><td><code>full_party_HP → reward replace</code></td><td>Nếu vào L3 với toàn đội full HP → thay 1 node L3 bằng reward (bonus)</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h1>5. Thuật toán sinh stage (pseudocode)</h1>
+
+<pre><code>function generate(stage_config, seed) {
+    rng = Random(seed)
+    tree = {}
+
+    // Layer 1: fixed
+    tree.L1 = stage_config.first_node_fixed
+
+    // Layer 2: 2 nodes random từ weighted pool
+    for i in 0..stage_config.layer_2.num_nodes:
+        node_type = weighted_pick(rng, stage_config.layer_2.weights)
+        tree.L2[i] = generate_node(node_type, stage_config.pools)
+
+    // Layer 3: 2 nodes random + bias-away-from-combat nếu came_from_combat
+    for i in 0..stage_config.layer_3.num_nodes:
+        weights = clone(stage_config.layer_3.weights)
+        if any_path_from_L2_to_L3[i] came_from "combat":
+            weights["combat"] = weights["combat"] / 2     // bias away
+        node_type = weighted_pick(rng, weights)
+        tree.L3[i] = generate_node(node_type, stage_config.pools)
+
+    // Boss: fixed
+    tree.BOSS = stage_config.last_node_fixed
+
+    // Apply rules / constraints
+    enforce(tree, stage_config.rules)
+    return tree
+}
+
+function enforce(tree, rules) {
+    for rule in rules:
+        switch rule:
+            case "no_consecutive_rest":
+                // Nếu L2[i] = rest và L3[j] connected = rest → re-roll L3[j]
+            case "max_combat_per_run":
+                // Nếu đường nào có > 3 combat → re-roll 1 node combat thành event
+            case "min_event_per_run":
+                // Nếu đường nào không có event → buộc L2 hoặc L3 thành event
+            case "if_player_has_full_party_hp_before_boss":
+                // Track ở runtime: nếu vào L3 mà party full HP → 1 L3 → reward
+}
+
+function generate_node(type, pools) {
+    switch type:
+        case "combat":
+            pool = pools.combat.default
+            num_enemies = rng.range(pool.min_enemies, pool.max_enemies)
+            enemies = [pick_with_variant(pool.enemies, pool.variants_allowed)
+                       for _ in 0..num_enemies]
+            return CombatNode(enemies)
+        case "event":
+            event_id = weighted_pick(rng, pools.event.weights)
+            return EventNode(event_id)
+        case "rest":
+            return RestNode(options = pools.rest.options)
+        case "reward":
+            drops = [weighted_pick(rng, pools.reward.drop_table)
+                     for _ in 0..pools.reward.rolls]
+            return RewardNode(drops)
+}</code></pre>
+
+<hr>
+
+<h1>6. Implementation hiện trạng (libGDX)</h1>
+
+<table>
+<thead><tr><th>Class</th><th>Vai trò</th><th>Trạng thái</th></tr></thead>
+<tbody>
+<tr><td><code>StageConfig</code> (record)</td><td>Mapping JSON stage_*.json</td><td><span class="badge done">✅ Sprint 1</span></td></tr>
+<tr><td><code>StageGenerator</code></td><td>Sinh <code>StageTree</code> từ config + seed</td><td><span class="badge done">✅ Sprint 4</span></td></tr>
+<tr><td><code>StageTree, StageNode</code></td><td>Domain model (CombatNode, EventNode, RestNode, RewardNode, BossNode, EliteNode, MinibossNode)</td><td><span class="badge done">✅ Sprint 4</span></td></tr>
+<tr><td><code>StageRules</code></td><td>Validator: no_consecutive_*, max_combat, min_event...</td><td><span class="badge done">✅ Sprint 4</span></td></tr>
+<tr><td><code>StageMapScreen</code></td><td>Render cây + click node</td><td><span class="badge done">✅ Sprint 7</span></td></tr>
+<tr><td><code>RunSession</code></td><td>Persist progress (current node, completed nodes, party state)</td><td><span class="badge done">✅ Sprint 6</span></td></tr>
+</tbody>
+</table>
+
+<footer>Project Shadow Stage Design &middot; cập nhật 2026-05-11</footer>
+</div>
+</body>
+</html>

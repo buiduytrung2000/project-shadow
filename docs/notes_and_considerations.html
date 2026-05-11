@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Project Shadow — Notes &amp; Considerations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+<div class="breadcrumb"><a href="../claude.md">← claude.md</a> &middot; docs / notes_and_considerations</div>
+
+<div class="banner">
+  <h1>📝 Notes &amp; Considerations</h1>
+  <p class="subtitle">Out-of-scope · Có thể phát triển thêm · Còn mơ hồ</p>
+</div>
+
+<h1>1. ❌ Out of scope (đã quyết định KHÔNG làm)</h1>
+
+<div class="card bad">
+<p>Những thứ đã loại khỏi MVP để giữ scope khả thi cho solo dev. Nếu thay đổi quyết định → phải đánh giá lại Sprint plan.</p>
+</div>
+
+<h3>1.1 Gameplay</h3>
+<ul>
+  <li><strong>Multiplayer / co-op / PvP / online</strong> — single-player offline only.</li>
+  <li><strong>Class thứ 15+</strong> — đã chốt 14 lớp. Bất kỳ class mới phải thêm 10 skill + balance pass.</li>
+  <li><strong>Procedural skill generation</strong> — 140 skills cố định, không random sinh ra skill mới.</li>
+  <li><strong>Open world / overworld map</strong> — chỉ có 3 stage tuyến tính + Hamlet hub.</li>
+  <li><strong>Mounts / pet system</strong> — không có nhân vật phụ ngoài 4 hero party + Necromancer summon.</li>
+  <li><strong>Crafting</strong> — items chỉ drop hoặc mua ở Hamlet, không kết hợp tạo item mới.</li>
+  <li><strong>Stealth/sneak mode</strong> — không có cơ chế lén lút ngoài Assassin's Shadow Strike.</li>
+  <li><strong>Multiple endings phân nhánh</strong> — 1 ending sau enemy_b03.</li>
+  <li><strong>Romance / relationship system</strong> — heroes không có quan hệ cá nhân.</li>
+</ul>
+
+<h3>1.2 Visuals / Audio</h3>
+<ul>
+  <li><strong>Animation frame-by-frame phức tạp</strong> — chỉ 2-3 frame attack/hurt + tween. Không 8-12 frame walk cycle.</li>
+  <li><strong>3D / 2.5D</strong> — pixel art 2D side view only.</li>
+  <li><strong>Cinematic cutscenes</strong> — text intro/outro/event dialogue. Không cảnh cắt, không animation phức tạp.</li>
+  <li><strong>Voice acting / lồng tiếng</strong> — toàn bộ text-based.</li>
+  <li><strong>Dynamic lighting system</strong> — background tĩnh + glow đơn giản cho crit/affliction.</li>
+  <li><strong>Particle physics</strong> — particle đơn giản (sparkle khi crit, smoke khi cast). Không physics simulation.</li>
+  <li><strong>Day/night cycle</strong> — không có thay đổi ánh sáng theo thời gian.</li>
+  <li><strong>Adaptive music system</strong> — 3 track cố định (Hamlet, dungeon, combat), không seamless transition theo gameplay.</li>
+</ul>
+
+<h3>1.3 Platform / Distribution</h3>
+<ul>
+  <li><strong>Mobile (iOS/Android) port</strong> — desktop only (Windows / Mac / Linux qua Construo).</li>
+  <li><strong>Console (Switch/PS5/Xbox)</strong> — không port.</li>
+  <li><strong>Cloud save / cross-device sync</strong> — local save JSON only.</li>
+  <li><strong>Steam Workshop / mod support</strong> — không.</li>
+  <li><strong>Localization &gt; 2 ngôn ngữ</strong> — chỉ VN + EN trong MVP.</li>
+</ul>
+
+<h3>1.4 Technical</h3>
+<ul>
+  <li><strong>Controller native support</strong> — keyboard + mouse only. (Có thể add post-MVP qua libGDX controllers extension)</li>
+  <li><strong>Replay system / battle recorder</strong> — không.</li>
+  <li><strong>Analytics / telemetry</strong> — không trừ khi opt-in (post-MVP).</li>
+  <li><strong>Achievements system (in-game)</strong> — không trong MVP. (Steam achievements có thể add sau)</li>
+  <li><strong>Difficulty selector ngoài Stage progression</strong> — không "Easy / Normal / Hard" mode. Difficulty ramp tự nhiên qua stage 1→3.</li>
+</ul>
+
+<hr>
+
+<h1>2. 🌱 Có thể phát triển thêm (Post-MVP / Future)</h1>
+
+<div class="card maybe">
+<p>Ý tưởng có giá trị nhưng chưa đủ ưu tiên trong MVP. Sắp xếp theo độ khả thi.</p>
+</div>
+
+<h3>2.1 Content expansion (mức effort thấp)</h3>
+<table>
+<thead><tr><th>Feature</th><th>Effort</th><th>Value</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td><strong>Stage 4-5 (DLC)</strong></td><td>Med</td><td>High</td><td>Tận dụng JSON template + thêm enemy variant + tileset</td></tr>
+<tr><td><strong>10+ event mới mỗi stage</strong></td><td>Low</td><td>Med</td><td>Mỗi event ~20 dòng CSV + thiết kế outcome</td></tr>
+<tr><td><strong>5-7 boss mới (Stage 2 mini, Stage 3 secret)</strong></td><td>Med</td><td>High</td><td>Khó nhất là balance phases</td></tr>
+<tr><td><strong>20+ items mới</strong></td><td>Low</td><td>Med</td><td>Reuse effects, chỉ thêm rows CSV</td></tr>
+<tr><td><strong>Skin / cosmetic cho heroes</strong></td><td>Med</td><td>Low</td><td>Cần PixelLab credits + UI selector</td></tr>
+</tbody>
+</table>
+
+<h3>2.2 Systems mới (mức effort trung)</h3>
+<ul>
+  <li><strong>New Game+ mode</strong> — Replay với +20% enemy stats, unlock skill cao cấp, keep relics.</li>
+  <li><strong>Hard mode / Bloodmoon</strong> — Permadeath thực sự, không revive ở Hamlet.</li>
+  <li><strong>Achievement system</strong> — In-game + Steam integration (~30 achievements).</li>
+  <li><strong>Heroes evolution / promotion</strong> — Cấp 5/10 hero unlock new skill slot (sk_*11 → sk_*14).</li>
+  <li><strong>Quirks (positive + negative random)</strong> — Mở rộng trait system: mỗi hero có 0-4 trait, thay đổi qua sự kiện.</li>
+  <li><strong>Camping skills</strong> — Mỗi lớp có 2-3 skill chỉ dùng ở rest node (heal team, scout, motivate).</li>
+  <li><strong>Hero death dialogue</strong> — Khi hero ngã, hiển thị 1 dòng thoại cuối tùy theo personality.</li>
+</ul>
+
+<h3>2.3 Polish &amp; UX (effort thấp-trung)</h3>
+<ul>
+  <li><strong>Controller support</strong> (gamepad).</li>
+  <li><strong>Multi-language</strong>: thêm CN, JP, FR, ES (sau VN/EN).</li>
+  <li><strong>Tutorial overlay</strong> — Highlight UI khi player gặp mechanic lần đầu.</li>
+  <li><strong>Difficulty modifiers</strong> tại run start: "0% rest nodes", "+50% boss HP", "no items"... → Ascensions kiểu Slay the Spire.</li>
+  <li><strong>Steam Cloud save</strong>.</li>
+  <li><strong>Replay viewer</strong> cho boss kills.</li>
+  <li><strong>Combat speed slider</strong> (1×/2×/3×).</li>
+</ul>
+
+<h3>2.4 Technical (effort cao)</h3>
+<ul>
+  <li><strong>Mobile port</strong> — libGDX Android module có sẵn, cần redo UI cho touch.</li>
+  <li><strong>Modding API</strong> — Cho phép community thêm class/enemy/event qua CSV mod.</li>
+  <li><strong>Online leaderboard</strong> — Run time, hero compositions.</li>
+  <li><strong>Daily challenge mode</strong> — Cùng seed, leaderboard 24h.</li>
+</ul>
+
+<hr>
+
+<h1>3. ❓ Còn mơ hồ — cần quyết định</h1>
+
+<div class="card warn">
+<p>Những điểm chưa có spec cụ thể, đang dùng giá trị default hoặc placeholder. Cần playtest để tinh chỉnh.</p>
+</div>
+
+<h3>3.1 Balance numbers — đã chốt &amp; cần playtest</h3>
+<table>
+<thead><tr><th>Tham số</th><th>Giá trị</th><th>Trạng thái</th></tr></thead>
+<tbody>
+<tr><td>Affliction/Virtue ratio</td><td><strong>70/30</strong></td><td><span class="badge done">✅ CHỐT</span> Cần độ khó cao, hệ skills/items đa dạng bổ trợ run dài</td></tr>
+<tr><td>Disease chance after stage</td><td><strong>30%/hero/stage</strong></td><td><span class="badge done">✅ CHỐT</span></td></tr>
+<tr><td>Stress max trước Affliction</td><td>100 (uniform)</td><td><span class="badge maybe">❓ chưa quyết</span> Có nên 100 Common / 80 Rare / 120 Legend? Default 100 cho tất cả.</td></tr>
+<tr><td>Boss HP scaling</td><td><strong>b01=80, b02=110, b03=150</strong></td><td><span class="badge done">✅ CHỐT</span> CSV updated 2026-05-11</td></tr>
+<tr><td>Gold reward per stage</td><td>200/400/1000g per boss + 30-70 per reward node + supplies tax 100/200/400g</td><td><span class="badge done">✅ CHỐT</span> Option C — supplies tax up-front per stage</td></tr>
+<tr><td>Hamlet 3-tier upgrades</td><td>4 buildings × 3 levels — gold + Heirloom</td><td><span class="badge done">✅ CHỐT</span> Full plan locked 2026-05-11 — xem Decision Log</td></tr>
+<tr><td>Hire cost by rarity</td><td>50g Common / 80g Rare / 150g Legend</td><td><span class="badge done">✅ CHỐT</span> Already implemented</td></tr>
+<tr><td>Crit multiplier</td><td><strong>1.5×</strong></td><td><span class="badge done">✅ CHỐT</span></td></tr>
+<tr><td>Random variance damage</td><td>±5% (0.95..1.05)</td><td><span class="badge maybe">❓ chưa quyết</span> ±10% tạo risk hơn? Default ±5%.</td></tr>
+</tbody>
+</table>
+
+<h3>3.2 Cơ chế chưa quyết định</h3>
+<ul>
+  <li><strong>Cách tính điểm cuối stage</strong> — Hiện chỉ có gold + items dropped. Có nên thêm "performance score" (no hero down = bonus, fast clear = bonus)?</li>
+  <li><strong>Tỷ lệ random chính xác affliction từng loại</strong> — Hiện 4 affliction equal-weight. Có nên weight theo personality (Cowardly hero dễ → Coward affliction hơn)?</li>
+  <li><strong>Mechanism reset stress sau retreat</strong> — Retreat có giảm stress không? Hiện không, có thể hơi punitive.</li>
+  <li><strong>Cách handle hero chết khi đang Affliction</strong> — Có cleanse affliction khi revive ở Hamlet? Hiện không (decision: keep cho realism).</li>
+  <li><strong>Cooldown reset giữa các stage</strong> — Skill cooldowns có reset khi enter new stage không? Hiện reset, có thể nên giữ nếu retreat.</li>
+  <li><strong>Boss "phase skip" exploit</strong> — Nếu burst dmg cực mạnh, có skip được phase 2/3? Cần test với Pyromancer Combustion + Berserker Bloodmoon combo.</li>
+</ul>
+
+<h3>3.3 Design questions chưa xác quyết</h3>
+<ul>
+  <li><strong>Có cho hero gắn bó với player không?</strong> — Hiện hero có name + trait, nhưng không có story riêng. Có nên thêm 1 đoạn backstory ngắn (~50 từ) cho mỗi hero khi tuyển?</li>
+  <li><strong>Hero ngã có vĩnh viễn không?</strong> — Permadeath: có. Nhưng có nên có chance 5% "linh hồn về Hamlet"? Player có thể "tìm lại" hero qua event đặc biệt.</li>
+  <li><strong>Equipment system</strong> — Hiện chỉ có trinket. Có nên thêm weapon/armor riêng? Hoặc giữ đơn giản và scale qua skill upgrade?</li>
+  <li><strong>Multiplayer co-op</strong> — DEF NOT in MVP. Nhưng có nên design data layer để có thể add sau? Hiện không, dùng singleton GameData.</li>
+  <li><strong>Stress sources từ camera angle / mood</strong> — DD có "Curio" và lighting affecting stress. Project Shadow hiện không có. Có nên thêm 1 cơ chế đơn giản: stress tick +1/lượt nếu trong dungeon? Đã có <code>eff_perm_stress_tick</code> cho cursed item — có thể reuse cho dungeon ambient stress.</li>
+</ul>
+
+<h3>3.4 Visual style chưa lock</h3>
+<ul>
+  <li><strong>Sprite size final</strong> — Đã queue PixelLab ở 64px character (canvas 92×92). Bosses 96px. Cần playtest xem có quá to/nhỏ trên 1080p screen không.</li>
+  <li><strong>UI font final</strong> — Hiện dùng <code>BeVietnamPro-Regular.ttf</code> 26px body. Có thể quá mảnh trên màn hình lớn?</li>
+  <li><strong>Color palette stage 2/3</strong> — Stage 1 cool grey-brown đã ok. Stage 2 forest đen-xanh? Stage 3 đỏ lửa? Cần concept art.</li>
+  <li><strong>HP/Stress bar visual</strong> — Hiện rectangle bar. Có nên đổi sang custom shape (giọt máu / ngọn lửa) như spec? Tốn effort vẽ.</li>
+</ul>
+
+<h3>3.5 Marketing &amp; distribution</h3>
+<ul>
+  <li><strong>Tên cuối cùng</strong> — <strong>"Project Shadow"</strong> ✅ CHỐT (final name, không phải codename).</li>
+  <li><strong>Pricing model</strong> — Free + DLC? Một lần $10-15? Demo + full game? <span class="badge maybe">chưa quyết</span></li>
+  <li><strong>Launch platform</strong> — Steam first hay itch.io trước? Steam fee $100 + 30% rev share. <span class="badge maybe">chưa quyết</span></li>
+  <li><strong>Demo scope</strong> — 1 stage full hay 1 dungeon limited? <span class="badge maybe">chưa quyết</span></li>
+</ul>
+
+<hr>
+
+<h1>4. Decision Log — quyết định quan trọng đã chốt</h1>
+
+<table>
+<thead><tr><th>Quyết định</th><th>Lý do</th><th>Date</th></tr></thead>
+<tbody>
+<tr><td><strong>Giữ stress system phức tạp</strong></td><td>Đặc trưng cốt lõi, distinguish khỏi roguelite khác. Cắt = mất identity.</td><td>Sprint 0</td></tr>
+<tr><td><strong>Đổi 4 lớp → 14 lớp</strong></td><td>Mỗi lớp CSV ~50 lines, không quá tốn. Team comp đa dạng hơn nhiều.</td><td>Sprint 2 mid</td></tr>
+<tr><td><strong>Engine libGDX (thay Godot/Unity)</strong></td><td>Java 21 dev biết tốt. Type-safe domain model. Atlas + audio mature.</td><td>Sprint 0</td></tr>
+<tr><td><strong>Data-driven effect resolver (1 generic + 134 row)</strong></td><td>Thay vì 134 class. Maintainable + designer có thể tinh chỉnh bằng CSV.</td><td>Sprint 3</td></tr>
+<tr><td><strong>Stage 1 layered_tree 3 lớp</strong></td><td>Đủ branching cho replay, không quá phức tạp. 4 path/run = enough.</td><td>Sprint 4</td></tr>
+<tr><td><strong>Permadeath ON by default</strong></td><td>Roguelite identity. Caretaker cure disease ≠ revive hero.</td><td>Sprint 6</td></tr>
+<tr><td><strong>VN as primary lang, EN secondary</strong></td><td>Dev là VN. Market: VN player + global EN. Sprint 9 i18n toggle.</td><td>Sprint 9</td></tr>
+<tr><td><strong>PixelLab AI cho sprite (thay vẽ tay)</strong></td><td>Solo dev không có thời gian vẽ 30+ characters × 4 anims. AI consistent style.</td><td>Sprint 9</td></tr>
+<tr><td><strong>5 boss total (3 main + 2 miniboss)</strong></td><td>1 boss/stage không đủ Stage 3. Miniboss tăng tension trước final.</td><td>Sprint 9 (mới)</td></tr>
+<tr><td><strong>Thêm 4 enemies vào CSV (b02, b03, mb01, mb02)</strong></td><td>Stage 2/3 đã spec → cần data layer match. Stage 3 phải có miniboss layer.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Affliction/Virtue 70/30 confirmed</strong></td><td>Game cần độ khó cao — hệ skills/items đa dạng bổ trợ run dài về sau.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Boss HP: b01=80, b02=110, b03=150</strong></td><td>Stage 3 cần thử thách rõ hơn. Scaling +30 HP/stage. (Trước: 80/90/130.)</td><td>2026-05-11</td></tr>
+<tr><td><strong>Crit multiplier 1.5× confirmed</strong></td><td>Giữ feel DD-style, không quá spike. 2× từng cân nhắc → bỏ.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Disease chance 30%/hero/stage confirmed</strong></td><td>Đủ tension nhưng không quá punishing. Caretaker 30g cure phù hợp.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Final game name: "Project Shadow"</strong></td><td>Codename = final. Đơn giản, dễ nhớ, đã build identity qua dev.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Hire cost by rarity (50/80/150g)</strong></td><td>Common/Rare/Legendary tiered. Tránh Legendary too easy access. Implemented in HamletService.hireCost().</td><td>2026-05-11</td></tr>
+<tr><td><strong>3-tier Hamlet upgrade locked</strong></td><td>4 buildings × 3 levels. Gold + Heirloom (boss drop). Full upgrade ~14H ≈ 4-5 boss kills. Xem section "Hamlet Economy" trong project_plan.html.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Disease cure: slot system theo Caretaker level</strong></td><td>Lv1=1 hero/visit, Lv2=2, Lv3=4. Cost giảm 30g→25g→20g. Cursed disease KHÔNG cure được (chỉ Paladin Tẩy Trần in combat).</td><td>2026-05-11</td></tr>
+<tr><td><strong>Gold persistence: Option C (supplies tax)</strong></td><td>Tax up-front 100/200/400g cho Stage 1/2/3. Non-refundable. Tạo "investment" feel mỗi run. Boss reward 200/400/1000g tự trang trải tax.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Heirloom currency #2 introduced</strong></td><td>Drop 1/2/4 từ boss Stage 1/2/3. Chỉ dùng cho Hamlet building upgrades. Tạo long-term goal.</td><td>2026-05-11</td></tr>
+</tbody>
+</table>
+
+<footer>Project Shadow Notes &middot; cập nhật 2026-05-11</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Project Shadow — Thiết kế tổng quan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+<div class="breadcrumb"><a href="../claude.md">← claude.md</a> &middot; docs / design_overview</div>
+
+<div class="banner">
+  <h1>🌑 Project Shadow — Thiết kế tổng quan</h1>
+  <p class="subtitle">Concept, Cốt truyện, Core Loop, Art Style, Âm thanh</p>
+</div>
+
+<h1>1. Concept (Ý tưởng trung tâm)</h1>
+
+<div class="card info">
+<p><strong>High Concept:</strong> <em>"Một game nhập vai chiến thuật theo lượt, nơi bạn dẫn dắt những linh hồn sa ngã qua các ngục tối ngẫu nhiên, đối mặt với nỗi sợ, bệnh tật và sự điên loạn — nhưng có lối vào nhẹ nhàng hơn và độ khó tăng dần theo lựa chọn của bạn."</em></p>
+</div>
+
+<h3>Ba trụ cột chính</h3>
+<ol>
+  <li><strong>Dễ tiếp cận, khó làm chủ</strong> — Stage 1 "tha thứ" (ít sát thương, ít stress); càng sâu càng đè áp lực tâm lý lẫn chiến thuật.</li>
+  <li><strong>Ngẫu nhiên bất định nhưng công bằng</strong> — Quái có biến thể chỉ số (Base/Tank/Assassin/Special), pathway dạng cây, sự kiện bất ngờ. Mỗi run là duy nhất nhưng vẫn có thể đọc và quyết định.</li>
+  <li><strong>Tâm lý đội nhóm là vũ khí &amp; kẻ thù</strong> — Stress, bệnh tật, và tính cách ảnh hưởng trực tiếp đến hành vi trong combat. Bạn phải quản lý cả thể xác lẫn tinh thần.</li>
+</ol>
+
+<h3>Đối tượng mục tiêu</h3>
+<p>Fan Darkest Dungeon nhưng thấy quá khó/căng; fan roguelite turn-based; solo dev muốn game có chiều sâu nhưng tầm tay — <strong>14 lớp × 10 skill / lớp, chọn 4 skill mỗi trận</strong>.</p>
+
+<hr>
+
+<h1>2. Cốt truyện (Story &amp; Lore)</h1>
+
+<h3>Bối cảnh</h3>
+<p>Thế giới phủ bởi <strong>Sương Mù Đen</strong> — ám khí khiến con người phát điên, biến quái vật hoặc chìm trong tuyệt vọng. Người sống sót co cụm trong các pháo đài nhỏ gọi là <strong>Nhà Tạm (Haven / Hamlet)</strong>.</p>
+
+<h3>Nhân vật chính</h3>
+<p>Bạn là <strong>Người Dẫn Hồn (Soul Warden)</strong> — kẻ có khả năng đưa các linh hồn sa ngã trở lại thực tại một phần để chiến đấu. Mỗi linh hồn mang theo một quá khứ đau buồn, thể hiện qua tính cách và bệnh tật.</p>
+
+<h3>3 hồi chính</h3>
+<table>
+<thead><tr><th>Hồi</th><th>Tên</th><th>Tóm tắt</th><th>Boss</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Hồi 1</strong></td>
+  <td>Tia sáng le lói</td>
+  <td>Hầm mộ khởi đầu. Giải cứu nhóm thợ mỏ. Phát hiện manh mối <em>Trái Tim Đen</em>.</td>
+  <td><code>enemy_b01</code> Giant Zombie</td>
+</tr>
+<tr>
+  <td><strong>Hồi 2</strong></td>
+  <td>Những nỗi sợ bị lãng quên</td>
+  <td>Rừng tối + đầm lầy. Mỗi vùng tiết lộ quá khứ một linh hồn. Một linh hồn bị "ăn mòn" hoàn toàn.</td>
+  <td><code>enemy_b02</code> The Whispering Shade (Bóng Thì Thầm)</td>
+</tr>
+<tr>
+  <td><strong>Hồi 3</strong></td>
+  <td>Đối diện với Trái Tim Đen</td>
+  <td>Vực sâu nhất. Bệnh + stress nghiêm trọng gấp đôi. Boss cuối sao chép kỹ năng party.</td>
+  <td><code>enemy_b03</code> The Black Heart (Trái Tim Đen)</td>
+</tr>
+</tbody>
+</table>
+
+<div class="card warn">
+<p><strong>Ghi chú cho solo dev:</strong> Cốt truyện kể qua đoạn văn ngắn (intro/outro stage), thoại trong event, mô tả unlock công trình. <strong>Không cắt cảnh, không lồng tiếng.</strong></p>
+</div>
+
+<hr>
+
+<h1>3. Core Loop (Vòng lặp game)</h1>
+
+<h2>3.1 Micro loop — mỗi lượt chiến đấu</h2>
+<ol>
+  <li>Chọn nhân vật → chọn kỹ năng (target hoặc auto theo vị trí).</li>
+  <li>Check stress: nếu Affliction, nhân vật có thể tự ý hành động.</li>
+  <li>Xử lý hiệu ứng: dmg, buff/debuff, dịch vị trí, +stress.</li>
+  <li>Enemy phản công.</li>
+  <li>Lặp lại đến khi một bên HP=0, hoặc rút lui (tỷ lệ phụ stress trung bình).</li>
+</ol>
+
+<h2>3.2 Mid loop — một màn chơi / dungeon</h2>
+<div class="flowchart">Bắt đầu màn (camp)
+    │
+    ▼
+Chọn pathway (từ 2-3 nhánh)
+    │
+    ├─── Chiến đấu (combat) ─────┐
+    ├─── Sự kiện ngẫu nhiên ────┤
+    ├─── Kho báu ───────────────┤
+    └─── Trại nghỉ ─────────────┘
+    │
+    ▼
+Kết thúc bước → chọn pathway tiếp theo
+    │
+    ▼
+Sau 3-5 bước → gặp boss cuối màn
+    │
+    ▼
+Kết thúc màn: tính thưởng, phát sinh bệnh, cập nhật stress</div>
+
+<h2>3.3 Macro loop — giữa các màn</h2>
+<ol>
+  <li>Trở về <strong>Hamlet</strong>.</li>
+  <li>Quản lý đội hình:
+    <ul>
+      <li>Chữa bệnh (Caretaker — tốn vàng).</li>
+      <li>Giảm stress (Survivalist quán rượu / nhà thờ).</li>
+      <li>Tuyển mộ (Stagecoach).</li>
+      <li>Nâng skill (Guild).</li>
+    </ul>
+  </li>
+  <li>Mở khóa / nâng cấp công trình (4 loại × 3 cấp).</li>
+  <li>Chọn màn tiếp theo (stage 1 → 2 → 3).</li>
+</ol>
+
+<div class="flowchart">[ Chiến đấu ] → [ Chọn đường ] → [ Sự kiện / Nghỉ ] → (lặp lại) → [ Boss ] → [ Hamlet ] → [ Nâng cấp ] → [ Màn mới ]</div>
+
+<hr>
+
+<h1>4. Art Style</h1>
+
+<div class="card info">
+<p><strong>Định hướng:</strong> Tối giản, u ám, pixel art retro với bảng màu hạn chế; biểu cảm &amp; không gian quan trọng hơn chi tiết.</p>
+</div>
+
+<h2>4.1 Màu sắc</h2>
+<ul>
+  <li><strong>Chủ đạo:</strong> Đen, xám đậm, đỏ rỉ sắt, tím than, xanh đêm.</li>
+  <li><strong>Ánh sáng:</strong> Dark ambient, chỉ có đuốc nhỏ hoặc kỹ năng ma thuật phát sáng.</li>
+  <li><strong>Hiệu ứng:</strong> Glow đơn giản cho crit, stress đỉnh, affliction.</li>
+</ul>
+
+<h2>4.2 Nhân vật (Heroes)</h2>
+<ul>
+  <li><strong>Sprite:</strong> 32×32 hoặc 48×48 (Project Shadow đã queue PixelLab ở <strong>size 64</strong>, character ~38px tall).</li>
+  <li>Dáng đứng tĩnh + 2–3 frame attack/hurt (tween).</li>
+  <li><strong>Hiển thị stress:</strong> mắt đỏ / tóc rối / run rẩy / aura sương khi Affliction.</li>
+</ul>
+
+<h2>4.3 Quái vật &amp; Boss</h2>
+<ul>
+  <li>Quái thường: pixel art 32×32 / 64 (size PixelLab).</li>
+  <li>Boss: lớn hơn (64×64 hoặc 96), đổi màu khi đổi phase.</li>
+  <li>Project Shadow đã queue: <code>enemy_b01</code> size 96, <code>enemy_b02</code> size 96, <code>enemy_b03</code> size 96, <code>enemy_mb01/02</code> size 80.</li>
+</ul>
+
+<h2>4.4 UI</h2>
+<ul>
+  <li>Phong cách <strong>"parchment cũ"</strong> (giấy da, mực viết tay).</li>
+  <li>HP/Stress bar dạng đường kẻ đứt đoạn hoặc giọt máu / ngọn lửa.</li>
+  <li>Tối ưu 1080p, scale xuống 720p.</li>
+</ul>
+
+<h2>4.5 Môi trường (Background &amp; Tilesets)</h2>
+<ul>
+  <li>Stage 1: <strong>Hầm Mộ Khởi Đầu (Catacombs)</strong> — đá xám-nâu nứt nẻ, xương vụn.</li>
+  <li>Stage 2: <strong>Sương Mù Đen (Black Fog Forest)</strong> — gỗ đen xoắn, sương mù.</li>
+  <li>Stage 3: <strong>Lò Đúc Linh Hồn (Soul Forge)</strong> — sàn obsidian núi lửa với khe dung nham đỏ.</li>
+  <li>Đã queue qua <code>create_topdown_tileset</code> PixelLab — Wang tileset 16×16.</li>
+</ul>
+
+<h2>4.6 Tham khảo</h2>
+<ul>
+  <li>Darkest Dungeon (đơn giản hóa ~80%).</li>
+  <li>Darkwood (top-down, tối giản u ám).</li>
+</ul>
+
+<hr>
+
+<h1>5. Âm thanh</h1>
+<div class="card">
+<p><strong>Scope tối thiểu (Sprint 9):</strong></p>
+<ul>
+  <li>3 track nhạc nền: <code>hamlet_theme</code>, <code>dungeon_ambient</code>, <code>combat_theme</code>.</li>
+  <li>15–20 SFX: click, hit, crit, skill cast, stress tick, level up, drop item, dialog blip.</li>
+  <li>Không lồng tiếng. Không adaptive music phức tạp.</li>
+</ul>
+</div>
+
+<h3>Mood</h3>
+<table>
+<thead><tr><th>Scene</th><th>Mood</th><th>Inspiration</th></tr></thead>
+<tbody>
+<tr><td>Hamlet</td><td>Tĩnh, ấm áp nhẹ, lo âu</td><td>DD <em>"Take a Deep Breath"</em></td></tr>
+<tr><td>Dungeon ambient</td><td>Lạnh, không gian rộng, drone u ám</td><td>Darkwood ambience</td></tr>
+<tr><td>Combat</td><td>Dồn dập theo lượt, dây + trống</td><td>DD combat tracks</td></tr>
+<tr><td>Boss</td><td>Choir + brass dày, đổi tempo theo phase</td><td>Hollow Knight bosses</td></tr>
+</tbody>
+</table>
+
+<footer>Project Shadow GDD &middot; cập nhật 2026-05-11</footer>
+</div>
+</body>
+</html>

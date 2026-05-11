@@ -24,8 +24,83 @@ import java.util.stream.Collectors;
  */
 public final class HamletService {
 
-    public static final int STAGECOACH_HIRE_COST = 50;
+    // ───── Tier 1 (default) hire costs by rarity ─────
+    public static final int STAGECOACH_HIRE_COST = 50;          // legacy default (Common tier)
+    public static final int STAGECOACH_HIRE_COST_COMMON = 50;
+    public static final int STAGECOACH_HIRE_COST_RARE = 80;
+    public static final int STAGECOACH_HIRE_COST_LEGENDARY = 150;
     public static final int STAGECOACH_OFFER_COUNT = 3;
+
+    // ───── 3-tier building upgrade costs (2026-05-11 design lock) ─────
+    // Stagecoach Lv1 (default) → Lv2 → Lv3
+    public static final int STAGECOACH_UPGRADE_LV2_GOLD = 300;
+    public static final int STAGECOACH_UPGRADE_LV2_HEIRLOOM = 1;
+    public static final int STAGECOACH_UPGRADE_LV3_GOLD = 800;
+    public static final int STAGECOACH_UPGRADE_LV3_HEIRLOOM = 3;
+    public static final int STAGECOACH_OFFERS_BY_LEVEL[] = { 0, 3, 4, 5 }; // index = lvl
+    public static final double STAGECOACH_LV3_HIRE_DISCOUNT = 0.20;       // -20% at Lv3
+
+    // Guild
+    public static final int GUILD_UPGRADE_LV2_GOLD = 250;
+    public static final int GUILD_UPGRADE_LV2_HEIRLOOM = 1;
+    public static final int GUILD_UPGRADE_LV3_GOLD = 700;
+    public static final int GUILD_UPGRADE_LV3_HEIRLOOM = 3;
+    public static final int GUILD_MAX_LEVEL_BY_TIER[] = { 0, 5, 6, 7 };
+    public static final double GUILD_COST_DISCOUNT_BY_TIER[] = { 0.0, 0.0, 0.20, 0.40 };
+
+    // Survivalist (prices adjusted per user 2026-05-11: Lv2=180g, Lv3=350g)
+    public static final int SURVIVALIST_UPGRADE_LV2_GOLD = 180;
+    public static final int SURVIVALIST_UPGRADE_LV2_HEIRLOOM = 1;
+    public static final int SURVIVALIST_UPGRADE_LV3_GOLD = 350;
+    public static final int SURVIVALIST_UPGRADE_LV3_HEIRLOOM = 2;
+
+    // Caretaker — slot system: Lv1=1, Lv2=2, Lv3=4 cure slots per Hamlet visit
+    public static final int CARETAKER_UPGRADE_LV2_GOLD = 200;
+    public static final int CARETAKER_UPGRADE_LV2_HEIRLOOM = 1;
+    public static final int CARETAKER_UPGRADE_LV3_GOLD = 500;
+    public static final int CARETAKER_UPGRADE_LV3_HEIRLOOM = 2;
+    public static final int CARETAKER_CURE_SLOTS_BY_LEVEL[] = { 0, 1, 2, 4 };
+    public static final int CARETAKER_CURE_COST_BY_LEVEL[] = { 0, 30, 25, 20 };
+
+    // ───── Supplies tax (Option C — gold persistence) ─────
+    public static final int SUPPLIES_TAX_STAGE_1 = 100;
+    public static final int SUPPLIES_TAX_STAGE_2 = 200;
+    public static final int SUPPLIES_TAX_STAGE_3 = 400;
+
+    /** Tax paid up-front when entering a stage; non-refundable on defeat. */
+    public static int suppliesTax(int stageAct) {
+        return switch (stageAct) {
+            case 1 -> SUPPLIES_TAX_STAGE_1;
+            case 2 -> SUPPLIES_TAX_STAGE_2;
+            case 3 -> SUPPLIES_TAX_STAGE_3;
+            default -> 0;
+        };
+    }
+
+    // ───── Heirloom drops ─────
+    public static final int HEIRLOOM_BOSS_STAGE_1 = 1;
+    public static final int HEIRLOOM_BOSS_STAGE_2 = 2;
+    public static final int HEIRLOOM_BOSS_STAGE_3 = 4;
+
+    public static int heirloomFromBoss(int stageAct) {
+        return switch (stageAct) {
+            case 1 -> HEIRLOOM_BOSS_STAGE_1;
+            case 2 -> HEIRLOOM_BOSS_STAGE_2;
+            case 3 -> HEIRLOOM_BOSS_STAGE_3;
+            default -> 0;
+        };
+    }
+
+    /** Cost to hire a specific hero based on rarity tier (Common/Rare/Legendary). */
+    public static int hireCost(String heroId, GameData gd) {
+        HeroData data = gd.heroes().get(heroId);
+        if (data == null) return STAGECOACH_HIRE_COST_COMMON;
+        return switch (data.rarity()) {
+            case "Legendary" -> STAGECOACH_HIRE_COST_LEGENDARY;
+            case "Rare" -> STAGECOACH_HIRE_COST_RARE;
+            default -> STAGECOACH_HIRE_COST_COMMON;
+        };
+    }
     public static final int GUILD_LEVEL_COST_BASE = 100;
     public static final int GUILD_MAX_LEVEL = 5;
     public static final int SURVIVALIST_CRAFT_COST = 80;
@@ -56,13 +131,14 @@ public final class HamletService {
         }
         HeroData data = gd.heroes().get(heroId);
         if (data == null) throw new HamletException("Unknown heroId: " + heroId);
-        if (meta.gold() < STAGECOACH_HIRE_COST) {
-            throw new HamletException("Không đủ gold (cần " + STAGECOACH_HIRE_COST + ", có " + meta.gold() + ")");
+        int cost = hireCost(heroId, gd);
+        if (meta.gold() < cost) {
+            throw new HamletException("Không đủ gold (cần " + cost + " cho " + data.rarity() + ", có " + meta.gold() + ")");
         }
         Hero fresh = new Hero(data, Position.POS_1, gd.effects());
         List<HeroState> newRoster = new ArrayList<>(meta.roster());
         newRoster.add(HeroState.from(fresh));
-        return meta.withGold(meta.gold() - STAGECOACH_HIRE_COST).withRoster(newRoster);
+        return meta.withGold(meta.gold() - cost).withRoster(newRoster);
     }
 
     // ---------- Guild ----------

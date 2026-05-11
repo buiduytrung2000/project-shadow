@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Project Shadow — Kế hoạch &amp; Scope</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+<div class="breadcrumb"><a href="../claude.md">← claude.md</a> &middot; docs / project_plan</div>
+
+<div class="banner">
+  <h1>🗓️ Kế hoạch &amp; Scope</h1>
+  <p class="subtitle">Roadmap 48 tuần · Sprint plan (9 sprints) · Feature List · Cắt scope</p>
+</div>
+
+<h1>1. Sprint plan (đang dùng — Java/libGDX)</h1>
+<p>Phương pháp sprint-based, mỗi sprint deliverable rõ ràng + demo. Đang ở <strong>Sprint 9 (Polish)</strong>.</p>
+
+<table>
+<thead><tr><th>Sprint</th><th>Tên</th><th>Deliverable chính</th><th>Trạng thái</th></tr></thead>
+<tbody>
+<tr><td><strong>1</strong></td><td>Data layer</td><td>Load tất cả CSV/JSON → POJO/record, unit test FK refs. <code>14 heroes, 140 skills, 134 effects, 50 items, 15 enemies, 23 enemy skills, 11 events, 14 traits, 3 stages — all FK valid ✅</code></td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>2</strong></td><td>Domain models + business logic</td><td>Hero/Combat objects, turn order, damage formula. Unit tests.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>3</strong></td><td>Effect resolver</td><td>134 effects implementable (data-driven). Demo text-based combat.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>4</strong></td><td>Stage generator</td><td><code>StageGenerator.generate(stage_1.json, seed)</code> → cây spec. ASCII print demo.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>5</strong></td><td>Rendering &amp; UI cơ bản</td><td>Combat scene 4v4 sprite placeholder, HP bar, stress bar, skill row, click execute.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>6</strong></td><td>Save system</td><td>Save/load run state (permadeath), JSON <code>saves/run_*.json</code></td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>7</strong></td><td>Stage map + run loop</td><td>Full Stage 1 playthrough: tutorial combat → path choice → event/combat → boss → end.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>8</strong></td><td>Hamlet + meta progression</td><td>Hub 4 building (Stagecoach, Guild, Survivalist, Caretaker), roster, gold.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>9</strong></td><td>Polish (i18n, audio, animation, juice)</td><td>VN+EN, music+SFX, Aseprite import, particle effects, sprite atlas (PixelLab).</td><td><span class="badge wip">IN PROGRESS</span></td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h1>2. Roadmap 48 tuần (Solo dev — version chi tiết)</h1>
+
+<h2>Giai đoạn 0 — Chuẩn bị (Tuần 1-2)</h2>
+<ul class="checklist">
+  <li class="done">Tạo Excel/CSV: 14 lớp nhân vật, 28 (→140) kỹ năng, 8 (→15) loại quái, 6 bệnh, 8 tính cách, 10 sự kiện</li>
+  <li class="done">Thiết kế cây pathway Stage 1 (3 lớp × 2-3 nhánh)</li>
+  <li class="done">Cài engine (Godot/Unity ← chuyển sang <strong>libGDX + JDK 21</strong>), tạo project, git repo</li>
+</ul>
+
+<h2>Giai đoạn 1 — Core combat (Tuần 3-8)</h2>
+<ul class="checklist">
+  <li class="done">Scene battle với grid 4v4</li>
+  <li class="done">Turn order, UI HP/stress bar tạm</li>
+  <li class="done">2 lớp khởi đầu + 4 skill/lớp, 3 loại quái cơ bản</li>
+  <li class="done">Damage, crit, death logic</li>
+  <li class="done">Target select (chuột), kết thúc battle</li>
+</ul>
+
+<h2>Giai đoạn 2 — Hoàn thiện 4 lớp (Tuần 9-14)</h2>
+<ul class="checklist">
+  <li class="done">Mở rộng từ 4 → <strong>14 lớp</strong> (decision change)</li>
+  <li class="done">10 skill mỗi lớp (chỉ trang bị 4)</li>
+  <li class="done">Màn chọn đội hình</li>
+  <li class="done">Thêm enemy: Cây độc, Bóng đen → mapped to enemy_03 Shadow Wisp</li>
+  <li class="done">Cân bằng sát thương cơ bản</li>
+</ul>
+
+<h2>Giai đoạn 3 — Stress &amp; Affliction (Tuần 15-20)</h2>
+<ul class="checklist">
+  <li class="done">Stress 0-100/hero</li>
+  <li class="done">Sources: bị crit, đồng đội ngã, skill stress</li>
+  <li class="done">resolve() 70% Affliction / 30% Virtue</li>
+  <li class="done">Affliction: Paranoia, Masochist, Cowardly + Virtue: Brave</li>
+  <li class="done">Hành vi bất lợi: skip turn, tự đánh đồng đội, từ chối heal</li>
+  <li class="wip">Icon + màu chữ cho stati</li>
+</ul>
+
+<h2>Giai đoạn 4 — Bệnh tật &amp; Tính cách (Tuần 21-26)</h2>
+<ul class="checklist">
+  <li class="done">6 bệnh: Fever, Plague, Blindness, Nightmare, Cursed, Bloodthirsty</li>
+  <li class="done">Sau màn random 30% chance 1 disease</li>
+  <li class="done">UI xem bệnh ở Hamlet</li>
+  <li class="done">8 tính cách (4 tốt / 4 xấu), 2 traits/hero khi recruit</li>
+  <li class="done">Trait ảnh hưởng hành vi (Cowardly skip turn, Vengeful tự đánh đồng đội...)</li>
+  <li class="done">Save bệnh + trait</li>
+</ul>
+
+<h2>Giai đoạn 5 — Sự kiện &amp; Pathway (Tuần 27-32)</h2>
+<ul class="checklist">
+  <li class="done">JSON pathway: <code>stage_1.json</code> dạng layered_tree</li>
+  <li class="done">Code chọn đường: 2-3 nhánh sau mỗi node</li>
+  <li class="done">11 sự kiện (Stage 1 pool: 6 events)</li>
+  <li class="done">Node reward + node rest</li>
+</ul>
+
+<h2>Giai đoạn 6 — Hamlet &amp; nâng cấp (Tuần 33-36)</h2>
+<ul class="checklist">
+  <li class="done">Scene Hamlet với 4 công trình</li>
+  <li class="done">Stagecoach (tuyển), Caretaker (chữa bệnh), Survivalist (giảm stress), Guild (upgrade skill)</li>
+  <li class="done">Upgrade building (3 cấp/loại)</li>
+  <li class="done">Roster management screen</li>
+</ul>
+
+<h2>Giai đoạn 7 — Random đột biến &amp; vật phẩm (Tuần 37-40)</h2>
+<ul class="checklist">
+  <li class="done">3 biến thể enemy (Base/Tank/Assassin/Special) — đã spec trong CSV</li>
+  <li class="done">50 items (12 consumable + 12 trinket + 14 class-specific + 5 relic + 7 cursed)</li>
+  <li class="done">2 rarity tier (Common→Epic)</li>
+  <li class="done">Random drop sau combat</li>
+  <li class="done">Use item in combat (tốn lượt)</li>
+</ul>
+
+<h2>Giai đoạn 8 — Stage 1 hoàn chỉnh (Tuần 41-44)</h2>
+<ul class="checklist">
+  <li class="done">Stage 1: 3 trận thường + boss Giant Zombie</li>
+  <li class="done">Boss <code>enemy_b01</code> 3 phases (sk_e_b01_smash, putrid_breath, enrage HP&lt;30%)</li>
+  <li class="done">End-stage screen: gold, items, bệnh mới</li>
+  <li class="done">Replay Stage 1 với đội hình mới (roguelite mở rộng)</li>
+</ul>
+
+<h2>Giai đoạn 9 — Polish &amp; UI (Tuần 45-48)</h2>
+<ul class="checklist">
+  <li class="wip">UI chính thức (parchment style, font BeVietnamPro)</li>
+  <li class="wip">3 track nhạc nền: Hamlet, dungeon, combat</li>
+  <li class="wip">15-20 SFX</li>
+  <li class="wip">Splash, main menu, settings (volume, fullscreen)</li>
+  <li class="done">Save/load full state</li>
+  <li class="wip">Sprite atlas — <strong>PixelLab AI batch đang chạy</strong>: 14 heroes + 15 enemies + 5 items + 3 tilesets</li>
+</ul>
+
+<h2>Giai đoạn 10 — Playtest &amp; phát hành (Tuần 49-52)</h2>
+<ul class="checklist">
+  <li>Tự chơi thử 10 lần Stage 1, log bug + cảm giác cân bằng</li>
+  <li>Mời 3-5 bạn chơi thử, thu feedback</li>
+  <li>Sửa crash, logic, cân bằng (stress quá nhanh / quá chậm?)</li>
+  <li>Build Windows + Mac/Linux (Construo)</li>
+  <li>Đăng itch.io / Steam (mô tả + gif)</li>
+</ul>
+
+<hr>
+
+<h1>3. Feature List (15 features)</h1>
+
+<table>
+<thead><tr><th>ID</th><th>Feature</th><th>Category</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>F01</td><td>Turn-based combat (4v4, chọn mục tiêu)</td><td>Combat</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F02</td><td>Hệ thống vị trí (front/back) ảnh hưởng skill</td><td>Combat</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F03</td><td>14 lớp nhân vật, mỗi lớp 10 skill (chọn 4)</td><td>Character</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F04</td><td>Thanh stress 0-100</td><td>Character</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F05</td><td>Affliction + Virtue khi stress=100</td><td>Character</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F06</td><td>6 bệnh tật có hiệu ứng chỉ số</td><td>Character</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F07</td><td>8 tính cách (4 tốt / 4 xấu) ảnh hưởng hành vi</td><td>Character</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F08</td><td>10 sự kiện ngẫu nhiên trong dungeon</td><td>Dungeon</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F09</td><td>Pathway 2-3 nhánh sau mỗi node</td><td>Dungeon</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>F10</td><td>Hamlet: 4 công trình nâng cấp</td><td>Hamlet</td><td><span class="badge done">✅</span></td></tr>
+<tr><td>E01</td><td>Stage 2 và Stage 3 (thêm map, quái, boss)</td><td>Extension</td><td><span class="badge wip">🚧 đã thiết kế JSON + boss CSV + PixelLab</span></td></tr>
+<tr><td>E02</td><td>Permadeath roguelite optional</td><td>Extension</td><td><span class="badge done">✅ default ON</span></td></tr>
+<tr><td>E03</td><td>Achievements</td><td>Extension</td><td><span class="badge todo">❌ post-MVP</span></td></tr>
+<tr><td>E04</td><td>Multi-language (VN + EN)</td><td>Extension</td><td><span class="badge done">✅ Sprint 9 i18n</span></td></tr>
+<tr><td>E05</td><td>Controller support</td><td>Extension</td><td><span class="badge todo">❌ post-MVP</span></td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h1>4. Lời khuyên cắt scope (đã áp dụng)</h1>
+
+<div class="card warn">
+<h3>Đã quyết định cắt</h3>
+<ul>
+  <li><strong>Animation frame-by-frame phức tạp</strong> → chỉ 2-3 frame attack/hurt + tween, không 8-12 frame walk cycle</li>
+  <li><strong>Cốt truyện cinematic</strong> → text intro/outro/event thoại, không cắt cảnh, không lồng tiếng</li>
+  <li><strong>Multiplayer / online</strong> → single-player only</li>
+  <li><strong>Procedural skill generation</strong> → 140 skill cố định</li>
+  <li><strong>Hệ thống ánh sáng động</strong> → background tĩnh + glow đơn giản cho FX</li>
+  <li><strong>Multiple endings phân nhánh</strong> → 1 ending sau khi đánh enemy_b03</li>
+</ul>
+</div>
+
+<div class="card ok">
+<h3>Đã quyết định giữ (dù tốn effort)</h3>
+<ul>
+  <li><strong>Stress system phức tạp</strong> — đặc trưng cốt lõi (giống DD). 70/30 Affliction/Virtue, perm debuffs.</li>
+  <li><strong>Disease + Trait permanent state</strong> — tạo chiều sâu meta.</li>
+  <li><strong>3 stage với boss riêng</strong> — đủ để player có "vertical slice + 2 ext" cho roguelite.</li>
+  <li><strong>14 lớp thay vì 4</strong> — đa dạng team composition (đổi từ plan ban đầu khi thấy mỗi lớp ~50 lines CSV không quá tốn).</li>
+  <li><strong>50 items + 14 effects/disease</strong> — chiều sâu meta progression.</li>
+</ul>
+</div>
+
+<hr>
+
+<h1>5. Hamlet Economy — 3-tier Building Upgrade Plan (lock 2026-05-11)</h1>
+
+<div class="card info">
+<p><strong>Hai currency:</strong> <code>gold</code> (chính, drop nhiều) + <code>heirloom</code> (boss-only, vĩnh viễn). Upgrade buildings tốn cả hai.</p>
+<p><strong>Heirloom drops:</strong> Stage 1 boss = 1, Stage 2 = 2, Stage 3 = 4. Full upgrade cần <strong>14 heirloom</strong> (~4-5 boss kills).</p>
+</div>
+
+<h2>A. Stagecoach (Trại tuyển mộ)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Offer count</th><th>Rarity weights</th><th>Bonus</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>3</td><td>70% Common, 30% Rare</td><td>—</td></tr>
+<tr><td>2</td><td>300g + 1 H</td><td>4</td><td>50% Common, 40% Rare, 10% Legend</td><td>—</td></tr>
+<tr><td>3</td><td>800g + 3 H</td><td>5</td><td>Guaranteed ≥1 Rare; 25% Legend</td><td><strong>Hire cost -20%</strong></td></tr>
+</tbody>
+</table>
+
+<h2>B. Guild (Hội phép — skill upgrade)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Cost reduction</th><th>Max hero lvl</th><th>Bonus</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>—</td><td>5</td><td>—</td></tr>
+<tr><td>2</td><td>250g + 1 H</td><td>-20% level-up cost</td><td>6</td><td>—</td></tr>
+<tr><td>3</td><td>700g + 3 H</td><td>-40% cost</td><td>7</td><td><strong>Skill Reroll 1×/hero</strong></td></tr>
+</tbody>
+</table>
+
+<h2>C. Survivalist (Thợ săn — craft trinket)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Craft rarity</th><th>Craft price</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>Common</td><td>80g</td></tr>
+<tr><td>2</td><td>180g + 1 H</td><td>Uncommon</td><td>150g</td></tr>
+<tr><td>3</td><td>350g + 2 H</td><td>Rare + class-specific</td><td>300g</td></tr>
+</tbody>
+</table>
+
+<h2>D. Caretaker (Người chăm sóc — cure / stress)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Cure slots/visit</th><th>Per-cure cost</th><th>Cursed</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>1 hero</td><td>30g</td><td>❌</td></tr>
+<tr><td>2</td><td>200g + 1 H</td><td>2 heroes</td><td>25g</td><td>❌</td></tr>
+<tr><td>3</td><td>500g + 2 H</td><td>4 heroes</td><td>20g</td><td>❌ (chỉ Paladin Tẩy Trần in combat)</td></tr>
+</tbody>
+</table>
+
+<h3>Total upgrade investment</h3>
+<table>
+<thead><tr><th>Tier</th><th>Gold</th><th>Heirloom</th></tr></thead>
+<tbody>
+<tr><td>All to Lv2</td><td>930g</td><td>4 H</td></tr>
+<tr><td>All to Lv3 (full)</td><td><strong>3,280g</strong></td><td><strong>14 H</strong></td></tr>
+</tbody>
+</table>
+
+<h2>E. Gold persistence — Option C: Supplies Tax</h2>
+
+<table>
+<thead><tr><th>Stage</th><th>Supplies tax (deducted on embark)</th><th>Boss reward gold</th><th>Net if win</th><th>Heirloom drop</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>100g</td><td>200g</td><td>+100g</td><td>1</td></tr>
+<tr><td>2</td><td>200g</td><td>400g</td><td>+200g</td><td>2</td></tr>
+<tr><td>3</td><td>400g</td><td>1000g</td><td>+600g</td><td>4</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+<p><strong>Tax không refund nếu thua.</strong> Tạo "investment feel" — mỗi run là quyết định có cân nhắc. Combined với Heirloom drop chỉ boss kill → khuyến khích chơi cẩn thận, không grind Stage 1 mãi.</p>
+</div>
+
+<h2>F. Implementation status</h2>
+<ul class="checklist">
+  <li class="done">Hire cost by rarity (50/80/150g) — <code>HamletService.hireCost()</code></li>
+  <li class="done">All upgrade cost constants defined in <code>HamletService</code></li>
+  <li class="done">Supplies tax + heirloom helpers (<code>suppliesTax()</code>, <code>heirloomFromBoss()</code>)</li>
+  <li class="wip">MetaState fields cho <code>heirloom</code> + 4 building levels — Sprint 8.5</li>
+  <li class="wip">UI upgrade screens cho 4 building — Sprint 8.5</li>
+  <li class="wip">Cure slot tracking per Hamlet visit — Sprint 8.5</li>
+  <li class="wip">Apply supplies tax in <code>RunSession.startNew()</code> — Sprint 8.5</li>
+  <li class="wip">Boss drops heirloom + apply via <code>HamletService.applyRunOutcome()</code> — Sprint 8.5</li>
+</ul>
+
+<hr>
+
+<h1>6. Cost estimate (PixelLab AI assets)</h1>
+
+<table>
+<thead><tr><th>Loại</th><th>Số lượng</th><th>Credits/each</th><th>Total</th></tr></thead>
+<tbody>
+<tr><td>Heroes (14, 5 credits/each: 1 create + 4 anims)</td><td>14</td><td>5</td><td>70</td></tr>
+<tr><td>Enemies (12, 5 credits/each)</td><td>12</td><td>5</td><td>60</td></tr>
+<tr><td>Bosses (5 — 3 boss + 2 miniboss, 5 credits/each)</td><td>5</td><td>5</td><td>25</td></tr>
+<tr><td>Items (5 core, 1 credit/each, create_object)</td><td>5</td><td>1</td><td>5</td></tr>
+<tr><td>Tilesets (3)</td><td>3</td><td>~1</td><td>3</td></tr>
+<tr><td>Buffer retries (server flake)</td><td>—</td><td>—</td><td>40</td></tr>
+<tr><th colspan="3">TOTAL ước tính</th><th>~200 credits</th></tr>
+</tbody>
+</table>
+
+<div class="card info">
+<p><strong>Cần subscription PixelLab Pro</strong>. Free tier ~50-100 credits/tháng không đủ.</p>
+</div>
+
+<footer>Project Shadow Project Plan &middot; cập nhật 2026-05-11</footer>
+</div>
+</body>
+</html>
