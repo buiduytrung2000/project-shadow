@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.trungbui.projectshadow.combat.CombatReward;
 import com.trungbui.projectshadow.i18n.I18n;
 
@@ -34,7 +35,11 @@ public class CombatRewardPopup extends Table {
     public CombatRewardPopup(Skin skin, CombatReward reward, Runnable onContinue) {
         this.onContinue = onContinue;
 
-        setBackground(skin.getDrawable("default-pane"));
+        // Sprint 10 debug fix: original code called skin.getDrawable("default-pane")
+        // which doesn't exist in our uiskin.json. Pick the first drawable that does
+        // exist; gracefully skip the background if none of the candidates is present.
+        Drawable bg = resolveFirstAvailableDrawable(skin, "tooltip", "window", "list");
+        if (bg != null) setBackground(bg);
         pad(24);
 
         Label title = new Label(I18n.t("combat.reward.title"), skin);
@@ -90,5 +95,23 @@ public class CombatRewardPopup extends Table {
     /** For tests: bypasses libGDX rendering, simulates time advance. */
     public boolean isDismissed() {
         return dismissed;
+    }
+
+    /**
+     * Look up the first drawable name that actually exists in the skin.
+     * Returns null if none match (caller skips setBackground gracefully).
+     *
+     * <p>Skin.getDrawable throws GdxRuntimeException when the name is missing —
+     * which crashed end-of-combat the first time this popup fired. This helper
+     * makes the lookup defensive against future skin tweaks.</p>
+     */
+    static Drawable resolveFirstAvailableDrawable(Skin skin, String... candidates) {
+        if (skin == null || candidates == null) return null;
+        for (String name : candidates) {
+            if (name != null && skin.has(name, Drawable.class)) {
+                return skin.getDrawable(name);
+            }
+        }
+        return null;
     }
 }
