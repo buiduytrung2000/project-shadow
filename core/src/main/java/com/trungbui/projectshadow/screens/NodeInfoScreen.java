@@ -14,19 +14,34 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
+import com.trungbui.projectshadow.data.model.EventChoice;
+import com.trungbui.projectshadow.data.model.EventData;
 import com.trungbui.projectshadow.i18n.I18n;
+import com.trungbui.projectshadow.run.EventOutcomeApplier;
+import com.trungbui.projectshadow.run.RestOptionApplier;
+import com.trungbui.projectshadow.stage.DropEntry;
 import com.trungbui.projectshadow.stage.EventNode;
 import com.trungbui.projectshadow.stage.RestNode;
 import com.trungbui.projectshadow.stage.RestOption;
 import com.trungbui.projectshadow.stage.RewardNode;
 import com.trungbui.projectshadow.stage.StageNode;
-import com.trungbui.projectshadow.stage.DropEntry;
 import com.trungbui.projectshadow.ui.FontFactory;
 
+import java.util.Random;
+
 /**
- * Sprint 7 placeholder screen for non-combat nodes (event / rest / reward).
- * Shows node info + a Continue button. Mechanics for actually applying event/rest/reward
- * effects are deferred to Sprint 8 — for now Continue advances the run with no side effects.
+ * Sprint 10 B3 — non-combat node screen with interactive choices.
+ *
+ * <p>Previously a "Sprint 7 placeholder" (Continue only). Now:</p>
+ * <ul>
+ *   <li><strong>Event nodes</strong>: render 2-3 choice buttons (no outcome preview —
+ *       mystery mode per design lock). Click → {@code EventOutcomeApplier} →
+ *       feedback line + Continue.</li>
+ *   <li><strong>Rest nodes</strong>: render each option as a button. Click →
+ *       {@code RestOptionApplier} → feedback + Continue.</li>
+ *   <li><strong>Reward nodes</strong>: unchanged — drops are auto-applied in
+ *       {@code ProjectShadowGame.finishCurrentNonCombatNode}; Continue advances.</li>
+ * </ul>
  */
 public class NodeInfoScreen implements Screen {
 
@@ -43,6 +58,14 @@ public class NodeInfoScreen implements Screen {
     private final Skin skin;
     private final Stage uiStage;
 
+    /** Sprint 10 B3 — feedback label that mutates after a choice is picked. */
+    private final Label feedbackLabel;
+    /** Tracks whether the player has interacted (for event/rest). Continue is
+     *  always enabled to keep flow simple — but if a choice was already picked,
+     *  buttons disable so player can't double-apply. */
+    private boolean interactionDone = false;
+    private Table choicesContainer;
+
     public NodeInfoScreen(ProjectShadowGame game, StageNode node) {
         this.game = game;
         this.node = node;
@@ -54,6 +77,9 @@ public class NodeInfoScreen implements Screen {
         skin.get(Label.LabelStyle.class).font = vnFont;
         skin.get(TextButton.TextButtonStyle.class).font = vnFont;
         this.uiStage = new Stage(viewport);
+        this.feedbackLabel = new Label("", skin);
+        this.feedbackLabel.setColor(Color.LIGHT_GRAY);
+        this.feedbackLabel.setWrap(true);
         buildUi();
         viewport.apply(true);
     }
@@ -61,17 +87,29 @@ public class NodeInfoScreen implements Screen {
     private void buildUi() {
         Table root = new Table();
         root.setFillParent(true);
-        root.center();
+        root.top().pad(40);
 
         Label title = new Label(headerForType(), skin);
         title.setColor(Color.GOLD);
-
         Label subtitle = new Label(I18n.t("node.subtitle", node.label()), skin);
         subtitle.setColor(Color.LIGHT_GRAY);
 
+        root.add(title).pad(20).row();
+        root.add(subtitle).pad(10).row();
+
+        // Body text (description for event/rest, drop list for reward).
         Label body = new Label(bodyText(), skin);
         body.setColor(Color.WHITE);
         body.setWrap(true);
+        root.add(body).width(1200).pad(20).row();
+
+        // Sprint 10 B3 — interactive choice buttons per node type.
+        choicesContainer = new Table();
+        buildChoicesUi(choicesContainer);
+        root.add(choicesContainer).pad(20).row();
+
+        // Feedback after pick.
+        root.add(feedbackLabel).width(1200).pad(10).row();
 
         TextButton continueBtn = new TextButton(I18n.t("button.continue"), skin);
         continueBtn.addListener(new ChangeListener() {
@@ -80,12 +118,87 @@ public class NodeInfoScreen implements Screen {
                 game.finishCurrentNonCombatNode(node);
             }
         });
-
-        root.add(title).pad(20).row();
-        root.add(subtitle).pad(10).row();
-        root.add(body).width(1200).pad(40).row();
         root.add(continueBtn).width(280).height(70).pad(40);
         uiStage.addActor(root);
+    }
+
+    /** Sprint 10 B3 — choice buttons for event / rest nodes. Reward nodes have
+     *  no interactive choices (drops auto-applied on Continue). */
+    private void buildChoicesUi(Table container) {
+        container.clear();
+        switch (node) {
+            case EventNode en -> {
+                EventData ed = game.gameData().events().get(en.eventId());
+                if (ed == null) {
+                    container.add(new Label("(event " + en.eventId() + " not found)", skin)).row();
+                    return;
+                }
+                for (EventChoice choice : ed.choices()) {
+                    TextButton btn = new TextButton(choice.text(), skin);
+                    btn.addListener(new ChangeListener() {
+                        @Override
+                        public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                            if (interactionDone) return;
+                            EventOutcomeApplier.AppliedSummary summary =
+                                    EventOutcomeApplier.apply(choice, game.runSession(), new Random());
+                            feedbackLabel.setText(summarizeEvent(summary));
+                            interactionDone = true;
+                            buildChoicesUi(container); // re-render to disable buttons
+                        }
+                    });
+                    btn.setDisabled(interactionDone);
+                    container.add(btn).pad(10).width(400).height(60).row();
+                }
+            }
+            case RestNode rn -> {
+                for (RestOption opt : rn.options()) {
+                    String labelText = opt.label() + " (" + opt.effect() + ")";
+                    TextButton btn = new TextButton(labelText, skin);
+                    btn.addListener(new ChangeListener() {
+                        @Override
+                        public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                            if (interactionDone) return;
+                            RestOptionApplier.AppliedSummary summary =
+                                    RestOptionApplier.apply(opt, game.runSession(), new Random());
+                            feedbackLabel.setText(summarizeRest(summary));
+                            interactionDone = true;
+                            buildChoicesUi(container);
+                        }
+                    });
+                    btn.setDisabled(interactionDone);
+                    container.add(btn).pad(10).width(500).height(60).row();
+                }
+            }
+            default -> {
+                // Reward + generic: no interactive choices.
+            }
+        }
+    }
+
+    private static String summarizeEvent(EventOutcomeApplier.AppliedSummary s) {
+        StringBuilder sb = new StringBuilder();
+        if (s.goldDelta != 0) sb.append("Gold ").append(s.goldDelta > 0 ? "+" : "").append(s.goldDelta).append(" · ");
+        if (s.partyStressAdded > 0) sb.append("Party stress +").append(s.partyStressAdded).append(" · ");
+        if (s.singleHeroStressAdded > 0) sb.append("Stress +").append(s.singleHeroStressAdded).append(" · ");
+        if (s.partyDamageDealt > 0) sb.append("Party HP -").append(s.partyDamageDealt).append(" · ");
+        if (s.singleHeroDamageDealt > 0) sb.append("HP -").append(s.singleHeroDamageDealt).append(" · ");
+        if (s.skillCdReset) sb.append("Skill CD reset · ");
+        if (!s.traitsApplied.isEmpty()) sb.append("Trait: ").append(s.traitsApplied).append(" · ");
+        if (!s.diseasesApplied.isEmpty()) sb.append("Disease: ").append(s.diseasesApplied).append(" · ");
+        if (!s.itemsAdded.isEmpty()) sb.append("Item: ").append(s.itemsAdded).append(" · ");
+        return sb.length() == 0 ? "(không có gì xảy ra)" : sb.toString();
+    }
+
+    private static String summarizeRest(RestOptionApplier.AppliedSummary s) {
+        StringBuilder sb = new StringBuilder();
+        if (s.totalHealed > 0) sb.append("Hồi +").append(s.totalHealed).append(" HP · ");
+        if (s.totalStressReduced > 0) sb.append("Stress -").append(s.totalStressReduced).append(" · ");
+        if (s.diseaseRemovedFrom != null) sb.append("Khỏi bệnh: ").append(s.diseaseRemovedId)
+                .append(" (").append(s.diseaseRemovedFrom).append(") · ");
+        if (s.removeDiseaseNoOp) sb.append("(không có bệnh nào để chữa) · ");
+        if (s.buffSkipped) sb.append("(buff chưa hỗ trợ Sprint 10) · ");
+        if (s.skillSwapNeedsUi) sb.append("(skill swap cần UI Sprint 11+) · ");
+        return sb.length() == 0 ? "(không có gì xảy ra)" : sb.toString();
     }
 
     private String headerForType() {
@@ -99,17 +212,13 @@ public class NodeInfoScreen implements Screen {
 
     private String bodyText() {
         return switch (node) {
-            case EventNode e -> I18n.t("node.body.event");
-            case RestNode r -> {
-                StringBuilder sb = new StringBuilder(I18n.t("node.body.restHeader")).append("\n");
-                if (r.options().isEmpty()) sb.append(I18n.t("node.body.restEmpty")).append("\n");
-                for (RestOption o : r.options()) {
-                    sb.append(I18n.t("node.body.restOption",
-                            o.label(), o.effect(), o.target(), o.valueMin(), o.valueMax())).append("\n");
-                }
-                sb.append(I18n.t("node.body.restFooter"));
-                yield sb.toString();
+            case EventNode e -> {
+                EventData ed = game.gameData().events().get(e.eventId());
+                yield ed != null && ed.descriptionVn() != null
+                        ? ed.descriptionVn()
+                        : I18n.t("node.body.event");
             }
+            case RestNode r -> I18n.t("node.body.restHeader");
             case RewardNode r -> {
                 StringBuilder sb = new StringBuilder(I18n.t("node.body.rewardHeader")).append("\n");
                 if (r.drops().isEmpty()) sb.append(I18n.t("node.body.rewardEmpty")).append("\n");
@@ -122,7 +231,6 @@ public class NodeInfoScreen implements Screen {
                     }
                     sb.append(I18n.t("node.body.rewardEntry", line.toString())).append("\n");
                 }
-                sb.append(I18n.t("node.body.rewardFooter"));
                 yield sb.toString();
             }
             default -> I18n.t("node.body.generic", node.type());
@@ -137,28 +245,11 @@ public class NodeInfoScreen implements Screen {
         uiStage.draw();
     }
 
-    @Override
-    public void resize(int width, int height) {
-        viewport.update(width, height, true);
-    }
-
-    @Override
-    public void show() {
-        Gdx.input.setInputProcessor(uiStage);
-    }
-
-    @Override
-    public void hide() {
-        Gdx.input.setInputProcessor(null);
-    }
-
-    @Override
-    public void pause() {
-    }
-
-    @Override
-    public void resume() {
-    }
+    @Override public void resize(int width, int height) { viewport.update(width, height, true); }
+    @Override public void show() { Gdx.input.setInputProcessor(uiStage); }
+    @Override public void hide() { Gdx.input.setInputProcessor(null); }
+    @Override public void pause() { }
+    @Override public void resume() { }
 
     @Override
     public void dispose() {

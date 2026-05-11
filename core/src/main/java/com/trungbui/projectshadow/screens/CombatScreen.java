@@ -63,6 +63,9 @@ public class CombatScreen implements Screen {
     private final ParticleSystem particles = new ParticleSystem();
     private final Runnable onWin;
     private final Runnable onLose;
+    /** Sprint 10 B3 — supplies the reward to show in CombatRewardPopup at end of
+     *  a victorious combat. Null in standalone mode (no popup shown). */
+    private java.util.function.Supplier<com.trungbui.projectshadow.combat.CombatReward> rewardProvider;
 
     private List<CombatantView> heroViews = List.of();
     private List<CombatantView> enemyViews = List.of();
@@ -312,10 +315,39 @@ public class CombatScreen implements Screen {
         controller.executePlayerSkill(idx, target);
     }
 
+    /** Sprint 10 B3 — supplies a function that produces the post-victory reward.
+     *  Called once at combat end (HEROES win) to fetch the reward to display in
+     *  {@link CombatRewardPopup}. Null = no popup (legacy / standalone mode). */
+    public void setRewardProvider(java.util.function.Supplier<com.trungbui.projectshadow.combat.CombatReward> p) {
+        this.rewardProvider = p;
+    }
+
     private void showContinueButton(CombatEncounter.Side winner) {
         if (onWin == null && onLose == null) return; // standalone mode — no callback wiring
         skillTable.clear();
         skillButtons.clear();
+
+        // Sprint 10 B3 — show reward popup on victory if a provider is wired.
+        // Popup auto-dismisses after 3s and runs the onWin transition; manual
+        // Continue click bypasses the timer. Defeat path skips popup.
+        if (winner == CombatEncounter.Side.HEROES && rewardProvider != null) {
+            com.trungbui.projectshadow.combat.CombatReward reward = rewardProvider.get();
+            if (reward != null && !reward.isEmpty()) {
+                Runnable transition = () -> {
+                    if (transitioned) return;
+                    transitioned = true;
+                    onWin.run();
+                };
+                CombatRewardPopup popup = new CombatRewardPopup(skin, reward, transition);
+                // Center the popup on screen.
+                popup.setPosition(
+                        (CombatRenderer.VIRTUAL_WIDTH - popup.getWidth()) / 2f,
+                        (CombatRenderer.VIRTUAL_HEIGHT - popup.getHeight()) / 2f);
+                uiStage.addActor(popup);
+                return; // popup owns the transition trigger; skip the legacy button.
+            }
+        }
+
         TextButton btn = new TextButton(
                 winner == CombatEncounter.Side.HEROES ? I18n.t("combat.continue") : I18n.t("combat.end"),
                 skin);

@@ -16,6 +16,10 @@ public final class StageGenerator {
      *  the layout-RNG sequence (preserves seed→map stability). */
     private static final long BOSS_REWARD_RNG_SALT = 0xB055_05ABL;
 
+    /** Sprint 10 B3: derived RNG for the pre-boss-alt elite layer (boss-alt path).
+     *  Separate stream so adding the alt block doesn't shift the layout sequence. */
+    private static final long PRE_BOSS_ALT_RNG_SALT = 0xA17_E817EL;
+
     public static StageTree generate(StageConfig config, long seed) {
         Random rng = new Random(seed);
         StageTree tree = new StageTree(config.id(), seed);
@@ -50,6 +54,18 @@ public final class StageGenerator {
             prevLayer = generateMinibossLayer(minibossSpec, prevLayer, tree, rng);
         }
 
+        // Sprint 10 B3 — optional pre-boss alt path: 1 elite node spawned parallel
+        // to the rest/event-cuối path. Edges: every layer_3 → boss (existing) AND
+        // every layer_3 → elite → boss (new). Player picks easier resource path or
+        // tougher fight for bonus loot. Uses derived sub-RNG so topology stays
+        // seed-stable when this block is added/removed in JSON.
+        JsonNode preBossSpec = layout.path("pre_boss_alt_layer");
+        List<StageNode> preBossEliteNodes = new ArrayList<>();
+        if (!preBossSpec.isMissingNode()) {
+            Random altRng = new Random(seed ^ PRE_BOSS_ALT_RNG_SALT);
+            preBossEliteNodes = generatePreBossAltLayer(preBossSpec, prevLayer, tree, altRng);
+        }
+
         // Sprint 9+ B2: boss reward uses a derived sub-RNG (seed ^ salt) so reward
         // pre-rolls don't consume from the shared layout stream and change topology.
         Random bossRewardRng = new Random(seed ^ BOSS_REWARD_RNG_SALT);
@@ -57,6 +73,10 @@ public final class StageGenerator {
         tree.addNode(boss);
         for (StageNode prev : prevLayer) {
             tree.addEdge(prev.label(), boss.label());
+        }
+        // Pre-boss elite nodes connect to the boss as alternate path.
+        for (StageNode eliteNode : preBossEliteNodes) {
+            tree.addEdge(eliteNode.label(), boss.label());
         }
 
         applyMaxCombatRule(tree, rules, pools, rng);
@@ -105,6 +125,38 @@ public final class StageGenerator {
             }
         }
         return new BossReward(gold, drops);
+    }
+
+    /**
+     * Sprint 10 B3 — generate the optional pre-boss-alt elite layer. Reads the
+     * {@code pre_boss_alt_layer} block from stage JSON, spawns 1-2 elite combat
+     * nodes, and connects every node in {@code prevLayer} to each elite. The
+     * caller is responsible for connecting elites to the boss node.
+     *
+     * @return list of generated elite nodes (caller links them to boss).
+     */
+    private static List<StageNode> generatePreBossAltLayer(
+            JsonNode spec, List<StageNode> prevLayer, StageTree tree, Random rng) {
+        String prefix = spec.path("label_prefix").asText("PB");
+        int n = spec.path("num_nodes").asInt(1);
+        JsonNode elitePool = spec.path("elite");
+        if (elitePool.isMissingNode()) return List.of();
+
+        List<StageNode> elites = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            String label = prefix + "." + (char) ('A' + i);
+            EliteNode elite = generateEliteNode(label, elitePool, rng);
+            tree.addNode(elite);
+            elites.add(elite);
+        }
+        // Wire every node in prevLayer → each elite. Player at L3 sees both
+        // "L3 → BOSS" and "L3 → PB.A → BOSS" as choices.
+        for (StageNode prev : prevLayer) {
+            for (StageNode e : elites) {
+                tree.addEdge(prev.label(), e.label());
+            }
+        }
+        return elites;
     }
 
     private static List<StageNode> generateMinibossLayer(
