@@ -28,8 +28,11 @@ public final class SaveMigration {
     /** Current schema version for {@link RunState}. */
     public static final int CURRENT_RUN_VERSION = 1;
 
-    /** Current schema version for {@link MetaState}. */
-    public static final int CURRENT_META_VERSION = 1;
+    /** Current schema version for {@link MetaState}. Bumped 1→2 in Sprint 10 B1
+     *  when {@code heirloom} + {@code buildingLevels} + {@code cureSlotsUsedThisVisit}
+     *  fields were added. Legacy v1 saves get default values during load via the
+     *  v1→v2 migration arm below. */
+    public static final int CURRENT_META_VERSION = 2;
 
     private SaveMigration() {
     }
@@ -67,6 +70,15 @@ public final class SaveMigration {
                     "MetaState saveVersion=" + version
                             + " is newer than supported (" + CURRENT_META_VERSION + ")"
                             + ". This save was created by a newer build of the game.");
+        }
+        // Sprint 10 B1 — v1→v2 migration: legacy v1 saves don't have heirloom /
+        // buildingLevels / cureSlotsUsedThisVisit. Jackson will default the missing
+        // fields (ints → 0, Map → null); MetaState's compact constructor then
+        // back-fills (heirloom=0, buildingLevels=all-Lv1, cureSlots=0). We just
+        // bump the version field unconditionally so the loaded record reports v2.
+        if (version < CURRENT_META_VERSION && root.isObject()) {
+            ((com.fasterxml.jackson.databind.node.ObjectNode) root)
+                    .put("saveVersion", CURRENT_META_VERSION);
         }
         return mapper.treeToValue(root, MetaState.class);
     }

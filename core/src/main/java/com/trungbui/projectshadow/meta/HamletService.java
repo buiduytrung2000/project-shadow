@@ -31,6 +31,9 @@ public final class HamletService {
     public static final int STAGECOACH_HIRE_COST_RARE = 80;
     public static final int STAGECOACH_HIRE_COST_LEGENDARY = 150;
     public static final int STAGECOACH_OFFER_COUNT = 3;
+    /** Sprint 10 B1 — cost per "Refresh" click on Stagecoach. Closes the save-scum
+     *  loophole where players could re-roll offers free until a Legendary appeared. */
+    public static final int STAGECOACH_REFRESH_COST = 50;
 
     // ───── 3-tier building upgrade costs (2026-05-11 design lock) ─────
     // Stagecoach Lv1 (default) → Lv2 → Lv3
@@ -124,6 +127,49 @@ public final class HamletService {
         java.util.Collections.shuffle(candidates, new java.util.Random(rng.nextLong()));
         int take = Math.min(STAGECOACH_OFFER_COUNT, candidates.size());
         return List.copyOf(candidates.subList(0, take));
+    }
+
+    /**
+     * Sprint 10 B1 — auto-cull random heroes from {@code meta.roster} until it fits
+     * {@link MetaState#SOFT_ROSTER_CAP}. Picked-party heroes are protected from culling.
+     * Called by {@code ProjectShadowGame.startNewRun} when {@link MetaState#isRosterOverCap()}
+     * is true. Player was warned by HamletScreen UI before this point.
+     *
+     * @param meta current meta state (may be over cap)
+     * @param protectedHeroIds heroes that MUST survive the cull (the embarking party)
+     * @return new MetaState with roster trimmed to cap
+     */
+    public static MetaState autoCullRosterToCap(MetaState meta, List<String> protectedHeroIds) {
+        if (!meta.isRosterOverCap()) return meta;
+        Set<String> protect = Set.copyOf(protectedHeroIds);
+        List<HeroState> keep = new ArrayList<>();
+        List<HeroState> cullable = new ArrayList<>();
+        for (HeroState rs : meta.roster()) {
+            if (protect.contains(rs.heroId())) keep.add(rs);
+            else cullable.add(rs);
+        }
+        int targetSize = MetaState.SOFT_ROSTER_CAP;
+        int toKeepFromCullable = Math.max(0, targetSize - keep.size());
+        // Shuffle the cullable list with a fresh RNG and keep the first N.
+        java.util.Collections.shuffle(cullable, new java.util.Random());
+        List<HeroState> survivors = cullable.stream().limit(toKeepFromCullable).toList();
+        List<HeroState> newRoster = new ArrayList<>(keep);
+        newRoster.addAll(survivors);
+        return meta.withRoster(newRoster);
+    }
+
+    /**
+     * Sprint 10 B1 — paid refresh of Stagecoach offers. Costs {@link #STAGECOACH_REFRESH_COST}
+     * gold. Throws if player can't afford. Returns updated MetaState (gold deducted).
+     * Caller is responsible for re-calling {@link #rollStagecoachOffers} to get the new
+     * offer list (kept separate so the offer roll itself stays free of side effects).
+     */
+    public static MetaState payStagecoachRefresh(MetaState meta) {
+        if (meta.gold() < STAGECOACH_REFRESH_COST) {
+            throw new HamletException(I18n.t("error.notEnoughGold",
+                    STAGECOACH_REFRESH_COST, meta.gold()));
+        }
+        return meta.withGold(meta.gold() - STAGECOACH_REFRESH_COST);
     }
 
     public static MetaState hireHero(MetaState meta, String heroId, GameData gd) {

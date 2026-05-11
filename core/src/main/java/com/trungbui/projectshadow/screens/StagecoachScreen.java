@@ -115,11 +115,20 @@ public class StagecoachScreen implements Screen {
             root.row();
         }
 
-        TextButton refresh = new TextButton(I18n.t("stagecoach.refresh"), skin);
+        // Sprint 10 B1: refresh now costs gold (was free → save-scum loophole).
+        TextButton refresh = new TextButton(
+                I18n.t("stagecoach.refresh", HamletService.STAGECOACH_REFRESH_COST), skin);
+        refresh.setDisabled(game.meta().gold() < HamletService.STAGECOACH_REFRESH_COST);
         refresh.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
-                rerollOffers(false);
+                try {
+                    MetaState newMeta = HamletService.payStagecoachRefresh(game.meta());
+                    game.applyMeta(newMeta);
+                    rerollOffers(false);
+                } catch (HamletService.HamletException ex) {
+                    rebuildUi(ex.getMessage());
+                }
             }
         });
         TextButton back = new TextButton(I18n.t("button.back"), skin);

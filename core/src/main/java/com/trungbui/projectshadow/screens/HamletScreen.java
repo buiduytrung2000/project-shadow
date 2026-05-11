@@ -114,6 +114,20 @@ public class HamletScreen implements Screen {
             root.add(warn).colspan(4).pad(10);
         }
 
+        // Sprint 10 B1 — soft-cap warning. Player can keep tuyển but will lose
+        // random excess heroes on embark.
+        if (game.meta().isRosterOverCap()) {
+            root.row();
+            Label rosterWarn = new Label(
+                    I18n.t("hamlet.rosterOverCap",
+                            game.meta().roster().size(),
+                            MetaState.SOFT_ROSTER_CAP,
+                            game.meta().rosterCullExcess()),
+                    skin);
+            rosterWarn.setColor(Color.SALMON);
+            root.add(rosterWarn).colspan(4).pad(10);
+        }
+
         uiStage.addActor(root);
         viewport.apply(true);
     }
