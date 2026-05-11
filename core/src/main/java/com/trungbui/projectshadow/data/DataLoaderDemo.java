@@ -15,9 +15,7 @@ import java.util.Set;
 public final class DataLoaderDemo {
 
     public static final Set<String> KNOWN_TODO_REFS = Set.of(
-            "enemy_b02", "enemy_b03",
-            "enemy_mb01", "enemy_mb02",
-            "item_gold", "random_boss_pool"
+            "item_gold", "random_boss_pool", "random_uncommon_trinket"
     );
 
     private DataLoaderDemo() {

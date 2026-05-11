@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Project Shadow — Kỹ thuật &amp; Data</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+<div class="breadcrumb"><a href="../claude.md">← claude.md</a> &middot; docs / technical_data</div>
+
+<div class="banner">
+  <h1>🔧 Kỹ thuật &amp; Data</h1>
+  <p class="subtitle">JSON schemas, API pseudocode, flowcharts</p>
+</div>
+
+<h1>1. JSON Schemas (mẫu)</h1>
+
+<h2>Hero</h2>
+<pre><code>{
+  "id": "hero_01",
+  "nameVN": "Chiến Binh",
+  "nameEN": "Warrior",
+  "rarity": "Common",
+  "role": "Tank / DPS",
+  "position": "Front",
+  "baseStats": {
+    "hp": 31, "dmgMin": 6, "dmgMax": 10,
+    "accuracy": 85, "crit": 0.08, "speed": 3,
+    "stressResist": 0.20
+  },
+  "levelUpBonuses": {
+    "hp": 3, "dmg": 1, "crit": 0.01, "stressResist": 0.02
+  },
+  "defaultSkills":   ["sk_w1", "sk_w2", "sk_w3", "sk_w4"],
+  "availableSkills": ["sk_w1","sk_w2","sk_w3","sk_w4","sk_w5","sk_w6","sk_w7","sk_w8","sk_w9","sk_w10"]
+}</code></pre>
+
+<h2>Skill</h2>
+<pre><code>{
+  "id": "sk_w1",
+  "nameVN": "Đòn Kiếm",
+  "nameEN": "Sword Strike",
+  "heroClass": "Warrior",
+  "isOffensive": true,
+  "targetType": "front_enemy",
+  "damageMultiplier": 1.0,
+  "accuracyMod": 0,
+  "cooldown": 0,
+  "stressDamage": 0,
+  "rarity": "Common",
+  "effects": [
+    { "effectId": "eff_stun", "value": 1, "chance": 0.5, "duration": 1 }
+  ],
+  "descriptionVN": "Đòn cơ bản. Đánh 1 địch hàng đầu, không hiệu ứng phụ."
+}</code></pre>
+
+<h2>Enemy</h2>
+<pre><code>{
+  "id": "enemy_01",
+  "name": "Goblin",
+  "baseStats": {
+    "hp": 12, "dmgMin": 3, "dmgMax": 6,
+    "crit": 0.05, "stressResist": 0.10, "accuracy": 80
+  },
+  "skills": ["sk_e_stab"],
+  "specialSkill": null,
+  "variants": [
+    { "id": "enemy_01_tank",     "name": "Goblin Tank",    "hpMult": 1.5, "dmgMult": 0.8 },
+    { "id": "enemy_01_assassin", "name": "Goblin Assassin","hpMult": 0.7, "dmgMult": 1.4 },
+    { "id": "enemy_01_special",  "name": "Goblin Shaman",  "hpMult": 1.0, "dmgMult": 0.6,
+      "specialSkill": "sk_e_self_heal" }
+  ],
+  "dropTable": [
+    { "itemId": "item_c01", "chance": 0.30 }
+  ]
+}</code></pre>
+
+<h2>Item</h2>
+<pre><code>{
+  "id": "item_c03",
+  "nameVN": "Hương Trầm Tĩnh Tâm",
+  "nameEN": "Calming Incense",
+  "category": "consumable",
+  "subcategory": "stress",
+  "isRemovable": true,
+  "restrictedToClass": "All",
+  "primaryEffect": {
+    "effectId": "eff_stress_reduce",
+    "value": -20,
+    "target": "all_allies",
+    "duration": "instant"
+  },
+  "secondaryEffect": null,
+  "rarity": "Common",
+  "priceGold": 60,
+  "canDrop": true,
+  "canBuy": true,
+  "descriptionVN": "Giảm 20 stress toàn đội ngay lập tức..."
+}</code></pre>
+
+<h2>Effect</h2>
+<pre><code>{
+  "effectId": "eff_burn",
+  "nameVN": "Bỏng", "nameEN": "Burn",
+  "category": "dot",
+  "isRemovable": true,
+  "durationType": "turns",
+  "defaultDuration": 3,
+  "statAffected": "hp",
+  "modifierType": "flat_per_turn",
+  "modifierValue": 2,
+  "canStack": true,
+  "maxStacks": 5,
+  "trigger": "on_turn_start",
+  "sourceExamples": "Pyromancer Ignite, item_c09 Combustion Flask",
+  "descriptionVN": "Cháy: mất 2 HP/lượt cho mỗi stack, tối đa 5 stack."
+}</code></pre>
+
+<h2>Event</h2>
+<pre><code>{
+  "id": "event_open_tomb",
+  "name": "Mộ cổ mở nắp",
+  "description": "Bạn thấy một cỗ quan tài lấp lánh. Mở hay không?",
+  "choices": [
+    {
+      "text": "Mở ra",
+      "outcomes": [
+        { "type": "damage", "target": "random_hero", "value": "5-10", "chance": 0.5 },
+        { "type": "gold",   "value": 500,                            "chance": 0.5 }
+      ]
+    },
+    {
+      "text": "Bỏ qua",
+      "outcomes": [
+        { "type": "stress", "target": "party", "value": 5 }
+      ]
+    }
+  ]
+}</code></pre>
+
+<h2>Stage</h2>
+<p>Xem chi tiết: <a href="pathway_stage1.html">pathway_stage1.html</a></p>
+
+<hr>
+
+<h1>2. Cấu trúc thư mục</h1>
+<pre><code>ProjectShadow/
+├── assets/
+│   ├── data/
+│   │   ├── heroes.csv
+│   │   ├── skills.csv
+│   │   ├── effects.csv
+│   │   ├── items.csv
+│   │   ├── enemies.csv
+│   │   ├── enemy_skills.csv
+│   │   ├── events.csv
+│   │   ├── diseases_traits.csv
+│   │   └── stages/
+│   │       ├── stage_1.json
+│   │       ├── stage_2.json
+│   │       └── stage_3.json
+│   ├── sprites/
+│   │   ├── raw/                     ← PNG frames per character
+│   │   ├── combatants.atlas
+│   │   └── combatants.png
+│   ├── music/
+│   ├── sfx/
+│   ├── fonts/BeVietnamPro-Regular.ttf
+│   └── ui/uiskin.json
+├── core/                            ← Java library (game logic)
+│   └── src/main/java/com/trungbui/projectshadow/
+│       ├── data/                    ← GameData, DataLoaderDemo, *Loader
+│       ├── domain/                  ← Hero, Combatant, CombatEncounter
+│       ├── combat/                  ← TurnOrder, DamageFormula, TargetSelector
+│       ├── effect/                  ← Effect, ActiveEffects
+│       ├── stage/                   ← StageGenerator, StageNode
+│       ├── meta/                    ← MetaState, HamletService
+│       ├── run/                     ← RunSession, SaveManager
+│       ├── screens/                 ← ScreenAdapter implementations
+│       └── i18n/                    ← I18n (vi/en bundles)
+├── lwjgl3/                          ← Desktop launcher (LWJGL3)
+├── scripts/
+│   └── process_pixellab_sprites.sh
+├── docs/                            ← Tài liệu thiết kế (HTML)
+└── .pixellab-ids.json               ← UUID tracking</code></pre>
+
+<hr>
+
+<h1>3. API nội bộ (pseudocode)</h1>
+
+<h2>Combat Manager</h2>
+<pre><code>// Khởi tạo combat với đội hình hero và enemy list
+void StartCombat(List&lt;Hero&gt; heroes, List&lt;Enemy&gt; enemies);
+
+// Xác định thứ tự lượt dựa trên speed (Combatant.speed + random)
+List&lt;Combatant&gt; DetermineTurnOrder();
+
+// Xử lý một lượt của combatant (hero hoặc enemy)
+void ProcessTurn(Combatant current);
+
+// Khi hero chọn skill
+void UseSkill(Hero user, Skill skill, List&lt;Combatant&gt; targets);
+
+// Tính toán sát thương (xem game_systems.html § 6)
+int CalculateDamage(Hero attacker, Enemy target, Skill skill, bool isCrit);
+
+// Áp dụng effect (stun, poison, riposte, heal, stress...)
+void ApplyEffect(Combatant target, Effect effect);
+
+// Kiểm tra kết thúc combat (mọi hero hoặc mọi enemy có HP <= 0)
+bool IsCombatEnded();</code></pre>
+
+<h2>Stress &amp; Affliction System</h2>
+<pre><code>// Thêm stress (clamp 0..100)
+void AddStress(Hero hero, int amount);
+
+// Khi stress >= 100 → trigger resolve
+void ResolveStress(Hero hero);
+
+// 70% chance Affliction, 30% chance Virtue
+Affliction SelectRandomAffliction();
+Virtue     SelectRandomVirtue();
+
+// Áp dụng / hủy
+void ApplyAffliction(Hero hero, Affliction aff);
+void RemoveAffliction(Hero hero);</code></pre>
+
+<h2>Dungeon Navigation</h2>
+<pre><code>// Tạo dungeon từ stage data + seed
+Dungeon GenerateDungeon(StageConfig stage, long seed);
+
+// Hiển thị các lựa chọn pathway tại node hiện tại
+List&lt;PathNode&gt; GetCurrentChoices();
+
+// Khi người chơi chọn một nhánh
+void ChoosePath(PathNode chosenNode);
+
+// Xử lý node hiện tại (combat, event, rest, reward...)
+void ProcessCurrentNode();
+
+// Chuyển sang node tiếp theo
+void AdvanceToNextNode();</code></pre>
+
+<h2>Event Handler</h2>
+<pre><code>void TriggerEvent(EventData eventData);
+void ShowEventUI(EventData eventData);
+void ApplyEventOutcome(List&lt;Outcome&gt; outcomes);
+Outcome PickRandomOutcome(List&lt;Outcome&gt; outcomes);</code></pre>
+
+<h2>Hamlet Manager</h2>
+<pre><code>void InitHamlet();
+void UpgradeBuilding(BuildingType type);
+bool CureDisease(Hero hero, Disease disease);
+void ReduceStressInTavern(Hero hero);
+Hero RecruitHero(string className);</code></pre>
+
+<h2>Save/Load</h2>
+<pre><code>void SaveGame(string slotName);
+void LoadGame(string slotName);
+
+struct SaveData {
+    string version;
+    int gold;
+    List&lt;HeroSave&gt; heroes;
+    List&lt;BuildingSave&gt; buildings;
+    int currentStage;
+    int dungeonProgress;
+}</code></pre>
+
+<hr>
+
+<h1>4. Flowcharts</h1>
+
+<h2>Combat Turn Flow</h2>
+<div class="flowchart">Start Turn
+    │
+    ▼
+Determine Turn Order (by speed)
+    │
+    ▼
+┌─→ Has combatant left? ──No──→ End Combat
+│   │ Yes
+│   ▼
+│   Combatant type?
+│   ├─ Hero  → Show skill menu → Player chooses → Calculate dmg & effects ─┐
+│   │                                                                      │
+│   └─ Enemy → AI picks skill  → Use on target ───────────────────────────┤
+│                                                                          │
+└──────────────── Apply damage, stress, effects ◄──────────────────────────┘
+                        │
+                        ▼
+                  Remove dead combatants
+                        │
+                        └───── loop ─────►</div>
+
+<h2>Stress Resolution Flow</h2>
+<div class="flowchart">Add Stress
+    │
+    ▼
+Stress >= 100? ──No──→ Return
+    │ Yes
+    ▼
+Resolve → random(0,1)
+    │
+    ├── ≤ 0.7 → Pick random Affliction → Apply modifiers ──┐
+    │                                                       │
+    └── > 0.7 → Pick random Virtue     → Apply buffs    ────┤
+                                                            │
+                              Set stress to 0 ◄─────────────┘</div>
+
+<h2>Dungeon Pathway Flow</h2>
+<div class="flowchart">Enter Dungeon → Load stage_N.json
+    │
+    ▼
+┌─→ Current node index &lt; total? ──No──→ Fight boss → End stage
+│   │ Yes
+│   ▼
+│   Get current node
+│   │
+│   ▼
+│   Node type?
+│   ├─ Combat  → Start combat → Win? → rewards + advance
+│   ├─ Event   → Trigger event → outcomes → advance
+│   ├─ Rest    → Choose hero → stress reduce → advance
+│   ├─ Reward  → Roll drop table → give items → advance
+│   └─ Choice  → Show 2-3 branches → player picks → next layer
+│                                                            │
+└──────────────────────────────────────────────────────────►─┘</div>
+
+<h2>Event Processing Flow</h2>
+<div class="flowchart">Trigger Event → Load event data
+    │
+    ▼
+Show description + choices
+    │
+    ▼
+Player selects choice
+    │
+    ▼
+For each outcome in choice:
+    │
+    ▼
+random check → Pass → Apply outcome effect
+              → Fail → Skip
+    │
+    ▼
+Update UI + game state
+    │
+    ▼
+Continue dungeon</div>
+
+<h2>Hamlet Management Flow</h2>
+<div class="flowchart">Enter Hamlet → Show main UI
+    │
+    ▼
+Player action?
+    ├─ Upgrade building → Check gold + level → Upgrade
+    ├─ Cure disease     → Select hero + disease → Pay gold → Remove
+    ├─ Reduce stress    → Select hero → Pay gold → -stress
+    ├─ Recruit hero     → Generate random hero → Add to roster
+    └─ Start next stage → Load dungeon</div>
+
+<hr>
+
+<h1>5. Data integrity rules (Foreign keys)</h1>
+<div class="card info">
+<p>Tất cả ID references được validate bằng <code>DataLoaderDemo.validateForeignKeys(gd)</code>. Test: <code>DataIntegrityTest.allValidations_clean</code>.</p>
+</div>
+
+<h3>Ràng buộc</h3>
+<table>
+<thead><tr><th>From</th><th>Field</th><th>References</th></tr></thead>
+<tbody>
+<tr><td>Hero</td><td>defaultSkills[], availableSkills[]</td><td>skills.csv</td></tr>
+<tr><td>Skill</td><td>primaryEffectId</td><td>effects.csv</td></tr>
+<tr><td>Item</td><td>effectId, secondaryEffectId</td><td>effects.csv</td></tr>
+<tr><td>Enemy</td><td>skill1, skill2, specialSkill</td><td>enemy_skills.csv</td></tr>
+<tr><td>Enemy</td><td>dropItem</td><td>items.csv OR <code>KNOWN_TODO_REFS</code> (random_boss_pool, item_gold, random_uncommon_trinket)</td></tr>
+<tr><td>EnemySkill</td><td>effectId</td><td>effects.csv (nullable)</td></tr>
+<tr><td>Stage</td><td>enemiesUsed[], enemySkillsUsed[], eventsUsed[], itemsReferenced[]</td><td>tương ứng</td></tr>
+</tbody>
+</table>
+
+<footer>Project Shadow GDD &middot; cập nhật 2026-05-11</footer>
+</div>
+</body>
+</html>

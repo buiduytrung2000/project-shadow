@@ -1,0 +1,204 @@
+# 🌑 Project Shadow — Game Design Hub
+
+> **Codename:** Project Shadow · **Working title:** *Shadow of the Soul*
+> **Genre:** Turn-based dungeon crawl roguelite (lấy cảm hứng Darkest Dungeon)
+> **Engine:** libGDX + JDK 21 · **Target platforms:** Windows, macOS, Linux desktop
+> **Solo dev project** · **Status:** Sprint 9 / 9 (Polish) đang chạy
+
+---
+
+## 📖 Tổng quan dự án
+
+**Project Shadow** là một game RPG chiến thuật theo lượt nơi người chơi dẫn dắt 4 "linh hồn sa ngã" qua các ngục tối ngẫu nhiên, đối mặt với enemies, stress, bệnh tật và affliction. Lấy cảm hứng từ **Darkest Dungeon** nhưng *điều chỉnh để dễ tiếp cận hơn* — độ khó tăng dần theo lựa chọn của người chơi.
+
+### Mục tiêu MVP
+- **3 stage** với boss riêng (b01 Giant Zombie, b02 Whispering Shade, b03 Black Heart).
+- **14 lớp nhân vật**, mỗi lớp 10 skill (chọn 4 / run).
+- **15 enemies** (11 thường + 3 boss + 2 miniboss Stage 3).
+- **50 items** (consumable + trinket + class-specific + relic + cursed).
+- **Hamlet hub** với 4 công trình (Stagecoach, Guild, Survivalist, Caretaker).
+- **Stress system** với Affliction (70%) / Virtue (30%) khi stress ≥ 100.
+- **Pathway dạng cây** (layered_tree) — branching, weighted random.
+- **Permadeath**, **save/load JSON**, **i18n VN/EN**.
+
+### Ba trụ cột thiết kế
+1. **Dễ tiếp cận, khó làm chủ** — Stage 1 nhẹ nhàng, Stage 3 đè áp lực tâm lý lẫn chiến thuật.
+2. **Ngẫu nhiên bất định nhưng công bằng** — Mỗi run unique nhưng player có thể đọc và quyết định.
+3. **Tâm lý đội nhóm là vũ khí &amp; kẻ thù** — Stress + disease + trait ảnh hưởng trực tiếp hành vi.
+
+---
+
+## 📚 Danh mục tài liệu
+
+Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
+
+| File | Nội dung |
+|---|---|
+| [docs/design_overview.html](docs/design_overview.html) | **Thiết kế tổng quan** — Concept, Cốt truyện, Core Loop (micro/mid/macro), Art Style, Âm thanh |
+| [docs/game_systems.html](docs/game_systems.html) | **Hệ thống &amp; Cân bằng** — Bảng Heroes/Enemies/Items/Diseases/Traits + công thức damage |
+| [docs/technical_data.html](docs/technical_data.html) | **Kỹ thuật &amp; Data** — JSON schemas (hero/skill/enemy/item/event/effect), API pseudocode, flowcharts |
+| [docs/pathway_stage1.html](docs/pathway_stage1.html) | **Stage 1 pathway** — JSON đầy đủ, pools, rules, thuật toán sinh stage (pseudocode) |
+| [docs/project_plan.html](docs/project_plan.html) | **Kế hoạch &amp; Scope** — Sprint plan 9 sprints, Roadmap 48 tuần, Feature List với status |
+| [docs/notes_and_considerations.html](docs/notes_and_considerations.html) | **Notes** — Out-of-scope, có thể phát triển thêm (post-MVP), còn mơ hồ |
+
+### Source data (CSV/JSON)
+- `assets/data/heroes.csv` — 14 heroes
+- `assets/data/skills.csv` — 140 skills
+- `assets/data/effects.csv` — 134 effects (data-driven)
+- `assets/data/items.csv` — 50 items
+- `assets/data/enemies.csv` — 15 enemies (incl. 3 boss + 2 miniboss)
+- `assets/data/enemy_skills.csv` — 23 enemy skills
+- `assets/data/events.csv` — 11 events
+- `assets/data/diseases_traits.csv` — 14 traits (6 disease + 8 personality)
+- `assets/data/stages/stage_1.json` — Stage 1 (layered_tree, fully implemented)
+- `assets/data/stages/stage_2.json` — Stage 2 spec (boss enemy_b02)
+- `assets/data/stages/stage_3.json` — Stage 3 spec (miniboss layer + final boss enemy_b03)
+
+### Code (Java/libGDX)
+- `core/src/main/java/com/trungbui/projectshadow/` — game logic library
+- `lwjgl3/src/main/java/...` — desktop launcher
+- `core/src/test/java/...` — JUnit 5 tests (247 tests, all passing ✅)
+
+---
+
+## 🛠️ Hướng dẫn sử dụng (solo dev)
+
+### Khi cần **xem tổng quan**
+→ Đọc theo thứ tự: [design_overview](docs/design_overview.html) → [game_systems](docs/game_systems.html) → [project_plan](docs/project_plan.html).
+
+### Khi cần **implement feature mới**
+1. Check [project_plan.html § Feature List](docs/project_plan.html) — feature đã có spec chưa?
+2. Đọc [technical_data.html](docs/technical_data.html) cho JSON schema + API pseudocode.
+3. Update `assets/data/*.csv` hoặc `*.json` nếu thay đổi data shape.
+4. Update test ở `core/src/test/.../DataIntegrityTest.java` — sửa `loadCounts_match_expected` nếu thay số rows.
+5. Chạy `./gradlew core:test` để verify FK.
+
+### Khi cần **thêm nhân vật / enemy / item mới**
+1. Thêm row vào CSV tương ứng.
+2. Reference đến effects/skills phải tồn tại trong CSV gốc (FK check).
+3. Nếu pseudo-id (e.g. `random_boss_pool`) → thêm vào `DataLoaderDemo.KNOWN_TODO_REFS`.
+4. Update [game_systems.html](docs/game_systems.html) bảng tương ứng.
+5. Queue PixelLab AI sprite qua MCP nếu cần visual.
+
+### Khi cần **chạy game**
+```bash
+./gradlew lwjgl3:run         # Khởi động desktop
+./gradlew core:test          # Chạy 247 unit tests
+./gradlew core:runDemo       # CLI verify CSV/JSON load
+./gradlew core:packAssets    # Pack PNG → combatants.atlas
+```
+
+### Khi sprite atlas thay đổi
+1. PixelLab AI batch tạo sprite (xem [Notes & Considerations § PixelLab](docs/notes_and_considerations.html)).
+2. Download ZIP qua script `scripts/process_pixellab_sprites.sh`.
+3. Frames rename + copy vào `assets/sprites/raw/<id>_<tag>_<frame>.png`.
+4. `./gradlew core:packAssets` rebuild atlas.
+
+---
+
+## 🏛️ Lịch sử các quyết định thiết kế quan trọng
+
+### Tại sao giữ Stress system (mặc dù phức tạp)?
+**Đặc trưng cốt lõi**. Cắt = mất identity, lẫn vào các roguelite turn-based khác. DD chứng minh stress là cơ chế hay nếu balance đúng — chúng ta giảm khắc nghiệt (Stage 1 ít stress) nhưng vẫn giữ Affliction/Virtue resolution để có "spike" cảm xúc.
+
+### Tại sao 14 lớp thay vì 4 (như plan ban đầu)?
+**Đa dạng team composition**. Mỗi lớp CSV ~50 dòng (10 skill × ~5 col) — không quá tốn. Người chơi muốn experiment với 4-hero combos → 14 lớp cho ~1000 team comps khả thi. Plan ban đầu 4 lớp quá ít.
+
+### Tại sao chỉ 3 stage (không phải 5-10)?
+**Scope solo dev**. Mỗi stage = pathway + pool + 1 boss + ~6 events + balance pass. 3 stage là sweet spot: đủ "vertical slice + 2 ext" cho roguelite. Stage 4-5 sẽ là DLC nếu game thành công.
+
+### Tại sao libGDX (không Godot/Unity)?
+**Java/JDK 21 dev đã biết**, type-safe domain model, atlas + freetype + audio mature. Godot có nhưng dùng GDScript chậm cho game lớn. Unity license + .NET overhead không cần thiết cho 2D pixel.
+
+### Tại sao data-driven effect resolver?
+**1 generic engine** đọc 134 effect rows từ CSV → switch behavior. Thay vì viết 134 class. Maintainability cao + designer có thể tinh chỉnh balance bằng spreadsheet.
+
+### Tại sao Stage 1 dùng `layered_tree` (không "DAG ngẫu nhiên")?
+- **3 layer × 2 node/layer + fully_connected**: 4 path/run khả thi.
+- Đủ branching cho replay value, không quá phức tạp implementation.
+- Player thấy được full tree → có thể plan trước (giảm frustration).
+
+### Tại sao thêm `enemy_b02`, `enemy_b03`, `enemy_mb01/02` vào CSV?
+**Stage 2/3 JSON đã reference** → cần data layer match. Stage 3 cần miniboss layer (L6) để tạo "test cuối trước final boss" — giống DD's "Champion fight" pattern.
+
+### Tại sao Permadeath ON by default?
+**Roguelite identity**. Người chơi muốn casual có thể save scum (manual file backup), nhưng default = permadeath để keep stake. Caretaker chữa **disease** ≠ revive hero.
+
+### Tại sao Vietnamese primary + English secondary?
+**Dev native VN**, viết content nhanh hơn. Market: VN gamer chưa được phục vụ với genre này. EN cho global reach. Hai ngôn ngữ qua `I18n.toggleLocale()` Sprint 9.
+
+### Tại sao PixelLab AI cho sprite?
+**Solo dev không có ~200h vẽ 30+ characters × 4 anims**. PixelLab AI cho consistent style + 5 credits/character (~$0.10 / char). Risk: server flake → đã có retry strategy (v2/v3/v4 nếu fail).
+
+---
+
+## ✅ Checklist hiện trạng dự án (2026-05-11)
+
+### Sprint 1-8 (Data + Logic + UI + Save + Hamlet)
+- [x] Data layer — 14 heroes, 140 skills, 134 effects, 50 items, 15 enemies, 23 enemy skills, 11 events, 14 traits, 3 stages
+- [x] Domain models (Hero, Combatant, CombatEncounter, Effect, ActiveEffects)
+- [x] Combat logic (turn order, damage formula, target selector)
+- [x] Effect resolver (data-driven, 134 effect types)
+- [x] Stage generator (`StageGenerator.generate(stage_1.json, seed)`)
+- [x] StageMapScreen render + click navigation
+- [x] Save/load run state (JSON `saves/run_*.json`)
+- [x] Hamlet hub: 4 buildings (Stagecoach/Guild/Survivalist/Caretaker)
+- [x] **247 unit tests passing** (DataIntegrityTest + 21 other test classes)
+
+### Sprint 9 (Polish) — đang chạy
+- [x] I18n VN + EN với toggle button
+- [x] AudioManager (music + SFX skeleton)
+- [x] Save/load Hamlet roster + meta state
+- [x] PixelLab AI sprite batch:
+  - [x] **14/14 heroes** base + 4 anims each (hero_02 missing dead anim)
+  - [x] **3/3 boss** base created (anims trong queue): enemy_b01 Giant Zombie, b02 Whispering Shade, b03 Black Heart
+  - [x] **2/2 miniboss** base created: enemy_mb01 Echo Wraith, mb02 Plague Bearer
+  - [x] **8/11 enemies** base done; assassin v3 + special v4 + tank v2 retry succeeded
+  - [x] **5/5 core items** queued (item_c01, c03, t02, t07, t10)
+  - [x] **2/3 tilesets** queued (stage_1 Hầm Mộ, stage_2 Sương Mù; stage_3 đang chờ slot)
+- [ ] Particle effects khi crit/affliction
+- [ ] Splash screen, main menu, settings UI
+- [ ] Aseprite-style animation refinement (tween + 2-3 frame)
+
+### Out of scope MVP (đã quyết định cắt)
+- ❌ Multiplayer / co-op / PvP
+- ❌ Cinematic cutscenes + voice acting
+- ❌ Procedural skill generation
+- ❌ Mobile / console port
+- ❌ Achievement system in-game
+- ❌ Controller native support
+- ❌ Adaptive music
+- ❌ Dynamic lighting
+- ❌ Crafting / equipment forging
+
+### Còn mơ hồ — cần playtest
+- ❓ Affliction/Virtue ratio 70/30 — phù hợp casual?
+- ❓ Boss HP scaling (b01=80, b02=90, b03=130) — Stage 3 đủ thử thách?
+- ❓ Gold reward economy — đủ Hamlet upgrade?
+- ❓ Crit multiplier 1.5× vs 2.0× — gamefeel
+- ❓ Disease chance 30%/hero/stage — quá thường xuyên?
+- ❓ Final game name — "Project Shadow" → "Shadow of the Soul"?
+
+---
+
+## 📂 Files đã thay đổi trong session này
+
+| File | Change |
+|---|---|
+| `assets/data/enemies.csv` | +4 rows: enemy_b02, enemy_b03, enemy_mb01, enemy_mb02 |
+| `assets/data/enemy_skills.csv` | +14 rows: skills cho 4 boss/miniboss mới |
+| `core/src/test/.../DataIntegrityTest.java` | Update expected counts (11→15 enemies, 9→23 skills) |
+| `core/src/main/.../DataLoaderDemo.java` | Update KNOWN_TODO_REFS (remove b02/b03/mb01/mb02 sau khi chính thức có data) |
+| `.pixellab-ids.json` | Đầy đủ UUIDs cho 14 heroes + 15 enemies + 5 items + 3 tilesets |
+| `docs/style.css` | Shared CSS cho 6 HTML docs |
+| `docs/design_overview.html` | NEW |
+| `docs/game_systems.html` | NEW |
+| `docs/technical_data.html` | NEW |
+| `docs/pathway_stage1.html` | NEW |
+| `docs/project_plan.html` | NEW |
+| `docs/notes_and_considerations.html` | NEW |
+| `claude.md` (file này) | NEW |
+
+---
+
+*Last update: 2026-05-11 · Tests: 247 passing ✅ · PixelLab assets: ~25/33 in queue/done*
