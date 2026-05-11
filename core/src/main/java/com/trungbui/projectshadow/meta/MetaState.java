@@ -21,6 +21,9 @@ import java.util.Optional;
  * <p>Hero IDs are unique within {@link #roster} — duplicates are rejected on hire.</p>
  */
 public record MetaState(
+        /** Sprint 9+ B3 — JSON schema version. See {@code RunState.saveVersion} javadoc.
+         *  Legacy meta saves load as version 1 (compact constructor normalizes 0 → 1). */
+        int saveVersion,
         int gold,
         List<HeroState> roster,
         List<String> trinketInventory,
@@ -30,6 +33,7 @@ public record MetaState(
     public static final int FRESH_GOLD = 200;
 
     public MetaState {
+        if (saveVersion < 1) saveVersion = 1; // Backward-compat: pre-B3 saves had no version field.
         roster = roster == null ? List.of() : List.copyOf(roster);
         trinketInventory = trinketInventory == null ? List.of() : List.copyOf(trinketInventory);
     }
@@ -43,7 +47,9 @@ public record MetaState(
             Hero h = new Hero(data, Position.POS_1, gd.effects());
             initial.add(HeroState.from(h));
         }
-        return new MetaState(FRESH_GOLD, initial, List.of(), now, now);
+        return new MetaState(
+                com.trungbui.projectshadow.save.SaveMigration.CURRENT_META_VERSION,
+                FRESH_GOLD, initial, List.of(), now, now);
     }
 
     public Optional<HeroState> heroInRoster(String heroId) {
@@ -57,14 +63,14 @@ public record MetaState(
     }
 
     public MetaState withGold(int newGold) {
-        return new MetaState(newGold, roster, trinketInventory, createdAt, Instant.now());
+        return new MetaState(saveVersion, newGold, roster, trinketInventory, createdAt, Instant.now());
     }
 
     public MetaState withRoster(List<HeroState> newRoster) {
-        return new MetaState(gold, newRoster, trinketInventory, createdAt, Instant.now());
+        return new MetaState(saveVersion, gold, newRoster, trinketInventory, createdAt, Instant.now());
     }
 
     public MetaState withTrinketInventory(List<String> newInventory) {
-        return new MetaState(gold, roster, newInventory, createdAt, Instant.now());
+        return new MetaState(saveVersion, gold, roster, newInventory, createdAt, Instant.now());
     }
 }

@@ -9,6 +9,12 @@ import java.util.List;
 import java.util.UUID;
 
 public record RunState(
+        /** Sprint 9+ B3 — JSON schema version. Bumped when fields are added/renamed
+         *  in a backward-incompatible way. {@link com.trungbui.projectshadow.save.SaveMigration}
+         *  refuses to load a file whose {@code saveVersion} exceeds
+         *  {@link SaveMigration#CURRENT_RUN_VERSION}. Legacy saves without this
+         *  field load as version 1 (compact constructor normalizes 0 → 1). */
+        int saveVersion,
         String runId,
         String stageId,
         long stageSeed,
@@ -22,6 +28,7 @@ public record RunState(
         boolean archived
 ) {
     public RunState {
+        if (saveVersion < 1) saveVersion = 1; // Backward-compat: pre-B3 saves had no version field.
         visitedNodes = visitedNodes == null ? List.of() : List.copyOf(visitedNodes);
         party = party == null ? List.of() : List.copyOf(party);
         inventory = inventory == null ? List.of() : List.copyOf(inventory);
@@ -31,6 +38,7 @@ public record RunState(
         Instant now = Instant.now();
         List<HeroState> snapshots = heroes.stream().map(HeroState::from).toList();
         return new RunState(
+                SaveMigration.CURRENT_RUN_VERSION,
                 UUID.randomUUID().toString(),
                 stageId,
                 stageSeed,
@@ -51,7 +59,7 @@ public record RunState(
             newVisited.add(currentNodeLabel);
         }
         return new RunState(
-                runId, stageId, stageSeed, nodeLabel,
+                saveVersion, runId, stageId, stageSeed, nodeLabel,
                 newVisited, party, gold, inventory,
                 createdAt, Instant.now(), archived
         );
@@ -60,7 +68,7 @@ public record RunState(
     public RunState withParty(List<Hero> liveHeroes) {
         List<HeroState> newParty = liveHeroes.stream().map(HeroState::from).toList();
         return new RunState(
-                runId, stageId, stageSeed, currentNodeLabel,
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, newParty, gold, inventory,
                 createdAt, Instant.now(), archived
         );
@@ -68,7 +76,7 @@ public record RunState(
 
     public RunState withGold(int newGold) {
         return new RunState(
-                runId, stageId, stageSeed, currentNodeLabel,
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, newGold, inventory,
                 createdAt, Instant.now(), archived
         );
@@ -76,15 +84,26 @@ public record RunState(
 
     public RunState withInventory(List<String> newInventory) {
         return new RunState(
-                runId, stageId, stageSeed, currentNodeLabel,
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, newInventory,
                 createdAt, Instant.now(), archived
         );
     }
 
-    /** Add a delta to the current run gold pool (negative deltas allowed). */
+    /**
+     * Add a delta to the current run gold pool.
+     * <p>Sprint 9+ B3: a negative delta that would push gold below 0 now throws
+     * {@link IllegalStateException} rather than silently flooring to 0. Reward
+     * paths (always positive) are unaffected. Cost paths now self-detect overdraw
+     * instead of producing a misleadingly-applied transaction.</p>
+     */
     public RunState withGoldDelta(int delta) {
-        return withGold(Math.max(0, gold + delta));
+        int next = gold + delta;
+        if (next < 0) {
+            throw new IllegalStateException(
+                    "Insufficient gold for delta=" + delta + " (current=" + gold + ")");
+        }
+        return withGold(next);
     }
 
     /** Append an item ID to the run inventory (immutable copy). */
@@ -97,7 +116,7 @@ public record RunState(
 
     public RunState markArchived() {
         return new RunState(
-                runId, stageId, stageSeed, currentNodeLabel,
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, inventory,
                 createdAt, Instant.now(), true
         );
