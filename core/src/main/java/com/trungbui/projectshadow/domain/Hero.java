@@ -131,9 +131,13 @@ public class Hero implements Combatant {
         return data.baseAccuracy();
     }
 
+    /** Sprint 11 B3 — was hardcoded 0. Now reads HeroData.baseDodge +
+     *  level × levelUpDodge. Cursed disease applies -30 on top via
+     *  ConditionResolver hook in {@link #effectiveDodge()}. */
     @Override
     public int dodge() {
-        return 0;
+        double levelGain = level * data.levelUpDodge();
+        return Math.max(0, data.baseDodge() + (int) Math.round(levelGain));
     }
 
     @Override
@@ -168,6 +172,18 @@ public class Hero implements Combatant {
         // 5% per stack, max 5 stacks → max +25% dmg.
         double mult = 1d + 0.05d * bloodthirstyStacks;
         return (int) Math.round(base * mult);
+    }
+
+    /** Sprint 11 B3 — Cursed disease (dis_06): -30 dodge. Floor at 0
+     *  (can't have negative dodge). Applied on top of {@link Combatant#effectiveDodge()}
+     *  (which already factors active stat effects). */
+    @Override
+    public int effectiveDodge() {
+        int base = Combatant.super.effectiveDodge();
+        if (diseases.contains("dis_06")) {
+            base = Math.max(0, base - 30);
+        }
+        return base;
     }
 
     @Override

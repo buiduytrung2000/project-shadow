@@ -17,6 +17,7 @@ public final class Fixtures {
                 "DPS", "Front",
                 hp, dmgMin, dmgMax, acc, crit, speed, 0.20,
                 3, 1, 0.01, 0.02,
+                /* Sprint 11 B3 new fields */ 0, 0d,
                 List.of("sk_test"), List.of("sk_test"),
                 ""
         );

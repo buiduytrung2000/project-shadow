@@ -29,6 +29,7 @@ class AfflictionResolverTest {
                 "DPS", "Front",
                 30, 5, 10, 80, 0.05, 5, 0.20,
                 3, 1, 0.01, 0.02,
+                /* Sprint 11 B3 baseDodge / levelUpDodge */ 0, 0d,
                 List.of("sk_test"), List.of("sk_test"),
                 ""
         );

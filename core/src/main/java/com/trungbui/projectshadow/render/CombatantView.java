@@ -10,6 +10,9 @@ public class CombatantView {
     public static final float WIDTH = 150f;
     public static final float HEIGHT = 200f;
     private static final float SHAKE_DURATION = 0.4f;
+    /** Sprint 11 B3 — duration of the boss epic-death zoom-in. ~1.5s gives a
+     *  noticeable dramatic beat without making the player wait too long. */
+    private static final float EPIC_DEATH_DURATION = 1.5f;
     private static final float SHAKE_AMPLITUDE = 12f;
 
     private final Combatant combatant;
@@ -19,6 +22,9 @@ public class CombatantView {
 
     private float shakeTimer = 0f;
     private float flashTimer = 0f;
+    /** Sprint 11 B3 — boss epic-death zoom timer. Counts down to 0; renderer
+     *  reads {@link #epicDeathZoom()} for the current scale factor. */
+    private float epicDeathTimer = 0f;
     private SpriteAnimator animator; // null if no atlas — caller falls back to rectangle
     private boolean wasAlive = true; // tracks alive→dead transition so we trigger DEAD anim once
 
@@ -79,9 +85,28 @@ public class CombatantView {
         if (animator != null) animator.setState(SpriteAnimator.State.ATTACKING);
     }
 
+    /** Sprint 11 B3 — boss epic death. Sets a scale-up flag the renderer reads
+     *  to grow the sprite 1.0 → 1.3× over EPIC_DEATH_DURATION. Combined with
+     *  the normal DEAD anim trigger (already fired by alive→dead transition in
+     *  {@link #update}), gives the boss a dramatic exit beat. */
+    public void triggerEpicDeath() {
+        epicDeathTimer = EPIC_DEATH_DURATION;
+    }
+
+    /** Current epic-death zoom factor for the renderer: 1.0 (none) to ~1.3 (peak).
+     *  Decays back to 1.0 as epicDeathTimer ticks to 0. */
+    public float epicDeathZoom() {
+        if (epicDeathTimer <= 0f) return 1f;
+        float progress = 1f - (epicDeathTimer / EPIC_DEATH_DURATION); // 0 → 1
+        // Peak at 70% of timer, then ease back down.
+        float bell = 4f * progress * (1f - progress); // 0 → 1 → 0 parabolic
+        return 1f + 0.3f * bell;
+    }
+
     public void update(float delta) {
         if (shakeTimer > 0f) shakeTimer = Math.max(0f, shakeTimer - delta);
         if (flashTimer > 0f) flashTimer = Math.max(0f, flashTimer - delta);
+        if (epicDeathTimer > 0f) epicDeathTimer = Math.max(0f, epicDeathTimer - delta);
 
         // Detect alive→dead transition: trigger DEAD animation once. SpriteAnimator
         // holds the last frame (PlayMode.NORMAL on DEAD) so the corpse stays visible.
