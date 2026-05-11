@@ -44,10 +44,12 @@ class SuppliesTaxTest {
     }
 
     @Test
-    void payTax_insufficient_throws() {
-        assertThatThrownBy(() -> HamletService.paySuppliesTax(withGold(50), 1))
-                .isInstanceOf(HamletService.HamletException.class)
-                .hasMessageContaining("gold");
+    void payTax_insufficient_allowsDebt_perSprint11() {
+        // Sprint 11 B1: paySuppliesTax no longer throws on insufficient gold.
+        // Player can embark while broke; gold goes negative as "supplies debt".
+        MetaState after = HamletService.paySuppliesTax(withGold(50), 1);
+        assertThat(after.gold()).isEqualTo(50 - 100); // -50
+        assertThat(after.gold()).isNegative();
     }
 
     @Test

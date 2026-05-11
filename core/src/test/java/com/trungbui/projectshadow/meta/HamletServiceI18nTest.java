@@ -45,15 +45,12 @@ class HamletServiceI18nTest {
 
     @Test
     void notEnoughGold_inVietnamese_byDefault() {
-        // FRESH_GOLD = 200; pick a hero whose hireCost > 200 to force the throw.
-        // Common = 50, Rare = 80, Legendary = 150 — none exceed 200 alone, so
-        // construct a depleted meta with 0 gold.
+        // Sprint 11 B1: hireHero/refresh/supplies tax follow debt model (no throw).
+        // For i18n testing of the "not enough gold" error path we route through
+        // levelUpHero which still throws on insufficient gold (upgrades aren't
+        // survival needs — keep strict).
         MetaState meta = MetaState.fresh(gd, List.of("hero_01")).withGold(0);
-        String pickAvailable = gd.heroes().keySet().stream()
-                .filter(id -> !meta.hasInRoster(id))
-                .findFirst().orElseThrow();
-
-        assertThatThrownBy(() -> HamletService.hireHero(meta, pickAvailable, gd))
+        assertThatThrownBy(() -> HamletService.levelUpHero(meta, "hero_01", gd))
                 .isInstanceOf(HamletService.HamletException.class)
                 .hasMessageContaining("Không đủ gold");
     }
@@ -62,11 +59,7 @@ class HamletServiceI18nTest {
     void notEnoughGold_inEnglish_afterSetLocale() {
         I18n.setLocale(I18n.EN);
         MetaState meta = MetaState.fresh(gd, List.of("hero_01")).withGold(0);
-        String pickAvailable = gd.heroes().keySet().stream()
-                .filter(id -> !meta.hasInRoster(id))
-                .findFirst().orElseThrow();
-
-        assertThatThrownBy(() -> HamletService.hireHero(meta, pickAvailable, gd))
+        assertThatThrownBy(() -> HamletService.levelUpHero(meta, "hero_01", gd))
                 .isInstanceOf(HamletService.HamletException.class)
                 .hasMessageContaining("Not enough gold");
     }

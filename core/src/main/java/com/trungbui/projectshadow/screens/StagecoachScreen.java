@@ -146,16 +146,20 @@ public class StagecoachScreen implements Screen {
                         }
                     }
                 });
-                hire.setDisabled(game.meta().gold() < HamletService.STAGECOACH_HIRE_COST);
+                // Sprint 11 B1 debt model: hire is always enabled. Color-code red
+                // when player would go into debt to signal cost-vs-wallet.
+                int hireCost = HamletService.hireCost(heroId, game.gameData());
+                if (game.meta().gold() < hireCost) hire.setColor(Color.SALMON);
                 root.add(hire).pad(10).width(380).height(110);
             }
             root.row();
         }
 
-        // Sprint 10 B1: refresh now costs gold (was free → save-scum loophole).
+        // Sprint 10 B1: refresh costs gold; Sprint 11 B1: allow debt (button stays
+        // enabled but turns red if not affordable).
         TextButton refresh = new TextButton(
                 I18n.t("stagecoach.refresh", HamletService.STAGECOACH_REFRESH_COST), skin);
-        refresh.setDisabled(game.meta().gold() < HamletService.STAGECOACH_REFRESH_COST);
+        if (game.meta().gold() < HamletService.STAGECOACH_REFRESH_COST) refresh.setColor(Color.SALMON);
         refresh.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {

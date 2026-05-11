@@ -89,9 +89,8 @@ public final class HamletService {
     public static MetaState paySuppliesTax(MetaState meta, int stageAct) {
         int tax = suppliesTax(stageAct);
         if (tax <= 0) return meta; // stage 0 or unknown → free
-        if (meta.gold() < tax) {
-            throw new HamletException(I18n.t("error.notEnoughGold", tax, meta.gold()));
-        }
+        // Sprint 11 B1 debt model: gold can go negative — player can embark even
+        // when broke; supplies become debt repaid by combat reward.
         return meta.withGold(meta.gold() - tax);
     }
 
@@ -263,10 +262,7 @@ public final class HamletService {
      * offer list (kept separate so the offer roll itself stays free of side effects).
      */
     public static MetaState payStagecoachRefresh(MetaState meta) {
-        if (meta.gold() < STAGECOACH_REFRESH_COST) {
-            throw new HamletException(I18n.t("error.notEnoughGold",
-                    STAGECOACH_REFRESH_COST, meta.gold()));
-        }
+        // Sprint 11 B1 debt model: gold can go negative (see hireHero comment).
         return meta.withGold(meta.gold() - STAGECOACH_REFRESH_COST);
     }
 
@@ -277,9 +273,9 @@ public final class HamletService {
         HeroData data = gd.heroes().get(heroId);
         if (data == null) throw new HamletException(I18n.t("error.unknownHero", heroId));
         int cost = hireCost(heroId, gd);
-        if (meta.gold() < cost) {
-            throw new HamletException(I18n.t("error.notEnoughGold", cost, meta.gold()));
-        }
+        // Sprint 11 B1 debt model: gold can go negative (player accumulates
+        // "supplies debt"). Combat reward pays it down. Lock from 2026-05-11:
+        // softlock-fix decision = allow negative gold.
         Hero fresh = new Hero(data, Position.POS_1, gd.effects());
         List<HeroState> newRoster = new ArrayList<>(meta.roster());
         newRoster.add(HeroState.from(fresh));

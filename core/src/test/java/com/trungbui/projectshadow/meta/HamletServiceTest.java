@@ -84,11 +84,15 @@ class HamletServiceTest {
     }
 
     @Test
-    void hireHero_rejectsInsufficientGold() {
+    void hireHero_allowsDebt_perSprint11DebtModel() {
+        // Sprint 11 B1: hireHero no longer throws on insufficient gold. Gold can
+        // go negative ("supplies debt"). Hero is hired; player owes the cost.
         MetaState broke = meta.withGold(10);
-        assertThatThrownBy(() -> HamletService.hireHero(broke, "hero_05", gd))
-                .isInstanceOf(HamletService.HamletException.class)
-                .hasMessageContaining("Không đủ gold");
+        int hireCost = HamletService.hireCost("hero_05", gd);
+        MetaState after = HamletService.hireHero(broke, "hero_05", gd);
+        assertThat(after.gold()).isEqualTo(10 - hireCost);
+        assertThat(after.gold()).isNegative(); // confirmed in debt
+        assertThat(after.hasInRoster("hero_05")).isTrue();
     }
 
     // ---------- Guild ----------

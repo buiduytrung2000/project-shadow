@@ -26,11 +26,13 @@ class StagecoachRefreshCostTest {
     }
 
     @Test
-    void payRefresh_throwsWhenInsufficient() {
+    void payRefresh_allowsDebt_perSprint11DebtModel() {
+        // Sprint 11 B1: refresh no longer throws on insufficient gold. Player
+        // can refresh while broke; gold goes negative as "supplies debt".
         MetaState broke = metaWith(20);
-        assertThatThrownBy(() -> HamletService.payStagecoachRefresh(broke))
-                .isInstanceOf(HamletService.HamletException.class)
-                .hasMessageContaining("gold");
+        MetaState after = HamletService.payStagecoachRefresh(broke);
+        assertThat(after.gold()).isEqualTo(20 - HamletService.STAGECOACH_REFRESH_COST);
+        assertThat(after.gold()).isNegative();
     }
 
     @Test

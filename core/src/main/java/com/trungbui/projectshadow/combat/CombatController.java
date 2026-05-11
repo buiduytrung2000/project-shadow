@@ -50,6 +50,15 @@ public class CombatController {
     private final List<String> log = new ArrayList<>();
     private Listener listener = new Listener() {
     };
+    /** Sprint 11 B1 — when > 0, enemy turn execution is gated. After advancing
+     *  to an enemy actor, the UI must explicitly call {@link #processPendingNonPlayerTurn()}
+     *  to fire the enemy action. The UI handles delay via libGDX Stage actions
+     *  so the player can visually follow each action. Default 0 = legacy
+     *  synchronous behavior (tests rely on this). */
+    private float pacingDelaySec = 0f;
+    /** True when control flow has advanced to an enemy actor and pacing is enabled
+     *  — UI must call {@link #processPendingNonPlayerTurn()} to proceed. */
+    private boolean awaitingNonPlayerProcess = false;
 
     public CombatController(CombatEncounter encounter, GameData data, RandomGenerator rng) {
         this.encounter = encounter;
@@ -159,8 +168,42 @@ public class CombatController {
     private void autoRunIfNotPlayer() {
         Combatant actor = encounter.currentActor();
         if (actor instanceof Enemy enemy && enemy.isAlive()) {
+            // Sprint 11 B1: if pacing is enabled, defer the enemy turn until the UI
+            // ticks through its delay. Otherwise (tests / legacy mode) run inline.
+            if (pacingDelaySec > 0f) {
+                awaitingNonPlayerProcess = true;
+                return;
+            }
             runEnemyTurn(enemy);
         }
+    }
+
+    /** Sprint 11 B1 — UI calls this after its 0.7s delay to actually execute the
+     *  pending enemy turn. No-op if there's no pending non-player turn. Resets the
+     *  flag before running so re-entrancy is safe. */
+    public void processPendingNonPlayerTurn() {
+        if (!awaitingNonPlayerProcess) return;
+        awaitingNonPlayerProcess = false;
+        Combatant actor = encounter.currentActor();
+        if (actor instanceof Enemy enemy && enemy.isAlive()) {
+            runEnemyTurn(enemy);
+        }
+    }
+
+    /** Sprint 11 B1 — true if a non-player actor is the current actor and pacing
+     *  is gating execution. UI polls this in its render loop. */
+    public boolean isAwaitingNonPlayerProcess() {
+        return awaitingNonPlayerProcess;
+    }
+
+    /** Sprint 11 B1 — set seconds of delay the UI should observe between
+     *  combatant actions. Set to 0 to disable (synchronous mode). Default 0. */
+    public void setPacingDelaySec(float seconds) {
+        this.pacingDelaySec = Math.max(0f, seconds);
+    }
+
+    public float pacingDelaySec() {
+        return pacingDelaySec;
     }
 
     private void runEnemyTurn(Enemy enemy) {
@@ -201,11 +244,18 @@ public class CombatController {
         // AoE before).
         attacker.activeEffects().onTurnStart(attacker, rng, round);
 
+        // Sprint 11 B1 — multi-hit support. Skills with eff_multi_hit roll damage
+        // N times (N = parsed effectMagnitude). Each roll is independent (crit /
+        // bleed / etc. computed per-hit). Total HP damage applied as one number;
+        // listener.onActionResolved fires once with aggregate AttackResult so UI
+        // damage popup shows the total but combat log lists every hit.
+        int hitCount = multiHitCount(skill);
+
         AttackResult result;
         Hero pendingAfflictionHero = null;
         Hero heartAttackHero = null;
         if (skill.isOffensive()) {
-            result = DamageFormula.resolve(attacker, target, skill, rng);
+            result = resolveOffensiveHits(attacker, target, skill, hitCount);
             if (result.hit()) {
                 target.takeHpDamage(result.hpDamage());
                 if (result.stressDamage() > 0 && target instanceof Hero h) {
@@ -223,7 +273,11 @@ public class CombatController {
             result = new AttackResult(true, false, 0, 0);
         }
 
-        if (skill.primaryEffectId() != null && data.effects().containsKey(skill.primaryEffectId())) {
+        // Sprint 11 B1: skip applying eff_multi_hit as a real effect — it's a
+        // sentinel for the multi-hit mechanic only. Apply other effects normally.
+        if (skill.primaryEffectId() != null
+                && !skill.primaryEffectId().equals("eff_multi_hit")
+                && data.effects().containsKey(skill.primaryEffectId())) {
             target.activeEffects().apply(
                     skill.primaryEffectId(), attacker, target, rng, skill.effectMagnitude(), round
             );
@@ -290,6 +344,52 @@ public class CombatController {
             return true;
         }
         return false;
+    }
+
+    /** Sprint 11 B1 — parse the hit count for multi-hit skills. Returns 1 for
+     *  normal skills (single hit). For skills with primaryEffectId="eff_multi_hit",
+     *  parses the effectMagnitude as an int (e.g. "2" → 2 hits, "3" → 3 hits).
+     *  Falls back to 1 if magnitude is missing/unparseable.
+     *
+     *  <p>Used by sk_ar6 (Bắn Kép, 2 hits) and sk_mk2 (Liên Hoàn Quyền, 3 hits).
+     *  Pre-Sprint-11 these skills fired only 1 hit at low multiplier — effectively
+     *  half/third strength. This is the bug user reported.</p>
+     */
+    static int multiHitCount(SkillData skill) {
+        if (skill == null || skill.primaryEffectId() == null) return 1;
+        if (!"eff_multi_hit".equals(skill.primaryEffectId())) return 1;
+        String mag = skill.effectMagnitude();
+        if (mag == null || mag.isBlank()) return 1;
+        try {
+            int n = Integer.parseInt(mag.trim());
+            return Math.max(1, Math.min(n, 10)); // sanity cap at 10 to avoid runaway
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    /** Sprint 11 B1 — roll {@code hitCount} independent damage attempts. Each roll
+     *  uses its own hit chance + crit + variance via {@link DamageFormula#resolve}.
+     *  HP damages are summed; final result reports {@code crit=true} if any hit
+     *  was crit, and {@code hit=true} if any hit landed. Stress damage applied
+     *  once (skill-level, not per-hit). */
+    private AttackResult resolveOffensiveHits(Combatant attacker, Combatant target,
+                                              SkillData skill, int hitCount) {
+        if (hitCount <= 1) {
+            return DamageFormula.resolve(attacker, target, skill, rng);
+        }
+        int totalHpDamage = 0;
+        boolean anyHit = false;
+        boolean anyCrit = false;
+        for (int i = 0; i < hitCount; i++) {
+            AttackResult r = DamageFormula.resolve(attacker, target, skill, rng);
+            if (r.hit()) {
+                anyHit = true;
+                if (r.crit()) anyCrit = true;
+                totalHpDamage += r.hpDamage();
+            }
+        }
+        return new AttackResult(anyHit, anyCrit, totalHpDamage, skill.stressDamage());
     }
 
     private static SkillData wrapEnemySkill(com.trungbui.projectshadow.data.model.EnemySkillData es) {
