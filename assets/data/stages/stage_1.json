@@ -82,7 +82,7 @@
   "pools": {
     "combat": {
       "default": {
-        "enemies": ["enemy_01", "enemy_02"],
+        "enemies": ["enemy_01", "enemy_02", "enemy_05"],
         "variants_allowed": ["Base", "Tank", "Assassin"],
         "min_enemies": 2,
         "max_enemies": 3

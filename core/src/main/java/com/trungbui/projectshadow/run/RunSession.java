@@ -115,6 +115,18 @@ public class RunSession {
         return state;
     }
 
+    /**
+     * Sprint 12 B3 — overwrite the in-memory state from {@code CombatController.useItem}
+     * after an item is consumed mid-combat. This is the ONLY public mutator that
+     * doesn't auto-persist — combat is volatile by design (death/win triggers a
+     * full {@code completeNode} save). Restricted to the combat package via
+     * naming convention; not for general use.
+     */
+    public void setStateForItemUse(RunState newState) {
+        if (newState == null) throw new IllegalArgumentException("newState");
+        this.state = newState;
+    }
+
     /** Returns the node the player most recently resolved, or {@code null} if no node yet. */
     public StageNode currentNode() {
         if (state.currentNodeLabel() == null) return null;

@@ -84,6 +84,16 @@ public class CombatScreen implements Screen {
     private boolean transitioned = false;
     private AudioManager audio;
 
+    /** Sprint 12 B3 — when non-null, the skill row is replaced with item buttons.
+     *  Cleared when the player presses "Back" or after a successful item use. */
+    private boolean inItemMode = false;
+    /** Sprint 12 B3 — when the player clicks a heal item, we enter target mode
+     *  for that item id (similar to skill target mode). */
+    private String pendingItemId = null;
+    /** Sprint 12 B3 — the run session backing the inventory. Null in standalone
+     *  combat (no items tab in that mode). */
+    private com.trungbui.projectshadow.run.RunSession runSession;
+
     /** Standalone combat (no run loop wiring). Used for the Sprint 5 demo. */
     public CombatScreen(GameData gameData) {
         this(gameData, CombatScenario.buildDefault(gameData), null, null);
@@ -261,6 +271,17 @@ public class CombatScreen implements Screen {
         if (!(actor instanceof Hero hero)) return;
         if (controller.encounter().isCombatOver()) return;
 
+        // Sprint 12 B3 — item mode replaces the skill row with item buttons.
+        if (inItemMode) {
+            buildItemRow();
+            return;
+        }
+
+        // Sprint 12 B3 — Bloodthirsty forced-attack: all skills gray + indicator
+        // label; controller already auto-picks the skill on click, but here we
+        // schedule auto-fire after 0.5s so the player sees the indicator first.
+        boolean forced = com.trungbui.projectshadow.combat.ConditionResolver.hasForcedAttack(hero);
+
         List<SkillData> skills = controller.currentActorSkills();
         for (int i = 0; i < skills.size(); i++) {
             SkillData skill = skills.get(i);
@@ -268,7 +289,9 @@ public class CombatScreen implements Screen {
             final SkillData skillForTooltip = skill;
             String label = I18n.t("combat.skillButton", i + 1, skill.displayName());
             TextButton btn = new TextButton(label, skin);
-            boolean disabled = hero.isOnCooldown(skill.skillId()) || !controller.skillIsSupported(index);
+            boolean disabled = forced
+                    || hero.isOnCooldown(skill.skillId())
+                    || !controller.skillIsSupported(index);
             btn.setDisabled(disabled);
             btn.addListener(new ChangeListener() {
                 @Override
@@ -303,6 +326,134 @@ public class CombatScreen implements Screen {
             skillTable.add(btn).pad(8).width(280).height(60);
             skillButtons.add(btn);
         }
+
+        // Sprint 12 B3 — Bloodthirsty indicator label + 0.5s auto-fire.
+        if (forced) {
+            Label forcedLabel = new Label(I18n.t("combat.bloodthirsty.indicator"), skin);
+            forcedLabel.setColor(Color.SALMON);
+            skillTable.add(forcedLabel).pad(8);
+            scheduleForcedAttack();
+            return; // skip Items tab — no choice this turn
+        }
+
+        // Sprint 12 B3 — Items tab button at end of skill row. Only shown when
+        // a run session is attached AND the inventory has at least one consumable.
+        if (runSession != null) {
+            int consumableCount = countConsumablesInInventory();
+            TextButton itemsBtn = new TextButton(
+                    I18n.t("combat.items.tab", consumableCount), skin);
+            itemsBtn.setDisabled(consumableCount == 0);
+            itemsBtn.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                    if (itemsBtn.isDisabled()) return;
+                    inItemMode = true;
+                    refreshSkillButtons();
+                }
+            });
+            skillTable.add(itemsBtn).pad(8).width(220).height(60);
+        }
+    }
+
+    /** Sprint 12 B3 — schedule an auto-fire for the Bloodthirsty forced action.
+     *  Adds a stage Action that fires after 0.5s on the UI thread. Idempotent:
+     *  the controller short-circuits if the actor changed or the encounter is
+     *  over by the time the action fires. */
+    private void scheduleForcedAttack() {
+        // Use Stage's act-based Actions to run after a delay without blocking.
+        com.badlogic.gdx.scenes.scene2d.actions.DelayAction delay =
+                com.badlogic.gdx.scenes.scene2d.actions.Actions.delay(0.5f);
+        com.badlogic.gdx.scenes.scene2d.actions.RunnableAction fire =
+                com.badlogic.gdx.scenes.scene2d.actions.Actions.run(() -> {
+                    // Re-check: only fire if the current actor is still the Bloodthirsty hero.
+                    Combatant cur = controller.currentActor().orElse(null);
+                    if (!(cur instanceof Hero h)) return;
+                    if (!com.trungbui.projectshadow.combat.ConditionResolver.hasForcedAttack(h)) return;
+                    if (controller.encounter().isCombatOver()) return;
+                    // Skill 0 is overridden inside CombatController.executePlayerSkill
+                    // when hasForcedAttack is true (auto-pick first offensive).
+                    controller.executePlayerSkill(0);
+                });
+        uiStage.addAction(com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence(delay, fire));
+    }
+
+    /** Sprint 12 B3 — count consumable items currently in the run inventory. */
+    private int countConsumablesInInventory() {
+        if (runSession == null) return 0;
+        int n = 0;
+        for (String id : runSession.state().inventory()) {
+            var it = gameData.items().get(id);
+            if (it != null && "consumable".equalsIgnoreCase(it.category())) n++;
+        }
+        return n;
+    }
+
+    /** Sprint 12 B3 — render one button per consumable in inventory plus a
+     *  "Back" button. Click handler decides whether to enter target mode (heal)
+     *  or fire immediately (party-wide stress reduce). */
+    private void buildItemRow() {
+        skillTable.clear();
+        skillButtons.clear();
+        if (runSession == null) {
+            inItemMode = false;
+            return;
+        }
+        // Group identical item IDs into stacks so duplicates show as "Bình Máu Nhỏ x2".
+        java.util.Map<String, Integer> counts = new java.util.LinkedHashMap<>();
+        for (String id : runSession.state().inventory()) {
+            counts.merge(id, 1, Integer::sum);
+        }
+        int rendered = 0;
+        for (var entry : counts.entrySet()) {
+            String itemId = entry.getKey();
+            int qty = entry.getValue();
+            var it = gameData.items().get(itemId);
+            if (it == null || !"consumable".equalsIgnoreCase(it.category())) continue;
+            String label = it.nameVn() + (qty > 1 ? " x" + qty : "");
+            TextButton btn = new TextButton(label, skin);
+            btn.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                    onItemButtonClicked(itemId);
+                }
+            });
+            skillTable.add(btn).pad(8).width(280).height(60);
+            rendered++;
+            if (rendered >= 5) break; // sanity cap to avoid overflow
+        }
+        TextButton back = new TextButton(I18n.t("combat.items.back"), skin);
+        back.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                inItemMode = false;
+                pendingItemId = null;
+                refreshSkillButtons();
+            }
+        });
+        skillTable.add(back).pad(8).width(180).height(60);
+    }
+
+    /** Sprint 12 B3 — handle a click on a consumable item button. Heal items
+     *  enter target-pick mode; non-target items fire immediately. */
+    private void onItemButtonClicked(String itemId) {
+        if (controller.isAwaitingNonPlayerProcess()) return;
+        var it = gameData.items().get(itemId);
+        if (it == null) return;
+        // Heal items need a target hero pick.
+        if ("eff_heal".equals(it.effectId())) {
+            pendingItemId = itemId;
+            uiState = UiState.AWAITING_TARGET;
+            highlightedTargets.clear();
+            for (Hero h : controller.encounter().heroes()) {
+                if (h.isAlive()) highlightedTargets.add(h);
+            }
+            statusLabel.setText(I18n.t("combat.items.pickTarget", it.nameVn()));
+            return;
+        }
+        // Stress-reduce (party-wide) and any future no-target items fire immediately.
+        controller.useItem(itemId, null);
+        inItemMode = false;
+        pendingItemId = null;
     }
 
     private void onSkillButtonClicked(int skillIndex) {
@@ -334,6 +485,15 @@ public class CombatScreen implements Screen {
     private void confirmTarget(Combatant target) {
         if (uiState != UiState.AWAITING_TARGET) return;
         if (!highlightedTargets.contains(target)) return;
+        // Sprint 12 B3 — if an item is pending, resolve item use instead of skill.
+        if (pendingItemId != null) {
+            String itemId = pendingItemId;
+            pendingItemId = null;
+            exitTargetMode();
+            inItemMode = false;
+            controller.useItem(itemId, target);
+            return;
+        }
         int idx = pendingSkillIndex;
         exitTargetMode();
         controller.executePlayerSkill(idx, target);
@@ -344,6 +504,14 @@ public class CombatScreen implements Screen {
      *  {@link CombatRewardPopup}. Null = no popup (legacy / standalone mode). */
     public void setRewardProvider(java.util.function.Supplier<com.trungbui.projectshadow.combat.CombatReward> p) {
         this.rewardProvider = p;
+    }
+
+    /** Sprint 12 B3 — attach the run session so the Items tab can read the
+     *  inventory and {@link CombatController#useItem} can consume it. */
+    public void setRunSession(com.trungbui.projectshadow.run.RunSession runSession) {
+        this.runSession = runSession;
+        controller.setRunSession(runSession);
+        refreshSkillButtons(); // redraw to show Items tab if available
     }
 
     private void showContinueButton(CombatEncounter.Side winner) {

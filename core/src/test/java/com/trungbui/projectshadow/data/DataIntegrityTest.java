@@ -45,8 +45,8 @@ class DataIntegrityTest {
         assertThat(gd.skills()).hasSize(140);
         assertThat(gd.effects()).hasSize(134);
         assertThat(gd.items()).hasSize(50);
-        assertThat(gd.enemies()).hasSize(15);
-        assertThat(gd.enemySkills()).hasSize(23);
+        assertThat(gd.enemies()).hasSize(16);    // +1 Sprint 12 B3: Poison Vine
+        assertThat(gd.enemySkills()).hasSize(24); // +1 Sprint 12 B3: sk_e_poison_strike
         assertThat(gd.events()).hasSize(11);
         assertThat(gd.diseasesTraits()).hasSize(18);
         assertThat(gd.stages()).hasSize(3);
