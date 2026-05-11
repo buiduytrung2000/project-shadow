@@ -159,7 +159,7 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
   - [x] **3/3 tilesets** queued (stage_1 Hầm Mộ, stage_2 Sương Mù, stage_3 Lò Đúc Linh Hồn)
   - [x] **Bugfix**: Double-dispose StageMapScreen → CombatScreen crash fixed (commit `1ae5e44`)
 
-### Sprint 9+ Combat Polish (3 follow-up branches, 2026-05-11)
+### Sprint 9+ Round 1 — Combat Polish trilogy (PR #3, 2026-05-11)
 - [x] **B3 — Combat animations** (commit `82316a3`, `bugfix/combat-animations`):
   attacker now plays attack anim + dying combatants play dead anim. Before
   fix only `hurt` was firing. +5 unit tests.
@@ -172,6 +172,58 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
   multiplier, target type, cooldown, stress damage, effect. i18n VN/EN.
   +7 tests.
 
+### Sprint 9+ Round 2 — Post-review hardening trilogy (PR #4/#5/#6, 2026-05-11)
+
+A `/engineering:code-review` pass on Round 1 HEAD surfaced a build-blocker,
+two gameplay-broken systems, and unhardened save data. User chose 3 sequential
+branches, plan-mode with `AskUserQuestion` for ambiguous decisions.
+
+- [x] **PR #4 — `hotfix/build-arraylist-import`** (commit `eedbe30`):
+  missing `import java.util.ArrayList;` in `ProjectShadowGame.java` —
+  `gradlew core:compileJava` was failing. Round 1's commit-message claim of
+  "tests pass" was unverifiable until this landed.
+- [x] **PR #5 — `fix/combat-correctness`** (commit `4a512e1`):
+  - **Effect tick hybrid** — AoE skills were N-ticking DoTs because
+    `resolveAction` looped per-target and end-of-round also re-ticked. Now:
+    per-actor tick at action start, deduped via `tickedThisRound` set,
+    cleared at `endRoundReset()`. New `EffectInstance.appliedRound` lets
+    just-applied effects skip their first tick.
+  - **Stress system rework** — `STRESS_MAX=200` was previously dormant. Now:
+    crossing 100 latches `pendingAfflictionRoll` → new `AfflictionResolver`
+    rolls 70% Affliction / 30% Virtue and picks a trait from
+    `diseases_traits.csv`. Crossing 200 → instant heart-attack death
+    (`setCurrentHp(0)`). Combat log + i18n popups for both events.
+  - **Reward RNG seeding** — was `new Random()` (unseeded). Now derived
+    from `runSession.state().stageSeed() ^ nodeLabel.hashCode()`.
+    `StageGenerator.parseBossReward` uses sub-RNG so layout stays stable.
+  - **Correctness nits**: `refreshDuration` uses `Math.max`,
+    `applyImmediate` re-runs on refresh, `dropChance` clamped `[0,1]`,
+    `item_random` resolves category→real item ID (was leaking
+    `"trinket_common"` to inventory), tooltip exit listener on parent
+    skill table, skill-tooltip parens gating.
+  - **+4 new affliction traits** in `diseases_traits.csv` (Paranoid,
+    Selfish, Fearful, Hopeless) + new `Resolution` column tags existing
+    8 traits as Affliction/Virtue.
+  - **+26 tests** across 7 new files.
+- [x] **PR #6 — `chore/save-hardening`** (commit `882fdca`):
+  - **Save schema versioning**: `saveVersion` field on `RunState` +
+    `MetaState`. New `SaveMigration` utility refuses to load saves whose
+    version exceeds the build (no silent data loss on downgrade). Legacy
+    saves (no field) load as v1 transparently.
+  - **Atomic write**: `.tmp` sibling + `Files.move(ATOMIC_MOVE,
+    REPLACE_EXISTING)` in both `SaveManager` and `MetaStateManager`.
+    Falls back to plain `REPLACE_EXISTING` on filesystems without
+    `ATOMIC_MOVE`. A crash mid-write can no longer corrupt the final file.
+  - **Path-traversal guard**: `runId` must match `[A-Za-z0-9_-]+`.
+  - **i18n on HamletService errors** (was hard-coded VN). EN-locale
+    players now see English exceptions.
+  - **`RunState.withGoldDelta` throws on overdraw** (was silent floor-to-0).
+  - **i18n polish**: `Locale.of(...)` over deprecated `new Locale(...)`;
+    `volatile` on mutable static `bundle`/`current`.
+  - **+28 tests** across 5 new files.
+
+Test count: **247 → 271 (Round 1) → 325 (Round 2)**. Zero failures throughout.
+
 ### Sprint mở rộng (deferred — documented for future sprint)
 - **Reward "combo 3" full feature**: streak bonus (compounding +10% gold,
   capped at 1.5×, reset on rest) + Pick 1 of 3 reward cards (Slay-the-Spire
@@ -181,6 +233,15 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
   2-3s display + "Continue" button planned for Sprint 10.
 - **descriptionEn CSV column**: skill tooltips fall back to VN description
   in EN locale until skills.csv adds an English column.
+- **Trait stat effects runtime resolver**: Sprint 9+ Round 2 wired
+  Affliction/Virtue *rolls* + UI display, but the trait effects themselves
+  (Cowardly skip-turn, Masochist stress-to-all, Paranoid stress aura, etc.)
+  are still data-only — `Trigger` column in `diseases_traits.csv` is not
+  consumed at runtime yet. Needs a `TraitEffectResolver` akin to the
+  existing data-driven `ActiveEffects`. Sprint 10.
+- **Supplies Tax + Caretaker cure slots wiring**: constants exist in
+  `HamletService` (`SUPPLIES_TAX_STAGE_*`, `CARETAKER_CURE_SLOTS_BY_LEVEL`)
+  but are never consumed. Wire in Sprint 10 alongside Hamlet upgrade UI.
 - [ ] Particle effects khi crit/affliction
 - [ ] Splash screen, main menu, settings UI
 - [ ] Aseprite-style animation refinement (tween + 2-3 frame)
@@ -236,4 +297,4 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
 
 ---
 
-*Last update: 2026-05-11 · Tests: 247 passing ✅ · PixelLab assets: ~25/33 in queue/done*
+*Last update: 2026-05-11 · Tests: **325 passing** ✅ · PixelLab assets: ~25/33 in queue/done · Sprint 9+ Round 2 (post-review trilogy) merged via PR #4/#5/#6*
