@@ -224,6 +224,70 @@ branches, plan-mode with `AskUserQuestion` for ambiguous decisions.
 
 Test count: **247 → 271 (Round 1) → 325 (Round 2)**. Zero failures throughout.
 
+### Sprint 9+ Round 3 — UI asset pack (PR #16/#20, 2026-05-11)
+
+First batch of UI visual assets cho game — buttons, panels, icons generated qua
+PixelLab AI, mỗi component 1 asset riêng, **4 button states share chung
+template + viền + rivets** (1 base + 3 `vary_object`). Tích hợp non-breaking
+vào libGDX skin pipeline qua `SkinLoader` mới.
+
+- [x] **PR #16 — `claude/gallant-meninsky-1e146f`** (commit `193bf2f`):
+  - **15 PixelLab assets** generated + packed thành
+    `assets/ui/components.atlas` (512×256):
+    - **4 button states** (`ui_btn_up/down/over/disabled`) 96×96 stone slab,
+      4 iron rivets ở góc. NinePatch margin 16 → 1 source scale tới Hamlet
+      280×120, CTA 600×80, lang toggle 120×50.
+    - **3 NinePatch panels** (`ui_panel_main`, `ui_panel_tooltip`,
+      `ui_popup_bg`) — ornate manuscript, gold tooltip, gothic rose-thorn
+      popup.
+    - **8 static icons** (stagecoach, guild, survivalist, caretaker, gold,
+      heirloom, settings, close) — 32-48px TextureRegionDrawables.
+  - **`SkinLoader` utility** (`core/src/main/.../ui/SkinLoader.java`) —
+    overlay components atlas lên uiskin, đăng ký NinePatchDrawables +
+    `"primary"` ImageTextButtonStyle + `"panel"/"popup"` WindowStyle +
+    `"panel"` TextTooltipStyle. Graceful fallback nếu atlas chưa pack.
+  - **11 screens migrate** `new Skin(...)` → `SkinLoader.load()` — đồng
+    nhất loading, zero behavior change ngoài Hamlet.
+  - **HamletScreen 4 building buttons** → ImageTextButton có icon prefix
+    + stone-slab background.
+  - **New Gradle task** `packUIComponents` pack `assets/ui/raw` →
+    `components.atlas` (riêng khỏi `combatants.atlas`, rebuild độc lập).
+  - **New script** `scripts/process_pixellab_ui.sh` — download object PNGs
+    từ PixelLab MCP endpoint (auto-detect ZIP vs raw PNG).
+  - **Tracking file** `assets/ui/.pixellab-ui-ids.json` — 15 UUIDs cho
+    regenerate / vary tương lai.
+
+- [x] **PR #20 — `fix/ui-skin-loader-drawable-and-font`** (commits
+  `58c46b7`, `69501f4`) — 2 bug visual phát hiện sau khi merge PR #16:
+  - **Bug 1 — `Skin.has()` exact-type match**: `HamletScreen.buildingButton()`
+    check `skin.has(iconDrawable, Drawable.class)` luôn false vì
+    `SkinLoader` register icons dưới `TextureRegionDrawable.class`. libGDX
+    `Skin.has()` không tự fallback theo superclass → 4 button fallback về
+    plain TextButton (default dark-rect, không icon).
+    **Fix:** SkinLoader register mỗi drawable dưới **cả** type cụ thể
+    (`NinePatchDrawable` / `TextureRegionDrawable`) **và** `Drawable.class`.
+  - **Bug 2 — Stale font reference**: `SkinLoader.load()` chạy trước
+    `fontFactory.create(24)`, copy font từ default style — đó là
+    `font.fnt` (ASCII-only). HamletScreen set VN font CHỈ cho default
+    style → `"primary"` style giữ font ASCII cũ → ký tự VN missing
+    (box / glyph sai).
+    **Fix:** thêm `SkinLoader.overrideFont(skin, font)` utility. HamletScreen
+    gọi nó sau khi VN bodyFont sẵn sàng.
+
+PixelLab API workflow note: 1 lần generate `ui_btn_up` timeout server →
+queue đầu thất bại, retry 2 lần (10 jobs concurrent limit). 4 button states
+giữ template nhất quán bằng cách generate 1 base rồi `vary_object` cho 3
+state — KHÔNG generate 4 lần độc lập (sẽ khác border style).
+
+UI mới CHỈ wire ở HamletScreen ở 2 PR này. Atlas + SkinLoader sẵn sàng;
+các screen khác (Stagecoach/Guild/CombatScreen/...) opt-in sau bằng
+`skin.get("primary", ...)`.
+
+Test count: 325 (Round 2) → **~451 (Round 3 baseline)** sau khi rebase lên
+main mới nhất (PR #7-18 đã thêm test). Round 3 không thêm test (visual UI
+work). 1 pre-existing flake (`EnemyHitRateTest.bossB01...`) trên main từ
+trước, không liên quan.
+
 ### Sprint mở rộng (deferred — documented for future sprint)
 - **Reward "combo 3" full feature**: streak bonus (compounding +10% gold,
   capped at 1.5×, reset on rest) + Pick 1 of 3 reward cards (Slay-the-Spire
@@ -297,4 +361,4 @@ Test count: **247 → 271 (Round 1) → 325 (Round 2)**. Zero failures throughou
 
 ---
 
-*Last update: 2026-05-11 · Tests: **325 passing** ✅ · PixelLab assets: ~25/33 in queue/done · Sprint 9+ Round 2 (post-review trilogy) merged via PR #4/#5/#6*
+*Last update: 2026-05-11 · Tests: **~451 passing** ✅ (1 pre-existing flake) · PixelLab assets: 33 chars/enemies/tiles + 15 UI components · Sprint 9+ Round 3 (UI asset pack) merged via PR #16/#20*
