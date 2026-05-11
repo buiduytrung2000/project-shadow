@@ -81,6 +81,20 @@ public final class HamletService {
         };
     }
 
+    /**
+     * Sprint 10 B2 — deduct {@link #suppliesTax(int)} from meta gold at embark time.
+     * Throws {@link HamletException} via i18n if insufficient gold. Non-refundable.
+     * Called by {@code ProjectShadowGame.startNewRun}.
+     */
+    public static MetaState paySuppliesTax(MetaState meta, int stageAct) {
+        int tax = suppliesTax(stageAct);
+        if (tax <= 0) return meta; // stage 0 or unknown → free
+        if (meta.gold() < tax) {
+            throw new HamletException(I18n.t("error.notEnoughGold", tax, meta.gold()));
+        }
+        return meta.withGold(meta.gold() - tax);
+    }
+
     // ───── Heirloom drops ─────
     public static final int HEIRLOOM_BOSS_STAGE_1 = 1;
     public static final int HEIRLOOM_BOSS_STAGE_2 = 2;
@@ -127,6 +141,90 @@ public final class HamletService {
         java.util.Collections.shuffle(candidates, new java.util.Random(rng.nextLong()));
         int take = Math.min(STAGECOACH_OFFER_COUNT, candidates.size());
         return List.copyOf(candidates.subList(0, take));
+    }
+
+    // ───── Sprint 10 B2 — Building upgrades ─────
+
+    /**
+     * Sprint 10 B2 — upgrade Stagecoach by one tier.
+     * Lv1 → Lv2 (300g + 1 heirloom). Lv2 → Lv3 (800g + 3 heirloom).
+     * Throws {@link HamletException} if already maxed or insufficient resources.
+     */
+    public static MetaState upgradeStagecoach(MetaState meta) {
+        return upgradeBuilding(meta, MetaState.B_STAGECOACH,
+                STAGECOACH_UPGRADE_LV2_GOLD, STAGECOACH_UPGRADE_LV2_HEIRLOOM,
+                STAGECOACH_UPGRADE_LV3_GOLD, STAGECOACH_UPGRADE_LV3_HEIRLOOM);
+    }
+
+    /** Sprint 10 B2 — upgrade Guild. Lv1→Lv2 250g+1H, Lv2→Lv3 700g+3H. */
+    public static MetaState upgradeGuild(MetaState meta) {
+        return upgradeBuilding(meta, MetaState.B_GUILD,
+                GUILD_UPGRADE_LV2_GOLD, GUILD_UPGRADE_LV2_HEIRLOOM,
+                GUILD_UPGRADE_LV3_GOLD, GUILD_UPGRADE_LV3_HEIRLOOM);
+    }
+
+    /** Sprint 10 B2 — upgrade Survivalist. Lv1→Lv2 180g+1H, Lv2→Lv3 350g+2H. */
+    public static MetaState upgradeSurvivalist(MetaState meta) {
+        return upgradeBuilding(meta, MetaState.B_SURVIVALIST,
+                SURVIVALIST_UPGRADE_LV2_GOLD, SURVIVALIST_UPGRADE_LV2_HEIRLOOM,
+                SURVIVALIST_UPGRADE_LV3_GOLD, SURVIVALIST_UPGRADE_LV3_HEIRLOOM);
+    }
+
+    /** Sprint 10 B2 — upgrade Caretaker. Lv1→Lv2 200g+1H, Lv2→Lv3 500g+2H. */
+    public static MetaState upgradeCaretaker(MetaState meta) {
+        return upgradeBuilding(meta, MetaState.B_CARETAKER,
+                CARETAKER_UPGRADE_LV2_GOLD, CARETAKER_UPGRADE_LV2_HEIRLOOM,
+                CARETAKER_UPGRADE_LV3_GOLD, CARETAKER_UPGRADE_LV3_HEIRLOOM);
+    }
+
+    /** Internal common upgrade logic. Validate gold+heirloom for next tier, return
+     *  updated meta with level bumped + costs deducted. */
+    private static MetaState upgradeBuilding(MetaState meta, String building,
+                                             int lv2Gold, int lv2Heirloom,
+                                             int lv3Gold, int lv3Heirloom) {
+        int currentLevel = meta.buildingLevel(building);
+        if (currentLevel >= 3) {
+            throw new HamletException(I18n.t("error.buildingMaxed", building));
+        }
+        int costGold = currentLevel == 1 ? lv2Gold : lv3Gold;
+        int costHeirloom = currentLevel == 1 ? lv2Heirloom : lv3Heirloom;
+        if (meta.gold() < costGold) {
+            throw new HamletException(I18n.t("error.notEnoughGold", costGold, meta.gold()));
+        }
+        if (meta.heirloom() < costHeirloom) {
+            throw new HamletException(I18n.t("error.notEnoughHeirloom", costHeirloom, meta.heirloom()));
+        }
+        return meta
+                .withGold(meta.gold() - costGold)
+                .withHeirloomDelta(-costHeirloom)
+                .withBuildingLevel(building, currentLevel + 1);
+    }
+
+    /** Sprint 10 B2 — gold cost for the next upgrade tier of a building.
+     *  Returns -1 if already maxed (UI shows "Maxed" instead of price). */
+    public static int upgradeGoldCost(String building, int currentLevel) {
+        if (currentLevel >= 3) return -1;
+        boolean lv2 = currentLevel == 1;
+        return switch (building) {
+            case MetaState.B_STAGECOACH -> lv2 ? STAGECOACH_UPGRADE_LV2_GOLD : STAGECOACH_UPGRADE_LV3_GOLD;
+            case MetaState.B_GUILD       -> lv2 ? GUILD_UPGRADE_LV2_GOLD : GUILD_UPGRADE_LV3_GOLD;
+            case MetaState.B_SURVIVALIST -> lv2 ? SURVIVALIST_UPGRADE_LV2_GOLD : SURVIVALIST_UPGRADE_LV3_GOLD;
+            case MetaState.B_CARETAKER   -> lv2 ? CARETAKER_UPGRADE_LV2_GOLD : CARETAKER_UPGRADE_LV3_GOLD;
+            default -> -1;
+        };
+    }
+
+    /** Sprint 10 B2 — heirloom cost for the next upgrade tier. -1 if maxed. */
+    public static int upgradeHeirloomCost(String building, int currentLevel) {
+        if (currentLevel >= 3) return -1;
+        boolean lv2 = currentLevel == 1;
+        return switch (building) {
+            case MetaState.B_STAGECOACH -> lv2 ? STAGECOACH_UPGRADE_LV2_HEIRLOOM : STAGECOACH_UPGRADE_LV3_HEIRLOOM;
+            case MetaState.B_GUILD       -> lv2 ? GUILD_UPGRADE_LV2_HEIRLOOM : GUILD_UPGRADE_LV3_HEIRLOOM;
+            case MetaState.B_SURVIVALIST -> lv2 ? SURVIVALIST_UPGRADE_LV2_HEIRLOOM : SURVIVALIST_UPGRADE_LV3_HEIRLOOM;
+            case MetaState.B_CARETAKER   -> lv2 ? CARETAKER_UPGRADE_LV2_HEIRLOOM : CARETAKER_UPGRADE_LV3_HEIRLOOM;
+            default -> -1;
+        };
     }
 
     /**
@@ -243,14 +341,24 @@ public final class HamletService {
         if (!rs.diseases().contains(diseaseId)) {
             throw new HamletException(I18n.t("error.noDisease", diseaseId));
         }
-        if (meta.gold() < CARETAKER_DISEASE_CURE_COST) {
-            throw new HamletException(I18n.t("error.notEnoughGold", CARETAKER_DISEASE_CURE_COST, meta.gold()));
+        // Sprint 10 B2 — cost varies by Caretaker level (30g → 25g → 20g per design lock).
+        int caretakerLevel = meta.buildingLevel(MetaState.B_CARETAKER);
+        int cost = CARETAKER_CURE_COST_BY_LEVEL[caretakerLevel];
+        if (meta.gold() < cost) {
+            throw new HamletException(I18n.t("error.notEnoughGold", cost, meta.gold()));
+        }
+        // Sprint 10 B2 — slot tracking. Slots reset at end-of-run (per design lock).
+        int slotLimit = CARETAKER_CURE_SLOTS_BY_LEVEL[caretakerLevel];
+        if (meta.cureSlotsUsedThisVisit() >= slotLimit) {
+            throw new HamletException(I18n.t("error.cureSlotsExhausted",
+                    meta.cureSlotsUsedThisVisit(), slotLimit));
         }
         Hero h = rs.toHero(gd);
         h.removeDisease(diseaseId);
         return meta
-                .withGold(meta.gold() - CARETAKER_DISEASE_CURE_COST)
-                .withRoster(replaceInRoster(meta.roster(), HeroState.from(h)));
+                .withGold(meta.gold() - cost)
+                .withRoster(replaceInRoster(meta.roster(), HeroState.from(h)))
+                .withCureSlotConsumed();
     }
 
     /** Reduces the hero's stress by {@link #CARETAKER_STRESS_RELIEF_BLOCK} for one fixed cost. */
@@ -297,7 +405,9 @@ public final class HamletService {
             }
         }
         int newGold = victory ? meta.gold() + run.state().gold() : meta.gold();
-        return meta.withGold(newGold).withRoster(newRoster);
+        // Sprint 10 B2 — reset cure slots at end-of-run (locked design 2026-05-11).
+        // One run-cycle = one Hamlet visit for cure-slot purposes.
+        return meta.withGold(newGold).withRoster(newRoster).withCureSlotsReset();
     }
 
     // ---------- helpers ----------

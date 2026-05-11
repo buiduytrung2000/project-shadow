@@ -18,6 +18,7 @@ import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.data.model.ItemData;
 import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.HamletService;
+import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.ui.FontFactory;
 
 import java.util.Random;
@@ -61,13 +62,52 @@ public class SurvivalistScreen implements Screen {
         viewport.apply(true);
     }
 
+    /** Sprint 10 B2 — Survivalist upgrade button. */
+    private void addUpgradeButton() {
+        int currentLevel = game.meta().buildingLevel(MetaState.B_SURVIVALIST);
+        if (currentLevel >= 3) {
+            Label maxed = new Label(I18n.t("hamlet.upgrade.maxed"), skin);
+            maxed.setColor(Color.GOLD);
+            root.add(maxed).pad(8).row();
+            return;
+        }
+        int costGold = HamletService.upgradeGoldCost(MetaState.B_SURVIVALIST, currentLevel);
+        int costHeir = HamletService.upgradeHeirloomCost(MetaState.B_SURVIVALIST, currentLevel);
+        TextButton upgrade = new TextButton(
+                I18n.t("hamlet.upgrade.button", currentLevel + 1, costGold, costHeir),
+                skin);
+        boolean affordable = game.meta().gold() >= costGold && game.meta().heirloom() >= costHeir;
+        upgrade.setDisabled(!affordable);
+        upgrade.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                try {
+                    MetaState newMeta = HamletService.upgradeSurvivalist(game.meta());
+                    game.applyMeta(newMeta);
+                    feedbackLabel.setText(I18n.t("hamlet.upgrade.success",
+                            newMeta.buildingLevel(MetaState.B_SURVIVALIST)));
+                    rebuildUi();
+                } catch (HamletService.HamletException ex) {
+                    feedbackLabel.setText(ex.getMessage());
+                    rebuildUi();
+                }
+            }
+        });
+        root.add(upgrade).pad(10).width(420).height(60).row();
+    }
+
     private void rebuildUi() {
         root.clear();
         Label title = new Label(I18n.t("survivalist.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).pad(20).row();
 
-        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold())
+                + "  |  " + I18n.t("hamlet.heirloom", game.meta().heirloom())
+                + "  |  " + I18n.t("hamlet.buildingLevel",
+                        game.meta().buildingLevel(MetaState.B_SURVIVALIST)),
+                skin);
         root.add(gold).pad(10).row();
+        addUpgradeButton();
         root.add(feedbackLabel).pad(10).row();
 
         Label invHeader = new Label(I18n.t("survivalist.inventory", game.meta().trinketInventory().size()), skin);

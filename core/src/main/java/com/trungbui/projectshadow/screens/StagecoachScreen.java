@@ -65,6 +65,38 @@ public class StagecoachScreen implements Screen {
         viewport.apply(true);
     }
 
+    /** Sprint 10 B2 — building upgrade button for Stagecoach (Lv1→Lv2→Lv3). */
+    private void addUpgradeButton(Table host) {
+        int currentLevel = game.meta().buildingLevel(MetaState.B_STAGECOACH);
+        if (currentLevel >= 3) {
+            Label maxed = new Label(I18n.t("hamlet.upgrade.maxed"), skin);
+            maxed.setColor(Color.GOLD);
+            host.add(maxed).colspan(3).pad(8).row();
+            return;
+        }
+        int costGold = HamletService.upgradeGoldCost(MetaState.B_STAGECOACH, currentLevel);
+        int costHeir = HamletService.upgradeHeirloomCost(MetaState.B_STAGECOACH, currentLevel);
+        TextButton upgrade = new TextButton(
+                I18n.t("hamlet.upgrade.button", currentLevel + 1, costGold, costHeir),
+                skin);
+        boolean affordable = game.meta().gold() >= costGold && game.meta().heirloom() >= costHeir;
+        upgrade.setDisabled(!affordable);
+        upgrade.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                try {
+                    MetaState newMeta = HamletService.upgradeStagecoach(game.meta());
+                    game.applyMeta(newMeta);
+                    rebuildUi(I18n.t("hamlet.upgrade.success",
+                            newMeta.buildingLevel(MetaState.B_STAGECOACH)));
+                } catch (HamletService.HamletException ex) {
+                    rebuildUi(ex.getMessage());
+                }
+            }
+        });
+        host.add(upgrade).colspan(3).pad(10).width(420).height(60).row();
+    }
+
     private void rerollOffers(boolean firstTime) {
         currentOffers = HamletService.rollStagecoachOffers(game.meta(), game.gameData(), new Random());
         rebuildUi(firstTime
@@ -77,8 +109,13 @@ public class StagecoachScreen implements Screen {
         Label title = new Label(I18n.t("stagecoach.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).colspan(3).pad(20).row();
 
-        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold())
+                + "  |  " + I18n.t("hamlet.heirloom", game.meta().heirloom())
+                + "  |  " + I18n.t("hamlet.buildingLevel",
+                        game.meta().buildingLevel(MetaState.B_STAGECOACH)),
+                skin);
         root.add(gold).colspan(3).pad(10).row();
+        addUpgradeButton(root);
 
         feedbackLabel.setText(feedback);
         root.add(feedbackLabel).colspan(3).pad(10).row();

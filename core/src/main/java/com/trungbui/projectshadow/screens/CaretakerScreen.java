@@ -65,13 +65,55 @@ public class CaretakerScreen implements Screen {
         viewport.apply(true);
     }
 
+    /** Sprint 10 B2 — Caretaker upgrade button. */
+    private void addUpgradeButton() {
+        int currentLevel = game.meta().buildingLevel(MetaState.B_CARETAKER);
+        if (currentLevel >= 3) {
+            Label maxed = new Label(I18n.t("hamlet.upgrade.maxed"), skin);
+            maxed.setColor(Color.GOLD);
+            root.add(maxed).colspan(3).pad(8).row();
+            return;
+        }
+        int costGold = HamletService.upgradeGoldCost(MetaState.B_CARETAKER, currentLevel);
+        int costHeir = HamletService.upgradeHeirloomCost(MetaState.B_CARETAKER, currentLevel);
+        TextButton upgrade = new TextButton(
+                I18n.t("hamlet.upgrade.button", currentLevel + 1, costGold, costHeir),
+                skin);
+        boolean affordable = game.meta().gold() >= costGold && game.meta().heirloom() >= costHeir;
+        upgrade.setDisabled(!affordable);
+        upgrade.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                try {
+                    MetaState newMeta = HamletService.upgradeCaretaker(game.meta());
+                    game.applyMeta(newMeta);
+                    feedbackLabel.setText(I18n.t("hamlet.upgrade.success",
+                            newMeta.buildingLevel(MetaState.B_CARETAKER)));
+                    rebuildUi();
+                } catch (HamletService.HamletException ex) {
+                    feedbackLabel.setText(ex.getMessage());
+                    rebuildUi();
+                }
+            }
+        });
+        root.add(upgrade).colspan(3).pad(10).width(420).height(60).row();
+    }
+
     private void rebuildUi() {
         root.clear();
         Label title = new Label(I18n.t("caretaker.title"), new Label.LabelStyle(titleFont, Color.GOLD));
         root.add(title).colspan(3).pad(20).row();
 
-        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
+        int caretakerLevel = game.meta().buildingLevel(MetaState.B_CARETAKER);
+        int slotsUsed = game.meta().cureSlotsUsedThisVisit();
+        int slotLimit = HamletService.CARETAKER_CURE_SLOTS_BY_LEVEL[caretakerLevel];
+        Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold())
+                + "  |  " + I18n.t("hamlet.heirloom", game.meta().heirloom())
+                + "  |  " + I18n.t("hamlet.buildingLevel", caretakerLevel)
+                + "  |  " + I18n.t("caretaker.cureSlots", slotsUsed, slotLimit),
+                skin);
         root.add(gold).colspan(3).pad(10).row();
+        addUpgradeButton();
 
         root.add(feedbackLabel).colspan(3).pad(10).row();
 
