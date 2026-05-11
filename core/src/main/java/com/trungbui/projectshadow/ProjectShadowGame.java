@@ -45,7 +45,21 @@ public class ProjectShadowGame extends Game {
     private static final List<String> DEFAULT_ROSTER =
             List.of("hero_01", "hero_13", "hero_05", "hero_03");
     private static final String DEFAULT_STAGE = "stage_1";
-    private static final long DEFAULT_SEED = 42L;
+
+    /** Sprint 10 B1 — formerly hardcoded {@code 42L}. Now generated per-run by
+     *  {@link #generateRunSeed()} unless the env var {@code SHADOW_FIXED_SEED}
+     *  is set (dev/test override). Random seed → each run has a unique stage map. */
+    private static long generateRunSeed() {
+        String fixed = System.getenv("SHADOW_FIXED_SEED");
+        if (fixed != null && !fixed.isBlank()) {
+            try {
+                return Long.parseLong(fixed.trim());
+            } catch (NumberFormatException ignored) {
+                // Fall through to random.
+            }
+        }
+        return new java.util.Random().nextLong();
+    }
 
     private GameData gameData;
     private SaveManager saveManager;
@@ -177,10 +191,20 @@ public class ProjectShadowGame extends Game {
     /** Start a new run with the chosen 4 heroes (must already be in the meta roster). */
     public void startNewRun(List<String> heroIds) {
         Screen prev = getScreen();
+        // Sprint 10 B1: if roster exceeds SOFT_ROSTER_CAP, auto-cull random excess heroes
+        // (none in the picked party). This is destructive — heroes are permanently dropped.
+        // Player was warned by HamletScreen UI when cap was exceeded.
+        if (meta.isRosterOverCap()) {
+            MetaState culled = HamletService.autoCullRosterToCap(meta, heroIds);
+            applyMeta(culled);
+        }
         // Use a snapshot of the heroes' meta state as their starting state for the run.
         // RunSession.startNew creates fresh Hero instances; to carry over level/HP/stress,
         // we restore each from its HeroState snapshot in meta.roster after creation.
-        runSession = RunSession.startNew(gameData, saveManager, DEFAULT_STAGE, DEFAULT_SEED, heroIds);
+        // Sprint 10 B1: seed is now per-run (was hardcoded 42L). Stage map varies
+        // between runs unless SHADOW_FIXED_SEED env var pins it (dev/test).
+        long runSeed = generateRunSeed();
+        runSession = RunSession.startNew(gameData, saveManager, DEFAULT_STAGE, runSeed, heroIds);
         // overlay roster snapshot onto party (level/hp/stress/diseases/cooldowns)
         for (int i = 0; i < heroIds.size(); i++) {
             HeroState rs = meta.heroInRoster(heroIds.get(i)).orElseThrow();

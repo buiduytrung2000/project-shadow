@@ -92,23 +92,33 @@ class SaveMigrationTest {
 
     @Test
     void loadMeta_currentVersion_succeeds() throws Exception {
+        // Sprint 10 B1: CURRENT_META_VERSION bumped 1→2. v2 saves include heirloom +
+        // buildingLevels fields. v1 saves are auto-migrated; see legacy test below.
         String json = """
                 {
-                  "saveVersion": 1,
+                  "saveVersion": 2,
                   "gold": 100,
+                  "heirloom": 0,
                   "roster": [],
                   "trinketInventory": [],
+                  "buildingLevels": { "stagecoach": 1, "guild": 1, "survivalist": 1, "caretaker": 1 },
+                  "cureSlotsUsedThisVisit": 0,
                   "createdAt": "2026-05-11T00:00:00Z",
                   "lastSavedAt": "2026-05-11T00:00:00Z"
                 }
                 """;
         MetaState m = SaveMigration.loadMeta(mapper, json);
-        assertThat(m.saveVersion()).isEqualTo(1);
+        assertThat(m.saveVersion()).isEqualTo(2);
         assertThat(m.gold()).isEqualTo(100);
+        assertThat(m.heirloom()).isZero();
+        assertThat(m.buildingLevel("stagecoach")).isEqualTo(1);
     }
 
     @Test
-    void loadMeta_legacyMissingVersion_loadsAsVersion1() throws Exception {
+    void loadMeta_legacyMissingVersion_migratesToCurrent() throws Exception {
+        // Pre-B3 saves had no saveVersion field. Sprint 10 B1 migration bumps them
+        // to CURRENT_META_VERSION (=2) so subsequent saves write the new schema.
+        // Default values fill in for new fields (heirloom=0, buildingLevels=all-Lv1).
         String json = """
                 {
                   "gold": 200,
@@ -119,7 +129,10 @@ class SaveMigrationTest {
                 }
                 """;
         MetaState m = SaveMigration.loadMeta(mapper, json);
-        assertThat(m.saveVersion()).isEqualTo(1);
+        assertThat(m.saveVersion()).isEqualTo(SaveMigration.CURRENT_META_VERSION);
+        assertThat(m.heirloom()).isZero();
+        assertThat(m.buildingLevel("stagecoach")).isEqualTo(1);
+        assertThat(m.cureSlotsUsedThisVisit()).isZero();
     }
 
     @Test
