@@ -325,6 +325,14 @@ public class ProjectShadowGame extends Game {
         Runnable onLose = () -> handleCombatLoss(nodeLabel);
         CombatScreen cs = new CombatScreen(gameData, encounter, onWin, onLose);
         cs.setAudio(audio); // must be before setScreen so show() picks it up
+        // Sprint 10 B3 — supply reward provider for CombatRewardPopup. The popup
+        // displays this reward; the actual apply runs in handleCombatWin after
+        // onWin fires. Both calls produce identical results (deterministic
+        // RNG seeding from Sprint 9+ B2), so the display can't drift from reality.
+        cs.setRewardProvider(() -> {
+            StageNode resolvedNode = runSession.stageTree().getNode(nodeLabel).orElse(null);
+            return rollRewardForNode(resolvedNode);
+        });
         setScreen(cs);
         // dispose is handled by enterNode() — single ownership
     }

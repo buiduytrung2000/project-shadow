@@ -34,6 +34,19 @@
       "boss_id": "enemy_b01",
       "intro_text": "Một xác chết khổng lồ trồi lên từ đống xương..."
     },
+    "pre_boss_alt_layer": {
+      "label_prefix": "PB",
+      "num_nodes": 1,
+      "comment": "Sprint 10 B3 — optional tier-3 elite node between layer_3 and boss. Player chooses: take the easier rest/event path or the elite skirmish (extra reward).",
+      "elite": {
+        "enemies": ["enemy_02"],
+        "variants_allowed": ["Tank", "Assassin"],
+        "min_enemies": 2,
+        "max_enemies": 2,
+        "stat_modifiers": { "hp_mult": 1.5, "dmg_mult": 1.2 },
+        "rewards": { "gold_bonus": 50, "item_drop_chance": 0.5 }
+      }
+    },
     "layer_2": {
       "label_prefix": "L2",
       "num_nodes": 2,
