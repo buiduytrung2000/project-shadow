@@ -21,6 +21,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ui.FontFactory;
+import com.trungbui.projectshadow.ui.SkinLoader;
 import com.trungbui.projectshadow.audio.AudioManager;
 import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.combat.AttackResult;
@@ -107,7 +108,7 @@ public class CombatScreen implements Screen {
         this.batch = new SpriteBatch();
         this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
         BitmapFont vnFont = fontFactory.create(FONT_SIZE_PX);
-        this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = vnFont;
         skin.get(TextButton.TextButtonStyle.class).font = vnFont;
         this.uiStage = new Stage(viewport, batch);

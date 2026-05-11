@@ -71,3 +71,18 @@ tasks.register('packAssets', JavaExec) {
   // Don't fail the task if input dir is empty — Sprint 9 ships with no sprites yet.
   ignoreExitValue = true
 }
+
+// Pack PixelLab-generated UI components (assets/ui/raw/*.png) into a dedicated
+// atlas separate from combatants. Buttons + panels + icons rebuild independently.
+tasks.register('packUIComponents', JavaExec) {
+  group = 'build'
+  description = 'Pack PixelLab UI component PNGs (assets/ui/raw/*.png) into components.atlas + components.png.'
+  classpath = configurations.packAssetsTool
+  mainClass = 'com.badlogic.gdx.tools.texturepacker.TexturePacker'
+  args = [
+    "${rootProject.projectDir}/assets/ui/raw",
+    "${rootProject.projectDir}/assets/ui",
+    'components'
+  ]
+  ignoreExitValue = true
+}

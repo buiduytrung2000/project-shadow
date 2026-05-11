@@ -19,6 +19,7 @@ import com.trungbui.projectshadow.i18n.I18n;
 import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.ui.FontFactory;
+import com.trungbui.projectshadow.ui.SkinLoader;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
 import java.util.List;
@@ -47,7 +48,7 @@ public class StagecoachScreen implements Screen {
         this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
         this.titleFont = fontFactory.create(48);
         var bodyFont = fontFactory.create(24);
-        this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = bodyFont;
         skin.get(TextButton.TextButtonStyle.class).font = bodyFont;
         this.uiStage = new Stage(viewport);

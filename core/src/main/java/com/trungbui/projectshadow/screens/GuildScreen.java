@@ -21,6 +21,7 @@ import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.save.HeroState;
 import com.trungbui.projectshadow.ui.FontFactory;
+import com.trungbui.projectshadow.ui.SkinLoader;
 
 public class GuildScreen implements Screen {
 
@@ -44,7 +45,7 @@ public class GuildScreen implements Screen {
         this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
         this.titleFont = fontFactory.create(48);
         var bodyFont = fontFactory.create(24);
-        this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = bodyFont;
         skin.get(TextButton.TextButtonStyle.class).font = bodyFont;
         this.uiStage = new Stage(viewport);
