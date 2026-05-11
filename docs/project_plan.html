@@ -189,7 +189,92 @@
 
 <hr>
 
-<h1>5. Cost estimate (PixelLab AI assets)</h1>
+<h1>5. Hamlet Economy — 3-tier Building Upgrade Plan (lock 2026-05-11)</h1>
+
+<div class="card info">
+<p><strong>Hai currency:</strong> <code>gold</code> (chính, drop nhiều) + <code>heirloom</code> (boss-only, vĩnh viễn). Upgrade buildings tốn cả hai.</p>
+<p><strong>Heirloom drops:</strong> Stage 1 boss = 1, Stage 2 = 2, Stage 3 = 4. Full upgrade cần <strong>14 heirloom</strong> (~4-5 boss kills).</p>
+</div>
+
+<h2>A. Stagecoach (Trại tuyển mộ)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Offer count</th><th>Rarity weights</th><th>Bonus</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>3</td><td>70% Common, 30% Rare</td><td>—</td></tr>
+<tr><td>2</td><td>300g + 1 H</td><td>4</td><td>50% Common, 40% Rare, 10% Legend</td><td>—</td></tr>
+<tr><td>3</td><td>800g + 3 H</td><td>5</td><td>Guaranteed ≥1 Rare; 25% Legend</td><td><strong>Hire cost -20%</strong></td></tr>
+</tbody>
+</table>
+
+<h2>B. Guild (Hội phép — skill upgrade)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Cost reduction</th><th>Max hero lvl</th><th>Bonus</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>—</td><td>5</td><td>—</td></tr>
+<tr><td>2</td><td>250g + 1 H</td><td>-20% level-up cost</td><td>6</td><td>—</td></tr>
+<tr><td>3</td><td>700g + 3 H</td><td>-40% cost</td><td>7</td><td><strong>Skill Reroll 1×/hero</strong></td></tr>
+</tbody>
+</table>
+
+<h2>C. Survivalist (Thợ săn — craft trinket)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Craft rarity</th><th>Craft price</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>Common</td><td>80g</td></tr>
+<tr><td>2</td><td>180g + 1 H</td><td>Uncommon</td><td>150g</td></tr>
+<tr><td>3</td><td>350g + 2 H</td><td>Rare + class-specific</td><td>300g</td></tr>
+</tbody>
+</table>
+
+<h2>D. Caretaker (Người chăm sóc — cure / stress)</h2>
+<table>
+<thead><tr><th>Lv</th><th>Upgrade cost</th><th>Cure slots/visit</th><th>Per-cure cost</th><th>Cursed</th></tr></thead>
+<tbody>
+<tr><td>1 (default)</td><td>—</td><td>1 hero</td><td>30g</td><td>❌</td></tr>
+<tr><td>2</td><td>200g + 1 H</td><td>2 heroes</td><td>25g</td><td>❌</td></tr>
+<tr><td>3</td><td>500g + 2 H</td><td>4 heroes</td><td>20g</td><td>❌ (chỉ Paladin Tẩy Trần in combat)</td></tr>
+</tbody>
+</table>
+
+<h3>Total upgrade investment</h3>
+<table>
+<thead><tr><th>Tier</th><th>Gold</th><th>Heirloom</th></tr></thead>
+<tbody>
+<tr><td>All to Lv2</td><td>930g</td><td>4 H</td></tr>
+<tr><td>All to Lv3 (full)</td><td><strong>3,280g</strong></td><td><strong>14 H</strong></td></tr>
+</tbody>
+</table>
+
+<h2>E. Gold persistence — Option C: Supplies Tax</h2>
+
+<table>
+<thead><tr><th>Stage</th><th>Supplies tax (deducted on embark)</th><th>Boss reward gold</th><th>Net if win</th><th>Heirloom drop</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>100g</td><td>200g</td><td>+100g</td><td>1</td></tr>
+<tr><td>2</td><td>200g</td><td>400g</td><td>+200g</td><td>2</td></tr>
+<tr><td>3</td><td>400g</td><td>1000g</td><td>+600g</td><td>4</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+<p><strong>Tax không refund nếu thua.</strong> Tạo "investment feel" — mỗi run là quyết định có cân nhắc. Combined với Heirloom drop chỉ boss kill → khuyến khích chơi cẩn thận, không grind Stage 1 mãi.</p>
+</div>
+
+<h2>F. Implementation status</h2>
+<ul class="checklist">
+  <li class="done">Hire cost by rarity (50/80/150g) — <code>HamletService.hireCost()</code></li>
+  <li class="done">All upgrade cost constants defined in <code>HamletService</code></li>
+  <li class="done">Supplies tax + heirloom helpers (<code>suppliesTax()</code>, <code>heirloomFromBoss()</code>)</li>
+  <li class="wip">MetaState fields cho <code>heirloom</code> + 4 building levels — Sprint 8.5</li>
+  <li class="wip">UI upgrade screens cho 4 building — Sprint 8.5</li>
+  <li class="wip">Cure slot tracking per Hamlet visit — Sprint 8.5</li>
+  <li class="wip">Apply supplies tax in <code>RunSession.startNew()</code> — Sprint 8.5</li>
+  <li class="wip">Boss drops heirloom + apply via <code>HamletService.applyRunOutcome()</code> — Sprint 8.5</li>
+</ul>
+
+<hr>
+
+<h1>6. Cost estimate (PixelLab AI assets)</h1>
 
 <table>
 <thead><tr><th>Loại</th><th>Số lượng</th><th>Credits/each</th><th>Total</th></tr></thead>

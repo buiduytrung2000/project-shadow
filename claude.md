@@ -1,6 +1,6 @@
 # 🌑 Project Shadow — Game Design Hub
 
-> **Codename:** Project Shadow · **Working title:** *Shadow of the Soul*
+> **Tên game:** **Project Shadow** (final, không phải codename)
 > **Genre:** Turn-based dungeon crawl roguelite (lấy cảm hứng Darkest Dungeon)
 > **Engine:** libGDX + JDK 21 · **Target platforms:** Windows, macOS, Linux desktop
 > **Solo dev project** · **Status:** Sprint 9 / 9 (Polish) đang chạy
@@ -171,13 +171,23 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
 - ❌ Dynamic lighting
 - ❌ Crafting / equipment forging
 
-### Còn mơ hồ — cần playtest
-- ❓ Affliction/Virtue ratio 70/30 — phù hợp casual?
-- ❓ Boss HP scaling (b01=80, b02=90, b03=130) — Stage 3 đủ thử thách?
-- ❓ Gold reward economy — đủ Hamlet upgrade?
-- ❓ Crit multiplier 1.5× vs 2.0× — gamefeel
-- ❓ Disease chance 30%/hero/stage — quá thường xuyên?
-- ❓ Final game name — "Project Shadow" → "Shadow of the Soul"?
+### Đã chốt — design decisions (2026-05-11)
+- ✅ **Affliction/Virtue ratio 70/30** — giữ độ khó cao, skills/items đa dạng bổ trợ
+- ✅ **Boss HP scaling**: b01=80, b02=110, b03=150 (+30 HP/stage)
+- ✅ **Crit multiplier 1.5×**
+- ✅ **Disease chance 30%/hero/stage**
+- ✅ **Final game name: "Project Shadow"**
+- ✅ **Hire cost by rarity**: 50g Common / 80g Rare / 150g Legendary
+- ✅ **3-tier Hamlet upgrade system**: Stagecoach/Guild/Survivalist/Caretaker × 3 levels. Costs gold + Heirloom (boss drop). Full upgrade = 3,280g + 14 Heirloom (~4-5 boss kills). Xem [project_plan.html § 5](docs/project_plan.html)
+- ✅ **Caretaker cure slots**: Lv1=1, Lv2=2, Lv3=4 heroes/visit. Cost 30g→25g→20g. Cursed NOT cured
+- ✅ **Heirloom currency #2**: boss drop 1/2/4 (Stage 1/2/3), chỉ dùng upgrade
+- ✅ **Gold persistence Option C — Supplies Tax**: 100g/200g/400g up-front, non-refundable
+- ✅ **Boss gold rewards**: 200g/400g/1000g (Stage 1/2/3)
+- ✅ **No gold cap**
+
+### Còn cần quyết định
+- ❓ Random damage variance ±5% vs ±10%
+- ❓ Stress max uniform 100 vs differentiated by rarity
 
 ---
 

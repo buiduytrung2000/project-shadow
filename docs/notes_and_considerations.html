@@ -123,17 +123,19 @@
 <p>Những điểm chưa có spec cụ thể, đang dùng giá trị default hoặc placeholder. Cần playtest để tinh chỉnh.</p>
 </div>
 
-<h3>3.1 Balance numbers cần playtest</h3>
+<h3>3.1 Balance numbers — đã chốt &amp; cần playtest</h3>
 <table>
-<thead><tr><th>Tham số</th><th>Giá trị hiện tại</th><th>Vấn đề cần check</th></tr></thead>
+<thead><tr><th>Tham số</th><th>Giá trị</th><th>Trạng thái</th></tr></thead>
 <tbody>
-<tr><td>Affliction/Virtue ratio</td><td>70/30</td><td>Có quá khắc nghiệt? DD là 75/25. Có thể nên 60/40 cho casual?</td></tr>
-<tr><td>Disease chance after stage</td><td>30% per hero</td><td>Có quá thường xuyên? Caretaker chi phí cân với rate này?</td></tr>
-<tr><td>Stress max trước Affliction</td><td>100</td><td>Có thể nên 100/Common, 80/Rare, 120/Legend?</td></tr>
-<tr><td>Boss HP scaling</td><td>b01=80, b02=90, b03=130</td><td>Stage 3 có thiếu HP boss? DD final boss thường &gt;200 HP.</td></tr>
-<tr><td>Gold reward per stage</td><td>200 boss / 30-70 per reward node</td><td>Đủ để upgrade Hamlet không? Cần track gold/run/stage.</td></tr>
-<tr><td>Crit multiplier</td><td>1.5×</td><td>2.0× có thể tạo "spike" cảm hứng hơn?</td></tr>
-<tr><td>Random variance damage</td><td>±5% (0.95..1.05)</td><td>±10% (0.9..1.1) tạo cảm giác risk hơn? Có thể tăng gamefeel.</td></tr>
+<tr><td>Affliction/Virtue ratio</td><td><strong>70/30</strong></td><td><span class="badge done">✅ CHỐT</span> Cần độ khó cao, hệ skills/items đa dạng bổ trợ run dài</td></tr>
+<tr><td>Disease chance after stage</td><td><strong>30%/hero/stage</strong></td><td><span class="badge done">✅ CHỐT</span></td></tr>
+<tr><td>Stress max trước Affliction</td><td>100 (uniform)</td><td><span class="badge maybe">❓ chưa quyết</span> Có nên 100 Common / 80 Rare / 120 Legend? Default 100 cho tất cả.</td></tr>
+<tr><td>Boss HP scaling</td><td><strong>b01=80, b02=110, b03=150</strong></td><td><span class="badge done">✅ CHỐT</span> CSV updated 2026-05-11</td></tr>
+<tr><td>Gold reward per stage</td><td>200/400/1000g per boss + 30-70 per reward node + supplies tax 100/200/400g</td><td><span class="badge done">✅ CHỐT</span> Option C — supplies tax up-front per stage</td></tr>
+<tr><td>Hamlet 3-tier upgrades</td><td>4 buildings × 3 levels — gold + Heirloom</td><td><span class="badge done">✅ CHỐT</span> Full plan locked 2026-05-11 — xem Decision Log</td></tr>
+<tr><td>Hire cost by rarity</td><td>50g Common / 80g Rare / 150g Legend</td><td><span class="badge done">✅ CHỐT</span> Already implemented</td></tr>
+<tr><td>Crit multiplier</td><td><strong>1.5×</strong></td><td><span class="badge done">✅ CHỐT</span></td></tr>
+<tr><td>Random variance damage</td><td>±5% (0.95..1.05)</td><td><span class="badge maybe">❓ chưa quyết</span> ±10% tạo risk hơn? Default ±5%.</td></tr>
 </tbody>
 </table>
 
@@ -166,10 +168,10 @@
 
 <h3>3.5 Marketing &amp; distribution</h3>
 <ul>
-  <li><strong>Tên cuối cùng</strong> — "Project Shadow" là codename. Tên thật: "Shadow of the Soul"? "Soul Warden"? "Hồn Sa Ngã"? Cần market test.</li>
-  <li><strong>Pricing model</strong> — Free + DLC? Một lần $10-15? Demo + full game?</li>
-  <li><strong>Launch platform</strong> — Steam first hay itch.io trước? Steam fee $100 + 30% rev share.</li>
-  <li><strong>Demo scope</strong> — 1 stage full hay 1 dungeon limited?</li>
+  <li><strong>Tên cuối cùng</strong> — <strong>"Project Shadow"</strong> ✅ CHỐT (final name, không phải codename).</li>
+  <li><strong>Pricing model</strong> — Free + DLC? Một lần $10-15? Demo + full game? <span class="badge maybe">chưa quyết</span></li>
+  <li><strong>Launch platform</strong> — Steam first hay itch.io trước? Steam fee $100 + 30% rev share. <span class="badge maybe">chưa quyết</span></li>
+  <li><strong>Demo scope</strong> — 1 stage full hay 1 dungeon limited? <span class="badge maybe">chưa quyết</span></li>
 </ul>
 
 <hr>
@@ -189,6 +191,16 @@
 <tr><td><strong>PixelLab AI cho sprite (thay vẽ tay)</strong></td><td>Solo dev không có thời gian vẽ 30+ characters × 4 anims. AI consistent style.</td><td>Sprint 9</td></tr>
 <tr><td><strong>5 boss total (3 main + 2 miniboss)</strong></td><td>1 boss/stage không đủ Stage 3. Miniboss tăng tension trước final.</td><td>Sprint 9 (mới)</td></tr>
 <tr><td><strong>Thêm 4 enemies vào CSV (b02, b03, mb01, mb02)</strong></td><td>Stage 2/3 đã spec → cần data layer match. Stage 3 phải có miniboss layer.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Affliction/Virtue 70/30 confirmed</strong></td><td>Game cần độ khó cao — hệ skills/items đa dạng bổ trợ run dài về sau.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Boss HP: b01=80, b02=110, b03=150</strong></td><td>Stage 3 cần thử thách rõ hơn. Scaling +30 HP/stage. (Trước: 80/90/130.)</td><td>2026-05-11</td></tr>
+<tr><td><strong>Crit multiplier 1.5× confirmed</strong></td><td>Giữ feel DD-style, không quá spike. 2× từng cân nhắc → bỏ.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Disease chance 30%/hero/stage confirmed</strong></td><td>Đủ tension nhưng không quá punishing. Caretaker 30g cure phù hợp.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Final game name: "Project Shadow"</strong></td><td>Codename = final. Đơn giản, dễ nhớ, đã build identity qua dev.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Hire cost by rarity (50/80/150g)</strong></td><td>Common/Rare/Legendary tiered. Tránh Legendary too easy access. Implemented in HamletService.hireCost().</td><td>2026-05-11</td></tr>
+<tr><td><strong>3-tier Hamlet upgrade locked</strong></td><td>4 buildings × 3 levels. Gold + Heirloom (boss drop). Full upgrade ~14H ≈ 4-5 boss kills. Xem section "Hamlet Economy" trong project_plan.html.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Disease cure: slot system theo Caretaker level</strong></td><td>Lv1=1 hero/visit, Lv2=2, Lv3=4. Cost giảm 30g→25g→20g. Cursed disease KHÔNG cure được (chỉ Paladin Tẩy Trần in combat).</td><td>2026-05-11</td></tr>
+<tr><td><strong>Gold persistence: Option C (supplies tax)</strong></td><td>Tax up-front 100/200/400g cho Stage 1/2/3. Non-refundable. Tạo "investment" feel mỗi run. Boss reward 200/400/1000g tự trang trải tax.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Heirloom currency #2 introduced</strong></td><td>Drop 1/2/4 từ boss Stage 1/2/3. Chỉ dùng cho Hamlet building upgrades. Tạo long-term goal.</td><td>2026-05-11</td></tr>
 </tbody>
 </table>
 
