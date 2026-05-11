@@ -149,13 +149,14 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
 - [x] I18n VN + EN với toggle button
 - [x] AudioManager (music + SFX skeleton)
 - [x] Save/load Hamlet roster + meta state
-- [x] PixelLab AI sprite batch:
-  - [x] **14/14 heroes** base + 4 anims each (hero_02 missing dead anim)
-  - [x] **3/3 boss** base created (anims trong queue): enemy_b01 Giant Zombie, b02 Whispering Shade, b03 Black Heart
-  - [x] **2/2 miniboss** base created: enemy_mb01 Echo Wraith, mb02 Plague Bearer
-  - [x] **8/11 enemies** base done; assassin v3 + special v4 + tank v2 retry succeeded
+- [x] **PixelLab AI sprite batch — COMPLETE** (2026-05-11):
+  - [x] **14/14 heroes** ✅ base + 4 anims each (hero_02 missing dead anim only — minor, acceptable static fallback)
+  - [x] **3/3 boss** ✅ all 4 anims: enemy_b01 Giant Zombie (size 96), enemy_b02 Whispering Shade (v2), enemy_b03 Black Heart (v2)
+  - [x] **2/2 miniboss** ✅ all 4 anims: enemy_mb01 Echo Wraith (v2), enemy_mb02 Plague Bearer (v4)
+  - [x] **11/11 enemies** ✅ all 4 anims each (after multiple retries — v2/v3/v4/v5/v6 for the difficult ones)
   - [x] **5/5 core items** queued (item_c01, c03, t02, t07, t10)
-  - [x] **2/3 tilesets** queued (stage_1 Hầm Mộ, stage_2 Sương Mù; stage_3 đang chờ slot)
+  - [x] **3/3 tilesets** queued (stage_1 Hầm Mộ, stage_2 Sương Mù, stage_3 Lò Đúc Linh Hồn)
+  - [x] **Bugfix**: Double-dispose StageMapScreen → CombatScreen crash fixed (commit `1ae5e44`)
 - [ ] Particle effects khi crit/affliction
 - [ ] Splash screen, main menu, settings UI
 - [ ] Aseprite-style animation refinement (tween + 2-3 frame)
