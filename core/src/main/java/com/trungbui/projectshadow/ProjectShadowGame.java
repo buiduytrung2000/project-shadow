@@ -4,6 +4,8 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.trungbui.projectshadow.audio.AudioManager;
+import com.trungbui.projectshadow.combat.CombatReward;
+import com.trungbui.projectshadow.combat.CombatRewardRoller;
 import com.trungbui.projectshadow.combat.CombatScenario;
 import com.trungbui.projectshadow.data.GameData;
 import com.trungbui.projectshadow.domain.CombatEncounter;
@@ -209,6 +211,13 @@ public class ProjectShadowGame extends Game {
     /** Called by {@link NodeInfoScreen} when the player presses Continue. */
     public void finishCurrentNonCombatNode(StageNode node) {
         Screen prev = getScreen();
+
+        // Sprint 9 (combat-reward-system) — reward nodes previously displayed drops
+        // but never granted them. Apply the pre-rolled drop list to the run state.
+        if (node instanceof com.trungbui.projectshadow.stage.RewardNode rn) {
+            applyRewardNodeDrops(rn);
+        }
+
         try {
             runSession.completeNode(node.label());
         } catch (IOException e) {
@@ -221,6 +230,32 @@ public class ProjectShadowGame extends Game {
             setScreen(new StageMapScreen(this));
         }
         if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    /** Apply each {@code DropEntry} on a reward node to the run state. */
+    private void applyRewardNodeDrops(com.trungbui.projectshadow.stage.RewardNode rn) {
+        java.util.Random rng = new java.util.Random();
+        int goldDelta = 0;
+        List<String> items = new ArrayList<>();
+        for (var drop : rn.drops()) {
+            switch (drop.type() == null ? "" : drop.type()) {
+                case "gold" -> {
+                    int lo = drop.valueMin() != null ? drop.valueMin() : 0;
+                    int hi = drop.valueMax() != null ? drop.valueMax() : lo;
+                    goldDelta += (hi > lo) ? lo + rng.nextInt(hi - lo + 1) : lo;
+                }
+                case "item" -> {
+                    if (drop.itemId() != null) items.add(drop.itemId());
+                }
+                case "item_random" -> {
+                    if (drop.category() != null) items.add(drop.category());
+                }
+                default -> {
+                    // unknown drop type, ignore
+                }
+            }
+        }
+        runSession.applyCombatReward(new CombatReward(goldDelta, items, null, 0));
     }
 
     /**
@@ -245,11 +280,21 @@ public class ProjectShadowGame extends Game {
 
     private void handleCombatWin(String nodeLabel) {
         Screen prev = getScreen();
+
+        // Roll combat rewards BEFORE completeNode so the gold/items get persisted in the
+        // single save call below. Sprint 9 (combat-reward-system) — fixes the bug where
+        // boss kills granted no gold and per-combat drops never fired.
+        StageNode resolvedNode = runSession.stageTree().getNode(nodeLabel).orElse(null);
+        CombatReward reward = rollRewardForNode(resolvedNode);
+        runSession.applyCombatReward(reward);
+
         try {
             runSession.completeNode(nodeLabel);
         } catch (IOException e) {
             throw new RuntimeException("Failed to save run after combat at " + nodeLabel, e);
         }
+        // TODO Sprint 10: show CombatRewardPopup with `reward` before transitioning. For
+        // now the reward is silently applied — players see gold counter change next screen.
         if (runSession.isOnBossNode()) {
             applyOutcomeAndArchive(true);
             setScreen(new VictoryScreen(this));
@@ -257,6 +302,23 @@ public class ProjectShadowGame extends Game {
             setScreen(new StageMapScreen(this));
         }
         if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    /** Compute the reward for a freshly-defeated combat node. Returns empty if node is null. */
+    private CombatReward rollRewardForNode(StageNode node) {
+        if (node == null) return CombatReward.empty();
+        // Defeated enemy IDs (works for Combat/Elite/Miniboss/Boss nodes)
+        List<String> defeated = switch (node) {
+            case CombatNode c -> c.enemies();
+            case EliteNode e -> e.enemies();
+            case MinibossNode mb -> List.of(mb.minibossId());
+            case BossNode boss -> List.of(boss.bossId());
+            default -> List.of();
+        };
+        // Live (alive) heroes for stress-relief targeting
+        List<com.trungbui.projectshadow.domain.Hero> alive = runSession.party().stream()
+                .filter(h -> h.currentHp() > 0).toList();
+        return CombatRewardRoller.roll(node, defeated, alive, gameData, new java.util.Random());
     }
 
     private void handleCombatLoss(String nodeLabel) {

@@ -20,12 +20,14 @@ public class CombatantView {
     private float shakeTimer = 0f;
     private float flashTimer = 0f;
     private SpriteAnimator animator; // null if no atlas — caller falls back to rectangle
+    private boolean wasAlive = true; // tracks alive→dead transition so we trigger DEAD anim once
 
     public CombatantView(Combatant combatant, float baseX, float baseY) {
         this.combatant = combatant;
         this.baseX = baseX;
         this.baseY = baseY;
         this.color = colorFor(combatant);
+        this.wasAlive = combatant.isAlive();
     }
 
     public void attachAnimator(SpriteAnimator animator) {
@@ -80,6 +82,15 @@ public class CombatantView {
     public void update(float delta) {
         if (shakeTimer > 0f) shakeTimer = Math.max(0f, shakeTimer - delta);
         if (flashTimer > 0f) flashTimer = Math.max(0f, flashTimer - delta);
+
+        // Detect alive→dead transition: trigger DEAD animation once. SpriteAnimator
+        // holds the last frame (PlayMode.NORMAL on DEAD) so the corpse stays visible.
+        boolean alive = combatant.isAlive();
+        if (wasAlive && !alive) {
+            if (animator != null) animator.setState(SpriteAnimator.State.DEAD);
+        }
+        wasAlive = alive;
+
         if (animator != null) animator.update(delta);
     }
 

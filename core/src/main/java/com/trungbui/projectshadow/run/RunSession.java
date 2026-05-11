@@ -1,5 +1,6 @@
 package com.trungbui.projectshadow.run;
 
+import com.trungbui.projectshadow.combat.CombatReward;
 import com.trungbui.projectshadow.data.GameData;
 import com.trungbui.projectshadow.data.model.StageConfig;
 import com.trungbui.projectshadow.domain.Hero;
@@ -147,6 +148,30 @@ public class RunSession {
         }
         state = state.withCurrentNode(label).withParty(party);
         return saveManager.save(state);
+    }
+
+    /**
+     * Apply a rolled {@link CombatReward} to the live run: increments gold, appends
+     * items to the inventory, and reduces stress on the targeted hero (if any). Does
+     * NOT auto-save — the caller (usually {@link #completeNode(String)} right after)
+     * persists once. Returns the updated state for chaining or test assertions.
+     */
+    public RunState applyCombatReward(CombatReward reward) {
+        if (reward == null || reward.isEmpty()) return state;
+        RunState next = state.withGoldDelta(reward.gold());
+        for (String itemId : reward.items()) {
+            next = next.withInventoryAdd(itemId);
+        }
+        if (reward.stressReliefHeroId() != null && reward.stressReliefAmount() > 0) {
+            for (Hero h : party) {
+                if (h.id().equals(reward.stressReliefHeroId()) && h.currentHp() > 0) {
+                    h.setCurrentStress(Math.max(0, h.currentStress() - reward.stressReliefAmount()));
+                    break;
+                }
+            }
+        }
+        state = next;
+        return state;
     }
 
     public boolean isPartyDead() {

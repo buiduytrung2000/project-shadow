@@ -40,6 +40,7 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
 | [docs/pathway_stage1.html](docs/pathway_stage1.html) | **Stage 1 pathway** — JSON đầy đủ, pools, rules, thuật toán sinh stage (pseudocode) |
 | [docs/project_plan.html](docs/project_plan.html) | **Kế hoạch &amp; Scope** — Sprint plan 9 sprints, Roadmap 48 tuần, Feature List với status |
 | [docs/notes_and_considerations.html](docs/notes_and_considerations.html) | **Notes** — Out-of-scope, có thể phát triển thêm (post-MVP), còn mơ hồ |
+| [docs/test_plan.html](docs/test_plan.html) | **Test Plan** — Checklist test thủ công chi tiết cho 9 sprints + extras + regression suite |
 
 ### Source data (CSV/JSON)
 - `assets/data/heroes.csv` — 14 heroes
@@ -157,6 +158,29 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
   - [x] **5/5 core items** queued (item_c01, c03, t02, t07, t10)
   - [x] **3/3 tilesets** queued (stage_1 Hầm Mộ, stage_2 Sương Mù, stage_3 Lò Đúc Linh Hồn)
   - [x] **Bugfix**: Double-dispose StageMapScreen → CombatScreen crash fixed (commit `1ae5e44`)
+
+### Sprint 9+ Combat Polish (3 follow-up branches, 2026-05-11)
+- [x] **B3 — Combat animations** (commit `82316a3`, `bugfix/combat-animations`):
+  attacker now plays attack anim + dying combatants play dead anim. Before
+  fix only `hurt` was firing. +5 unit tests.
+- [x] **B1 — Combat reward system** (commit `f257070`, `feature/combat-reward-system`):
+  fixes boss-kill-grants-zero-gold bug (boss_node.rewards_on_kill was raw
+  JsonNode), adds per-combat auto-drop (gold scaling by variant + item via
+  CSV dropChance + -3 stress relief), wires reward node drops. +12 tests.
+- [x] **B2 — Skill tooltip** (commit `9777fc8`, `feature/skill-description-tooltip`):
+  hover skill button in combat → floating panel shows description, dmg
+  multiplier, target type, cooldown, stress damage, effect. i18n VN/EN.
+  +7 tests.
+
+### Sprint mở rộng (deferred — documented for future sprint)
+- **Reward "combo 3" full feature**: streak bonus (compounding +10% gold,
+  capped at 1.5×, reset on rest) + Pick 1 of 3 reward cards (Slay-the-Spire
+  style) for elite/miniboss/boss nodes. Plan committed in
+  [docs/notes_and_considerations.html](docs/notes_and_considerations.html).
+- **CombatRewardPopup UI**: reward currently applied silently — popup with
+  2-3s display + "Continue" button planned for Sprint 10.
+- **descriptionEn CSV column**: skill tooltips fall back to VN description
+  in EN locale until skills.csv adds an English column.
 - [ ] Particle effects khi crit/affliction
 - [ ] Splash screen, main menu, settings UI
 - [ ] Aseprite-style animation refinement (tween + 2-3 frame)
