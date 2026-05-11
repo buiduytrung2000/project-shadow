@@ -2,6 +2,7 @@ package com.trungbui.projectshadow.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -208,5 +209,21 @@ public final class SkinLoader {
     /** True iff the PixelLab components have been packed and loaded successfully. */
     public static boolean hasComponents(Skin skin) {
         return skin.has(DRAWABLE_BTN_UP, NinePatchDrawable.class);
+    }
+
+    /**
+     * Overrides the font on the "primary" button/image-button styles. Screens load a
+     * Vietnamese-capable BitmapFont via FontFactory and call this to ensure custom
+     * button styles render VN characters (default ASCII font causes glyph misses).
+     *
+     * <p>Safe no-op if components atlas wasn't loaded.</p>
+     */
+    public static void overrideFont(Skin skin, BitmapFont font) {
+        if (skin.has(STYLE_PRIMARY_BUTTON, TextButton.TextButtonStyle.class)) {
+            skin.get(STYLE_PRIMARY_BUTTON, TextButton.TextButtonStyle.class).font = font;
+        }
+        if (skin.has(STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class)) {
+            skin.get(STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class).font = font;
+        }
     }
 }
