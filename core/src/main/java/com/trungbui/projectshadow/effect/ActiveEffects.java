@@ -5,17 +5,24 @@ import com.trungbui.projectshadow.domain.Combatant;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.random.RandomGenerator;
 
 public class ActiveEffects {
 
     private final Map<String, EffectData> catalog;
     private final List<EffectInstance> instances = new ArrayList<>();
+    /** Sprint 9+ B2: dedup set for the hybrid tick scheme. An effect that already
+     *  ticked this round (via {@link #onTurnStart}) is skipped if {@code onTurnStart}
+     *  is called again in the same round (e.g. AoE skills that loop per target).
+     *  Cleared at end of each round by {@link #endRoundReset()}. */
+    private final Set<String> tickedThisRound = new HashSet<>();
 
     public ActiveEffects() {
         this(Collections.emptyMap());
@@ -45,7 +52,7 @@ public class ActiveEffects {
     }
 
     public EffectInstance apply(String effectId, Combatant source, Combatant target, RandomGenerator rng) {
-        return apply(effectId, source, target, rng, null);
+        return apply(effectId, source, target, rng, null, EffectInstance.UNKNOWN_ROUND);
     }
 
     public EffectInstance apply(
@@ -54,6 +61,27 @@ public class ActiveEffects {
             Combatant target,
             RandomGenerator rng,
             String skillMagnitudeOverride
+    ) {
+        return apply(effectId, source, target, rng, skillMagnitudeOverride, EffectInstance.UNKNOWN_ROUND);
+    }
+
+    /**
+     * Apply an effect. Sprint 9+ B2: takes {@code currentRound} so the instance can
+     * remember when it was applied; {@link #onTurnStart} uses this to skip the first
+     * tick on the same round (an effect just-applied this round shouldn't immediately
+     * fire its DoT — it ticks starting next round).
+     *
+     * <p>On refresh (effect already present), the immediate damage/heal IS re-applied
+     * (e.g. casting a heal a second time heals again). Stack count increments if the
+     * effect can stack.</p>
+     */
+    public EffectInstance apply(
+            String effectId,
+            Combatant source,
+            Combatant target,
+            RandomGenerator rng,
+            String skillMagnitudeOverride,
+            int currentRound
     ) {
         EffectData data = lookup(effectId);
         int duration = parseDuration(data);
@@ -66,6 +94,11 @@ public class ActiveEffects {
                 ei.addStack(max);
             }
             ei.refreshDuration(duration);
+            // Sprint 9+ B2: re-apply immediate damage/heal on refresh so re-casting
+            // a heal still heals. Previously only the first apply triggered immediate.
+            applyImmediate(ei, data, target, rng, skillMagnitudeOverride);
+            // Re-applying in same round → keep effective appliedRound at current to
+            // prevent surprise ticks from a stale earlier value.
             return ei;
         }
 
@@ -73,7 +106,8 @@ public class ActiveEffects {
                 effectId,
                 source != null ? source.id() : null,
                 duration,
-                1
+                1,
+                currentRound
         );
         instances.add(fresh);
         applyImmediate(fresh, data, target, rng, skillMagnitudeOverride);
@@ -81,9 +115,37 @@ public class ActiveEffects {
     }
 
     public void onTurnStart(Combatant self, RandomGenerator rng) {
+        onTurnStart(self, rng, EffectInstance.UNKNOWN_ROUND);
+    }
+
+    /**
+     * Tick effects with {@code on_turn_start} trigger. Sprint 9+ B2 hybrid tick:
+     * <ul>
+     *   <li>Each effect ticks at most once per round (deduped via {@link #tickedThisRound}),
+     *       even when {@code onTurnStart} is called multiple times in the same round
+     *       (e.g. AoE skills looping over targets).</li>
+     *   <li>An effect applied during the current round does NOT tick on its first round —
+     *       it starts ticking next round (skip if {@code appliedRound == currentRound}).</li>
+     *   <li>Duration decrements once per round regardless of how many times {@code onTurnStart}
+     *       is called, by the same dedup logic.</li>
+     * </ul>
+     * {@code currentRound == UNKNOWN_ROUND} disables the just-applied skip (legacy callers).
+     */
+    public void onTurnStart(Combatant self, RandomGenerator rng, int currentRound) {
+        boolean dedup = currentRound != EffectInstance.UNKNOWN_ROUND;
         Iterator<EffectInstance> it = instances.iterator();
         while (it.hasNext()) {
             EffectInstance ei = it.next();
+            if (dedup && tickedThisRound.contains(ei.effectId())) {
+                // Already processed this round (e.g. AoE multi-target call). Skip silently.
+                continue;
+            }
+            // Just-applied skip: effect applied THIS round → don't tick yet, but still mark
+            // as "processed" so duration decrement also waits until next round.
+            if (dedup && ei.appliedRound() == currentRound) {
+                tickedThisRound.add(ei.effectId());
+                continue;
+            }
             EffectData data = lookup(ei.effectId());
             if ("on_turn_start".equals(data.trigger())) {
                 tickEffect(ei, data, self, rng);
@@ -94,7 +156,15 @@ public class ActiveEffects {
                     it.remove();
                 }
             }
+            if (dedup) tickedThisRound.add(ei.effectId());
         }
+    }
+
+    /** Sprint 9+ B2: clear the per-round dedup set. {@link com.trungbui.projectshadow.combat.CombatController}
+     *  invokes this on every combatant at end-of-round so the next round's first
+     *  per-actor tick is allowed to fire. */
+    public void endRoundReset() {
+        tickedThisRound.clear();
     }
 
     public boolean removeFirst(String effectId) {

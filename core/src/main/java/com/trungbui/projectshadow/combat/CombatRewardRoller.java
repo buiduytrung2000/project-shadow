@@ -2,6 +2,7 @@ package com.trungbui.projectshadow.combat;
 
 import com.trungbui.projectshadow.data.GameData;
 import com.trungbui.projectshadow.data.model.EnemyData;
+import com.trungbui.projectshadow.data.model.ItemData;
 import com.trungbui.projectshadow.domain.Hero;
 import com.trungbui.projectshadow.stage.BossNode;
 import com.trungbui.projectshadow.stage.BossReward;
@@ -62,13 +63,21 @@ public final class CombatRewardRoller {
                 if (ed == null) continue;
                 gold += rollEnemyGold(ed, elite, rng);
 
-                if (ed.dropItem() != null && rng.nextDouble() < ed.dropChance()) {
+                // Sprint 9+ B2: clamp dropChance to [0, 1] defensively so a CSV value of
+                // 30 (instead of 0.30) doesn't auto-trigger every drop. NaN → 0.
+                double dropChance = ed.dropChance();
+                if (Double.isNaN(dropChance) || dropChance < 0d) dropChance = 0d;
+                else if (dropChance > 1d) dropChance = 1d;
+                if (ed.dropItem() != null && rng.nextDouble() < dropChance) {
                     String drop = ed.dropItem();
                     if ("item_gold".equals(drop)) {
                         gold += ITEM_GOLD_VALUE;
                     } else if (gd.items().containsKey(drop)) {
                         items.add(drop);
                     }
+                    // Unknown drop ID: silently ignored (forward-compat). Worth a designer
+                    // log in a future sprint; for now, missing CSV refs are caught by
+                    // DataLoaderDemo.KNOWN_TODO_REFS.
                 }
             }
             // Elite bonus gold from JSON
@@ -82,7 +91,7 @@ public final class CombatRewardRoller {
             BossReward br = boss.reward();
             gold += br.gold();
             for (DropEntry d : br.drops()) {
-                resolveDropToItem(d, items);
+                resolveDropToItem(d, items, gd, rng);
             }
         }
 
@@ -110,17 +119,21 @@ public final class CombatRewardRoller {
         return base;
     }
 
-    /** Convert a {@link DropEntry} (from boss drop_table) to an inventory item ID. */
-    private static void resolveDropToItem(DropEntry d, List<String> items) {
+    /** Convert a {@link DropEntry} (from boss drop_table) to an inventory item ID.
+     *  Sprint 9+ B2: {@code item_random} now resolves to a real item ID from the
+     *  CSV by matching the requested category against {@link ItemData#category()},
+     *  picking uniformly at random from the matching pool. If no item matches,
+     *  the drop is silently skipped (previously the category string itself was
+     *  added to inventory — a leak). */
+    static void resolveDropToItem(DropEntry d, List<String> items, GameData gd, RandomGenerator rng) {
         if (d == null || d.type() == null) return;
         switch (d.type()) {
             case "item" -> {
                 if (d.itemId() != null) items.add(d.itemId());
             }
             case "item_random" -> {
-                // Category-based random — for MVP we just add a placeholder marker so the
-                // popup can show "?" until item-by-category lookup is wired (TODO Sprint 10).
-                if (d.category() != null) items.add(d.category());
+                String resolved = resolveRandomItem(d.category(), gd, rng);
+                if (resolved != null) items.add(resolved);
             }
             case "gold" -> {
                 // Gold drops in boss drop_table are already counted via BossReward.gold().
@@ -130,5 +143,43 @@ public final class CombatRewardRoller {
                 // Unknown drop type — silently ignore for forward compat.
             }
         }
+    }
+
+    /** Pick a random item ID whose category+rarity matches the drop_table category string.
+     *  <p>Category strings from stage JSON are compound (e.g. {@code "trinket_common"},
+     *  {@code "consumable_rare"}) while {@link ItemData#category()} values are simpler
+     *  ({@code consumable}, {@code trinket}, {@code relic_buff}, {@code cursed_item}).
+     *  This method maps:</p>
+     *  <ul>
+     *    <li>{@code "<cat>_<rarity>"} → items with matching {@code category} and {@code rarity}</li>
+     *    <li>{@code "relic"} → items with category {@code relic_buff}</li>
+     *    <li>{@code "cursed"} → items with category {@code cursed_item}</li>
+     *  </ul>
+     *  Returns null if the pool is empty (drop silently skipped). */
+    public static String resolveRandomItem(String category, GameData gd, RandomGenerator rng) {
+        if (category == null || category.isBlank()) return null;
+        String targetCategory;
+        String targetRarity = null;
+        switch (category) {
+            case "relic" -> targetCategory = "relic_buff";
+            case "cursed" -> targetCategory = "cursed_item";
+            default -> {
+                int us = category.indexOf('_');
+                if (us > 0 && us < category.length() - 1) {
+                    targetCategory = category.substring(0, us);
+                    targetRarity = category.substring(us + 1);
+                } else {
+                    targetCategory = category;
+                }
+            }
+        }
+        List<String> pool = new ArrayList<>();
+        for (ItemData it : gd.items().values()) {
+            if (!targetCategory.equalsIgnoreCase(it.category())) continue;
+            if (targetRarity != null && !targetRarity.equalsIgnoreCase(it.rarity())) continue;
+            pool.add(it.itemId());
+        }
+        if (pool.isEmpty()) return null;
+        return pool.get(rng.nextInt(pool.size()));
     }
 }

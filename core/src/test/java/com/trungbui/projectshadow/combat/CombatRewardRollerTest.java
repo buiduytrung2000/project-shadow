@@ -62,19 +62,28 @@ class CombatRewardRollerTest {
 
     @Test
     void tankVariant_appliesGoldMultiplier() {
-        // Aggregate multiple rolls to confirm Tank enemies on average yield more gold than Base.
-        // (Tank is 1.2× Base.)
-        Random rng = new Random(0L);
+        // Sprint 9+ B2 test fix: replace flaky 200-trial "tank > base" with a tight
+        // ratio band derived from many fixed-seed pairs. Also assert the precondition
+        // that enemy_01_tank exists in the CSV — without it, the loop body silently
+        // contributes 0 to tankTotal and "tank > base" can pass for the wrong reason.
+        assertThat(gd.enemies().get("enemy_01_tank"))
+                .as("enemy_01_tank must exist in enemies.csv as the Tank variant fixture")
+                .isNotNull();
+
+        int trials = 200;
         int baseTotal = 0;
         int tankTotal = 0;
         Hero h = aliveHero("hero_01");
-        for (int i = 0; i < 200; i++) {
-            CombatNode base = new CombatNode("L", List.of("enemy_01"), List.of("Base"), false);
-            CombatNode tank = new CombatNode("L", List.of("enemy_01_tank"), List.of("Tank"), false);
-            baseTotal += CombatRewardRoller.roll(base, base.enemies(), List.of(h), gd, rng).gold();
-            tankTotal += CombatRewardRoller.roll(tank, tank.enemies(), List.of(h), gd, rng).gold();
+        CombatNode base = new CombatNode("L", List.of("enemy_01"), List.of("Base"), false);
+        CombatNode tank = new CombatNode("L", List.of("enemy_01_tank"), List.of("Tank"), false);
+        for (int seed = 0; seed < trials; seed++) {
+            baseTotal += CombatRewardRoller.roll(base, base.enemies(), List.of(h), gd, new Random(seed)).gold();
+            tankTotal += CombatRewardRoller.roll(tank, tank.enemies(), List.of(h), gd, new Random(seed)).gold();
         }
-        assertThat(tankTotal).isGreaterThan(baseTotal);
+        double ratio = tankTotal / (double) baseTotal;
+        // Tank multiplier is 1.2× on base 5..10g rolls. Expected ratio ~ 1.2; allow
+        // a generous band that excludes "no multiplier at all" (1.0) and runaway scaling.
+        assertThat(ratio).isBetween(1.10, 1.30);
     }
 
     @Test

@@ -343,6 +343,9 @@ public final class DataLoader {
                         cell(row, h, "Description"),
                         cell(row, h, "Severity"),
                         cell(row, h, "Duration"),
+                        // "Resolution" column is new (Sprint 9+ B2); legacy CSVs without it
+                        // get null which yields neither affliction nor virtue.
+                        h.containsKey("Resolution") ? nullIfBlank(cell(row, h, "Resolution")) : null,
                         cell(row, h, "Status")
                 ));
             }
