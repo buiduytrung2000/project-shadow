@@ -22,3 +22,4 @@ sk_e_mb01_phase_shift,Chuyển Pha,Phase Shift,Echo Wraith,No,Self,0,0,3,eff_dod
 sk_e_mb02_plague_strike,Đòn Dịch Bệnh,Plague Strike,Plague Bearer,Yes,Single Hero,1.0,0,0,,Plague/Fever/Nightmare random (disease mechanic),6,"Đánh single + áp 1 disease ngẫu nhiên (Plague/Fever/Nightmare). Cooldown 1. (Disease là mechanic riêng — không dùng eff_)."
 sk_e_mb02_disease_cloud,Mây Dịch,Disease Cloud,Plague Bearer,Yes,All Heroes,0.4,0,3,eff_poison,4/turn x3,8,"AoE: dmg nhỏ + Poison 4/lượt trong 3 lượt toàn party + 8 stress."
 sk_e_mb02_lifesteal,Hút Máu,Lifesteal,Plague Bearer,No,Self,0,0,0,eff_lifesteal,30% of dmg dealt heals self,0,"Passive: 30% sát thương gây ra hồi máu bản thân. Không cần kích hoạt."
+sk_e_poison_strike,Đòn Độc,Poison Strike,Poison Vine,Yes,Front Hero,0.8,0,0,eff_poison,4/turn x3 50%,0,"Đòn cơ bản 80% dmg + 50% chance áp eff_poison (4/lượt x3) lên target."

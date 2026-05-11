@@ -65,6 +65,11 @@ public class CombatController {
     private final List<String> log = new ArrayList<>();
     private Listener listener = new Listener() {
     };
+    /** Sprint 12 B3 — optional run session reference. Set by the UI screen
+     *  before combat starts so {@link #useItem(String, Combatant)} can
+     *  consume from the run inventory. Tests that don't use items leave it
+     *  null and the controller short-circuits. */
+    private com.trungbui.projectshadow.run.RunSession runSession;
     /** Sprint 11 B1 — when > 0, enemy turn execution is gated. After advancing
      *  to an enemy actor, the UI must explicitly call {@link #processPendingNonPlayerTurn()}
      *  to fire the enemy action. The UI handles delay via libGDX Stage actions
@@ -92,6 +97,47 @@ public class CombatController {
     public void setListener(Listener listener) {
         this.listener = listener != null ? listener : new Listener() {
         };
+    }
+
+    /** Sprint 12 B3 — attach the run session so combat actions can read +
+     *  mutate the inventory (item use). Pass {@code null} to detach. */
+    public void setRunSession(com.trungbui.projectshadow.run.RunSession runSession) {
+        this.runSession = runSession;
+    }
+
+    /**
+     * Sprint 12 B3 — use a consumable item from the run inventory on
+     * {@code target}. Returns {@code true} if the item was used (and the turn
+     * advanced); {@code false} if no run session, item not in inventory, or
+     * the current actor isn't a player hero.
+     *
+     * <p>The item is removed from inventory regardless of whether the effect
+     * applied — players cannot retry a botched item use (e.g. heal on dead
+     * target). This keeps action-economy honest.</p>
+     */
+    public boolean useItem(String itemId, Combatant target) {
+        if (encounter.isCombatOver()) return false;
+        if (runSession == null) return false;
+        Combatant actor = encounter.currentActor();
+        if (!(actor instanceof Hero hero)) return false;
+
+        var state = runSession.state();
+        if (!state.inventory().contains(itemId)) return false;
+
+        // Sprint 12 B3 — apply via static helper (testable in isolation).
+        ItemUseHandler.AppliedSummary summary =
+                ItemUseHandler.apply(itemId, hero, target, runSession, data);
+
+        // Consume from inventory regardless of apply success.
+        java.util.List<String> newInv = new ArrayList<>(state.inventory());
+        newInv.remove(itemId);
+        runSession.setStateForItemUse(state.withInventory(newInv));
+
+        log.add(hero.id() + " dùng vật phẩm " + itemId
+                + (summary.applied() ? " — " + summary.notes() : " (no-op)"));
+
+        advanceTurn();
+        return true;
     }
 
     public void start() {

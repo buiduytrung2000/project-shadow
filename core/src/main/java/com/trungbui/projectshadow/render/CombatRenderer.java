@@ -92,7 +92,19 @@ public class CombatRenderer implements Disposable {
         if (v.animator() == null || !v.animator().hasAnimations()) return;
         TextureRegion frame = v.animator().currentFrame();
         if (frame == null) return;
-        spriteBatch.draw(frame, v.x(), v.y(), v.width(), v.height());
+        // Sprint 12 B3 — boss epic-death zoom: scale the sprite around its
+        // centre when the view's epicDeathZoom() > 1.0. HP bars stay anchored
+        // at their fixed Y in drawCombatant(); only the sprite scales.
+        float zoom = v.epicDeathZoom();
+        if (zoom <= 1f + 1e-4f) {
+            spriteBatch.draw(frame, v.x(), v.y(), v.width(), v.height());
+            return;
+        }
+        float scaledW = v.width() * zoom;
+        float scaledH = v.height() * zoom;
+        float offsetX = (scaledW - v.width()) * 0.5f;
+        float offsetY = (scaledH - v.height()) * 0.5f;
+        spriteBatch.draw(frame, v.x() - offsetX, v.y() - offsetY, scaledW, scaledH);
     }
 
     private void drawCombatant(CombatantView v, Combatant currentActor, Set<Combatant> highlightedTargets) {
