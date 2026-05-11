@@ -45,7 +45,7 @@ public final class StageGenerator {
             prevLayer = generateMinibossLayer(minibossSpec, prevLayer, tree, rng);
         }
 
-        BossNode boss = generateBossNode(layout.path("last_node_fixed"));
+        BossNode boss = generateBossNode(layout.path("last_node_fixed"), config.bossNode(), rng);
         tree.addNode(boss);
         for (StageNode prev : prevLayer) {
             tree.addEdge(prev.label(), boss.label());
@@ -61,10 +61,41 @@ public final class StageGenerator {
         return generateCombatNode(label, firstSpec, rng, false);
     }
 
-    private static BossNode generateBossNode(JsonNode bossSpec) {
+    private static BossNode generateBossNode(JsonNode bossSpec, JsonNode bossNodeBlock, Random rng) {
         String label = bossSpec.path("label").asText("BOSS");
         String bossId = bossSpec.path("boss_id").asText();
-        return new BossNode(label, bossId);
+        BossReward reward = parseBossReward(bossNodeBlock, rng);
+        return new BossNode(label, bossId, reward);
+    }
+
+    /**
+     * Parse the {@code boss_node.rewards_on_kill} block from stage JSON into a
+     * {@link BossReward}. Returns {@link BossReward#none()} if the block is missing
+     * or malformed — keeps legacy specs (stage_2/stage_3 in progress) functional.
+     *
+     * <p>Drops are pre-rolled here using the stage RNG so each run with the same seed
+     * produces deterministic boss rewards.</p>
+     */
+    private static BossReward parseBossReward(JsonNode bossNodeBlock, Random rng) {
+        if (bossNodeBlock == null || bossNodeBlock.isMissingNode()) return BossReward.none();
+        JsonNode rewards = bossNodeBlock.path("rewards_on_kill");
+        if (rewards.isMissingNode()) return BossReward.none();
+
+        // Gold: {value: N, chance: 1.0} — chance is informational; gold always granted on boss kill.
+        int gold = rewards.path("gold").path("value").asInt(0);
+
+        // Items: { rolls: N, drop_table: [...] } — perform N weighted rolls now.
+        JsonNode itemsNode = rewards.path("items");
+        List<DropEntry> drops = new ArrayList<>();
+        if (!itemsNode.isMissingNode()) {
+            int rolls = itemsNode.path("rolls").asInt(1);
+            JsonNode dropTable = itemsNode.path("drop_table");
+            for (int i = 0; i < rolls; i++) {
+                DropEntry d = pickDrop(dropTable, rng);
+                if (d != null) drops.add(d);
+            }
+        }
+        return new BossReward(gold, drops);
     }
 
     private static List<StageNode> generateMinibossLayer(

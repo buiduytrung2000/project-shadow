@@ -82,6 +82,19 @@ public record RunState(
         );
     }
 
+    /** Add a delta to the current run gold pool (negative deltas allowed). */
+    public RunState withGoldDelta(int delta) {
+        return withGold(Math.max(0, gold + delta));
+    }
+
+    /** Append an item ID to the run inventory (immutable copy). */
+    public RunState withInventoryAdd(String itemId) {
+        if (itemId == null || itemId.isBlank()) return this;
+        List<String> newInv = new ArrayList<>(inventory);
+        newInv.add(itemId);
+        return withInventory(newInv);
+    }
+
     public RunState markArchived() {
         return new RunState(
                 runId, stageId, stageSeed, currentNodeLabel,
