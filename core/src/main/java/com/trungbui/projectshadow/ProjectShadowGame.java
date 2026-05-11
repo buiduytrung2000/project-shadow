@@ -355,6 +355,18 @@ public class ProjectShadowGame extends Game {
             if (heirloomDrop > 0) {
                 applyMeta(meta.withHeirloomDelta(heirloomDrop));
             }
+            // Sprint 12 B2 — end-of-stage XP bonus. Each alive hero earns
+            // +END_OF_STAGE_XP (default 50) on boss kill. Dead heroes miss it.
+            for (com.trungbui.projectshadow.domain.Hero h : runSession.party()) {
+                if (h.isAlive()) {
+                    h.addXp(HamletService.END_OF_STAGE_XP);
+                }
+            }
+        } else {
+            // Sprint 12 B2 — post-combat disease roll. 30% per alive hero per
+            // non-boss combat win. Pool = dis_01..dis_05. Skip heroes who
+            // already have the rolled disease.
+            applyPostCombatDiseaseRoll(nodeLabel);
         }
 
         try {
@@ -371,6 +383,23 @@ public class ProjectShadowGame extends Game {
             setScreen(new StageMapScreen(this));
         }
         if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    /**
+     * Sprint 12 B2 — roll 30% chance per alive hero to catch a random disease
+     * after a non-boss combat win. Delegates to {@link HamletService#rollPostCombatDisease}
+     * for the actual roll so logic is unit-testable.
+     *
+     * <p>RNG is seeded deterministically from
+     * {@code stageSeed ^ nodeLabel.hashCode() ^ 0xDEADBEEF} so the same
+     * (run, node) always rolls the same outcome.</p>
+     */
+    private void applyPostCombatDiseaseRoll(String nodeLabel) {
+        long seed = runSession.state().stageSeed() ^ nodeLabel.hashCode() ^ 0xDEADBEEFL;
+        java.util.Random rng = new java.util.Random(seed);
+        for (com.trungbui.projectshadow.domain.Hero h : runSession.party()) {
+            HamletService.rollPostCombatDisease(h, rng);
+        }
     }
 
     /** Compute the reward for a freshly-defeated combat node. Returns empty if node is null.

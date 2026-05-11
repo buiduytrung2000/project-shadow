@@ -53,6 +53,11 @@ public class Hero implements Combatant {
      *  start round 1). Applied to effective damage via getter for ConditionResolver
      *  to read. */
     private int bloodthirstyStacks = 0;
+    /** Sprint 12 B2 — accumulated XP for Guild level-up. Increments from
+     *  combat kills (per-killer + party share) and end-of-stage bonuses.
+     *  Consumed (decremented) when player triggers Guild level-up.
+     *  Persists across runs via {@link com.trungbui.projectshadow.save.HeroState}. */
+    private int currentXp = 0;
 
     public Hero(HeroData data, Position position) {
         this(data, 0, position, new ArrayList<>(data.defaultSkills()), Collections.emptyMap());
@@ -383,6 +388,33 @@ public class Hero implements Combatant {
     /** Sprint 11 B2: called at combat start to reset stacks (per-combat counter). */
     public void resetBloodthirstyStacks() {
         bloodthirstyStacks = 0;
+    }
+
+    // ───── Sprint 12 B2 — XP accumulator ─────
+
+    public int currentXp() {
+        return currentXp;
+    }
+
+    /** Adds XP from combat/end-of-stage. Negative deltas ignored (use
+     *  {@link #consumeXp(int)} to subtract). */
+    public void addXp(int amount) {
+        if (amount > 0) currentXp += amount;
+    }
+
+    /** Consume {@code amount} XP for Guild level-up. Throws if insufficient. */
+    public void consumeXp(int amount) {
+        if (amount < 0) throw new IllegalArgumentException("amount must be non-negative");
+        if (currentXp < amount) {
+            throw new IllegalStateException(
+                    "Insufficient XP: need " + amount + ", have " + currentXp);
+        }
+        currentXp -= amount;
+    }
+
+    /** Restore XP from save (used by HeroState.toHero). */
+    public void setCurrentXp(int xp) {
+        this.currentXp = Math.max(0, xp);
     }
 
     public HeroData data() {

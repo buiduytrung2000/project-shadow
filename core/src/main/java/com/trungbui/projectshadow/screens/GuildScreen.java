@@ -120,13 +120,22 @@ public class GuildScreen implements Screen {
             for (HeroState rs : meta.roster()) {
                 HeroData data = game.gameData().heroes().get(rs.heroId());
                 String name = data != null ? data.displayName() : rs.heroId();
-                Label heroLabel = new Label(I18n.t("guild.heroLine", name, rs.level()), skin);
+                // Sprint 12 B2 — show XP progress inline with the level. At max
+                // level the XP requirement is 0; show "MAX" instead.
+                int xpReq = HamletService.xpRequiredForNextLevel(rs.level());
+                String heroText = xpReq > 0
+                        ? I18n.t("guild.heroLine", name, rs.level())
+                            + "  XP " + rs.currentXp() + "/" + xpReq
+                        : I18n.t("guild.heroLine", name, rs.level()) + "  XP MAX";
+                Label heroLabel = new Label(heroText, skin);
 
                 int cost = HamletService.levelUpCost(rs.level());
                 boolean atMax = rs.level() >= HamletService.GUILD_MAX_LEVEL;
+                boolean enoughXp = rs.currentXp() >= xpReq;
+                boolean enoughGold = meta.gold() >= cost;
                 String btnText = atMax ? I18n.t("guild.maxed") : I18n.t("guild.levelup", cost);
                 TextButton btn = new TextButton(btnText, skin);
-                btn.setDisabled(atMax || meta.gold() < cost);
+                btn.setDisabled(atMax || !enoughGold || !enoughXp);
                 final String idCaptured = rs.heroId();
                 btn.addListener(new ChangeListener() {
                     @Override
