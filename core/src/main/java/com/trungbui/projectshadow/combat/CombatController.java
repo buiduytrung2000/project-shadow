@@ -7,6 +7,7 @@ import com.trungbui.projectshadow.domain.CombatEncounter;
 import com.trungbui.projectshadow.domain.CombatPhase;
 import com.trungbui.projectshadow.domain.Enemy;
 import com.trungbui.projectshadow.domain.Hero;
+import com.trungbui.projectshadow.meta.HamletService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -394,6 +395,21 @@ public class CombatController {
                 // gains a stack here; other on_kill effects could hook in later.
                 if (targetWasAlive && !target.isAlive() && attacker instanceof Hero killer) {
                     ConditionResolver.onKill(killer);
+                    // Sprint 12 B2 — per-kill XP. Killer gets full XP; each
+                    // other alive ally gets 50% of that pool (separately, not
+                    // split — small parties don't get penalized). Variant
+                    // multiplier scales (Boss 5×, Tank/Special/Assassin 1.2×).
+                    if (target instanceof Enemy enemyTarget) {
+                        int killXp = HamletService.killXpForEnemy(enemyTarget.data());
+                        killer.addXp(killXp);
+                        int allyXp = (int) Math.round(killXp * HamletService.KILL_XP_PARTY_SHARE);
+                        if (allyXp > 0) {
+                            for (Hero ally : encounter.heroes()) {
+                                if (ally == killer || !ally.isAlive()) continue;
+                                ally.addXp(allyXp);
+                            }
+                        }
+                    }
                 }
                 // Sprint 11 B3: boss-death event for UI pause+zoom. Fires once per
                 // boss kill; non-boss enemies do not trigger this.

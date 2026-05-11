@@ -120,6 +120,82 @@ public final class HamletService {
     }
     public static final int GUILD_LEVEL_COST_BASE = 100;
     public static final int GUILD_MAX_LEVEL = 5;
+
+    /** Sprint 12 B2 — XP required to reach NEXT level from each level.
+     *  Index = currentLevel (0..GUILD_MAX_LEVEL); value = XP needed to go to
+     *  level+1. Beyond GUILD_MAX_LEVEL the value is irrelevant (level-up blocked). */
+    public static final int[] XP_REQUIRED_FOR_NEXT_LEVEL = { 100, 200, 350, 500, 750, 0 };
+
+    /** Sprint 12 B2 — base XP awarded for a normal-variant enemy kill.
+     *  Tank/Special/Assassin variants × 1.2, Boss × 5.0. Allies share 50% of
+     *  the killer's pool, distributed evenly. */
+    public static final int KILL_XP_BASE = 8;
+    public static final double KILL_XP_VARIANT_MULT_TANK = 1.2;
+    public static final double KILL_XP_VARIANT_MULT_SPECIAL = 1.2;
+    public static final double KILL_XP_VARIANT_MULT_ASSASSIN = 1.2;
+    public static final double KILL_XP_VARIANT_MULT_BOSS = 5.0;
+    public static final double KILL_XP_VARIANT_MULT_MINIBOSS = 2.5;
+    /** Each surviving non-killer hero shares this fraction of the killer's XP. */
+    public static final double KILL_XP_PARTY_SHARE = 0.50;
+
+    /** Sprint 12 B2 — end-of-stage bonus XP per alive hero (boss kill only). */
+    public static final int END_OF_STAGE_XP = 50;
+
+    /** Sprint 12 B2 — chance per alive hero to catch a random disease after a
+     *  non-boss combat win. Boss combat is rich-reward and skips this roll. */
+    public static final double DISEASE_CHANCE_POST_COMBAT = 0.30;
+
+    /** Sprint 12 B2 — pool of diseases used for the post-combat 30% roll.
+     *  Mirrors the 5 wired disease constants in
+     *  {@code ConditionResolver}. Public for test access. */
+    public static final List<String> POST_COMBAT_DISEASE_POOL = List.of(
+            "dis_01", "dis_02", "dis_03", "dis_04", "dis_05");
+
+    /**
+     * Sprint 12 B2 — roll a post-combat disease for one alive hero.
+     * Returns the disease id newly added to {@code hero}, or {@code null} if
+     * the hero failed the {@link #DISEASE_CHANCE_POST_COMBAT} roll or already
+     * has the rolled disease.
+     *
+     * <p>Pure logic — no I/O. Caller owns the {@code RandomGenerator} so
+     * tests can seed deterministically.</p>
+     */
+    public static String rollPostCombatDisease(Hero hero, RandomGenerator rng) {
+        if (hero == null || !hero.isAlive()) return null;
+        if (rng.nextDouble() >= DISEASE_CHANCE_POST_COMBAT) return null;
+        String picked = POST_COMBAT_DISEASE_POOL.get(
+                rng.nextInt(POST_COMBAT_DISEASE_POOL.size()));
+        if (hero.diseases().contains(picked)) return null;
+        hero.addDisease(picked);
+        return picked;
+    }
+
+    /** Sprint 12 B2 — number of random Virtue traits assigned at recruit time. */
+    public static final int TRAITS_AT_RECRUIT = 2;
+
+    /** Compute XP needed to advance from {@code currentLevel} to next.
+     *  Returns 0 if already at max level. */
+    public static int xpRequiredForNextLevel(int currentLevel) {
+        if (currentLevel >= GUILD_MAX_LEVEL) return 0;
+        if (currentLevel < 0 || currentLevel >= XP_REQUIRED_FOR_NEXT_LEVEL.length) return 0;
+        return XP_REQUIRED_FOR_NEXT_LEVEL[currentLevel];
+    }
+
+    /** Compute kill-XP value for an enemy by variant type. Defaults to base
+     *  if variantType is missing or unknown. */
+    public static int killXpForEnemy(com.trungbui.projectshadow.data.model.EnemyData ed) {
+        if (ed == null) return KILL_XP_BASE;
+        String variant = ed.variantType() == null ? "" : ed.variantType();
+        double mult = switch (variant) {
+            case "Boss" -> KILL_XP_VARIANT_MULT_BOSS;
+            case "Miniboss" -> KILL_XP_VARIANT_MULT_MINIBOSS;
+            case "Tank" -> KILL_XP_VARIANT_MULT_TANK;
+            case "Special" -> KILL_XP_VARIANT_MULT_SPECIAL;
+            case "Assassin" -> KILL_XP_VARIANT_MULT_ASSASSIN;
+            default -> 1.0;
+        };
+        return (int) Math.round(KILL_XP_BASE * mult);
+    }
     public static final int SURVIVALIST_CRAFT_COST = 80;
     public static final int CARETAKER_DISEASE_CURE_COST = 30;
     public static final int CARETAKER_STRESS_RELIEF_BLOCK = 10;
@@ -267,16 +343,36 @@ public final class HamletService {
     }
 
     public static MetaState hireHero(MetaState meta, String heroId, GameData gd) {
+        return hireHero(meta, heroId, gd, new java.util.Random());
+    }
+
+    /**
+     * Sprint 12 B2 — hire variant with explicit RNG for deterministic recruit
+     * traits. Adds {@link #TRAITS_AT_RECRUIT} (2) random Virtue traits to the
+     * fresh hero. If the Virtue pool has fewer than 2 entries, assigns whatever
+     * is available (never an affliction at recruit).
+     *
+     * <p>Sprint 11 B1 debt model still applies: gold can go negative.</p>
+     */
+    public static MetaState hireHero(MetaState meta, String heroId, GameData gd, RandomGenerator rng) {
         if (meta.hasInRoster(heroId)) {
             throw new HamletException(I18n.t("error.heroDuplicate", heroId));
         }
         HeroData data = gd.heroes().get(heroId);
         if (data == null) throw new HamletException(I18n.t("error.unknownHero", heroId));
         int cost = hireCost(heroId, gd);
-        // Sprint 11 B1 debt model: gold can go negative (player accumulates
-        // "supplies debt"). Combat reward pays it down. Lock from 2026-05-11:
-        // softlock-fix decision = allow negative gold.
         Hero fresh = new Hero(data, Position.POS_1, gd.effects());
+        // Sprint 12 B2 — assign 2 random Virtue traits at recruit. Pool is the
+        // subset of diseases_traits rows classified as Trait + Virtue.
+        List<String> virtuePool = gd.diseasesTraits().values().stream()
+                .filter(com.trungbui.projectshadow.data.model.DiseaseTraitData::isVirtue)
+                .map(com.trungbui.projectshadow.data.model.DiseaseTraitData::id)
+                .collect(Collectors.toCollection(ArrayList::new));
+        java.util.Collections.shuffle(virtuePool, new java.util.Random(rng.nextLong()));
+        int take = Math.min(TRAITS_AT_RECRUIT, virtuePool.size());
+        for (int i = 0; i < take; i++) {
+            fresh.addTrait(virtuePool.get(i));
+        }
         List<HeroState> newRoster = new ArrayList<>(meta.roster());
         newRoster.add(HeroState.from(fresh));
         return meta.withGold(meta.gold() - cost).withRoster(newRoster);
@@ -289,20 +385,31 @@ public final class HamletService {
         return GUILD_LEVEL_COST_BASE * (currentLevel + 1);
     }
 
+    /**
+     * Sprint 12 B2 — level-up now consumes BOTH gold AND XP.
+     * Throws if either resource is insufficient. Backward-compat: legacy saves
+     * default {@code currentXp=0}, so previously-leveled heroes keep their
+     * level; they just need to grind XP for further level-ups.
+     */
     public static MetaState levelUpHero(MetaState meta, String heroId, GameData gd) {
         HeroState rs = meta.heroInRoster(heroId)
                 .orElseThrow(() -> new HamletException(I18n.t("error.heroNotInRoster", heroId)));
         if (rs.level() >= GUILD_MAX_LEVEL) {
             throw new HamletException(I18n.t("error.maxLevel", GUILD_MAX_LEVEL));
         }
-        int cost = levelUpCost(rs.level());
-        if (meta.gold() < cost) {
-            throw new HamletException(I18n.t("error.notEnoughGold", cost, meta.gold()));
+        int goldCost = levelUpCost(rs.level());
+        if (meta.gold() < goldCost) {
+            throw new HamletException(I18n.t("error.notEnoughGold", goldCost, meta.gold()));
+        }
+        int xpCost = xpRequiredForNextLevel(rs.level());
+        if (rs.currentXp() < xpCost) {
+            throw new HamletException(I18n.t("error.notEnoughXp", xpCost, rs.currentXp()));
         }
         Hero h = rs.toHero(gd);
         h.setLevel(rs.level() + 1);
+        if (xpCost > 0) h.consumeXp(xpCost);
         return meta
-                .withGold(meta.gold() - cost)
+                .withGold(meta.gold() - goldCost)
                 .withRoster(replaceInRoster(meta.roster(), HeroState.from(h)));
     }
 

@@ -104,20 +104,42 @@ class HamletServiceTest {
         assertThat(HamletService.levelUpCost(4)).isEqualTo(500);
     }
 
+    /** Sprint 12 B2 helper — replace hero in meta roster with one that has
+     *  enough XP to consume {@code xpAmount}. */
+    private static MetaState giveXp(MetaState meta, String heroId, int xpAmount) {
+        HeroState rs = meta.heroInRoster(heroId).orElseThrow();
+        HeroState withXp = new HeroState(
+                rs.heroId(), rs.level(), rs.currentHp(), rs.currentStress(),
+                rs.positionRank(), rs.equippedSkills(), rs.traits(),
+                rs.diseases(), rs.skillCooldowns(), xpAmount);
+        List<HeroState> newRoster = new java.util.ArrayList<>(meta.roster());
+        for (int i = 0; i < newRoster.size(); i++) {
+            if (newRoster.get(i).heroId().equals(heroId)) {
+                newRoster.set(i, withXp);
+                break;
+            }
+        }
+        return meta.withRoster(newRoster);
+    }
+
     @Test
-    void levelUpHero_increasesLevel_deductsGold() {
-        MetaState rich = meta.withGold(1000);
+    void levelUpHero_increasesLevel_deductsGoldAndXp() {
+        MetaState rich = giveXp(meta.withGold(1000), "hero_01",
+                HamletService.xpRequiredForNextLevel(0));
         MetaState after = HamletService.levelUpHero(rich, "hero_01", gd);
         HeroState hs = after.heroInRoster("hero_01").orElseThrow();
         assertThat(hs.level()).isEqualTo(1);
         assertThat(after.gold()).isEqualTo(1000 - 100);
+        // XP was consumed by the level-up.
+        assertThat(hs.currentXp()).isEqualTo(0);
     }
 
     @Test
     void levelUpHero_rejectsAtMaxLevel() {
         MetaState rich = meta.withGold(99999);
-        // bump hero to max
+        // bump hero to max — also feed XP each iteration
         for (int i = 0; i < HamletService.GUILD_MAX_LEVEL; i++) {
+            rich = giveXp(rich, "hero_01", HamletService.xpRequiredForNextLevel(i));
             rich = HamletService.levelUpHero(rich, "hero_01", gd);
         }
         MetaState atCap = rich;
@@ -128,10 +150,21 @@ class HamletServiceTest {
 
     @Test
     void levelUpHero_rejectsInsufficientGold() {
-        MetaState broke = meta.withGold(50);
+        // Sprint 12 B2: also need XP. Give XP but starve gold to isolate the gold check.
+        MetaState broke = giveXp(meta.withGold(50), "hero_01",
+                HamletService.xpRequiredForNextLevel(0));
         assertThatThrownBy(() -> HamletService.levelUpHero(broke, "hero_01", gd))
                 .isInstanceOf(HamletService.HamletException.class)
                 .hasMessageContaining("Không đủ gold");
+    }
+
+    @Test
+    void levelUpHero_rejectsInsufficientXp() {
+        // Sprint 12 B2: gold sufficient but XP not — should throw on XP check.
+        MetaState rich = meta.withGold(1000); // XP defaults to 0 from fresh()
+        assertThatThrownBy(() -> HamletService.levelUpHero(rich, "hero_01", gd))
+                .isInstanceOf(HamletService.HamletException.class)
+                .hasMessageContaining("Không đủ XP");
     }
 
     @Test
