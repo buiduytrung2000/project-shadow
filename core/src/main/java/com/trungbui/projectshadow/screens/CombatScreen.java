@@ -16,6 +16,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ui.FontFactory;
@@ -70,6 +72,7 @@ public class CombatScreen implements Screen {
     private final Label logLabel;
     private final List<String> logBuffer = new ArrayList<>();
     private final List<TextButton> skillButtons = new ArrayList<>();
+    private SkillDescriptionPanel skillTooltip;
 
     private UiState uiState = UiState.IDLE;
     private int pendingSkillIndex = -1;
@@ -172,6 +175,16 @@ public class CombatScreen implements Screen {
         root.add(skillTable).expandX().bottom().padBottom(40);
 
         uiStage.addActor(root);
+
+        // Sprint 9 (feature/skill-description-tooltip) — floating tooltip in the
+        // top-right corner. Shown on skill-button hover.
+        skillTooltip = new SkillDescriptionPanel(skin);
+        // Position: top-right with 20px margin from the right edge.
+        skillTooltip.setPosition(
+                CombatRenderer.VIRTUAL_WIDTH - skillTooltip.panelWidth() - 20f,
+                CombatRenderer.VIRTUAL_HEIGHT - 360f
+        );
+        uiStage.addActor(skillTooltip);
     }
 
     private void layoutCombatants() {
@@ -182,6 +195,7 @@ public class CombatScreen implements Screen {
     private void refreshSkillButtons() {
         skillTable.clear();
         skillButtons.clear();
+        if (skillTooltip != null) skillTooltip.hide();
 
         Combatant actor = controller.currentActor().orElse(null);
         if (!(actor instanceof Hero hero)) return;
@@ -191,6 +205,7 @@ public class CombatScreen implements Screen {
         for (int i = 0; i < skills.size(); i++) {
             SkillData skill = skills.get(i);
             final int index = i;
+            final SkillData skillForTooltip = skill;
             String label = I18n.t("combat.skillButton", i + 1, skill.displayName());
             TextButton btn = new TextButton(label, skin);
             boolean disabled = hero.isOnCooldown(skill.skillId()) || !controller.skillIsSupported(index);
@@ -200,6 +215,23 @@ public class CombatScreen implements Screen {
                 public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                     if (btn.isDisabled()) return;
                     onSkillButtonClicked(index);
+                }
+            });
+            // Sprint 9 (feature/skill-description-tooltip) — show panel on enter, hide on exit.
+            btn.addListener(new InputListener() {
+                @Override
+                public void enter(InputEvent event, float x, float y, int pointer,
+                                  com.badlogic.gdx.scenes.scene2d.Actor fromActor) {
+                    if (skillTooltip != null) skillTooltip.showFor(skillForTooltip);
+                }
+
+                @Override
+                public void exit(InputEvent event, float x, float y, int pointer,
+                                 com.badlogic.gdx.scenes.scene2d.Actor toActor) {
+                    // Only hide if the cursor isn't entering another skill button. Stage's
+                    // enter/exit fires per actor, so a simple "hide on exit" with the next
+                    // button's enter immediately showing the new tooltip is the cleanest UX.
+                    if (skillTooltip != null && toActor == null) skillTooltip.hide();
                 }
             });
             skillTable.add(btn).pad(8).width(280).height(60);
