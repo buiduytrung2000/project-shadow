@@ -114,6 +114,10 @@ public class CombatScreen implements Screen {
         this.renderer = new CombatRenderer();
 
         this.controller = new CombatController(encounter, gameData, new Random());
+        // Sprint 11 B1 — pacing: 0.7s between actions so player can follow.
+        // Env var SHADOW_ACTION_DELAY (seconds, float) overrides for tuning;
+        // 0 disables (legacy synchronous mode, used by tests).
+        controller.setPacingDelaySec(actionDelayFromEnv(0.7f));
 
         this.skillTable = new Table();
         this.statusLabel = new Label("", skin);
@@ -263,11 +267,17 @@ public class CombatScreen implements Screen {
                 }
             });
             // Sprint 9 (feature/skill-description-tooltip) — show panel on enter, hide on exit.
+            // Sprint 11 B1: pass actor's effective damage range so tooltip shows actual
+            // "Dmg X..Y" numbers instead of the abstract "Dmg ×1.2" multiplier.
+            final int actorDmgMin = hero.effectiveDmgMin();
+            final int actorDmgMax = hero.effectiveDmgMax();
             btn.addListener(new InputListener() {
                 @Override
                 public void enter(InputEvent event, float x, float y, int pointer,
                                   com.badlogic.gdx.scenes.scene2d.Actor fromActor) {
-                    if (skillTooltip != null) skillTooltip.showFor(skillForTooltip);
+                    if (skillTooltip != null) {
+                        skillTooltip.showFor(skillForTooltip, actorDmgMin, actorDmgMax);
+                    }
                 }
 
                 @Override
@@ -285,6 +295,9 @@ public class CombatScreen implements Screen {
     }
 
     private void onSkillButtonClicked(int skillIndex) {
+        // Sprint 11 B1 — ignore clicks while pacing delay is gating the enemy turn.
+        // Prevents the player from queueing actions while watching enemy animation.
+        if (controller.isAwaitingNonPlayerProcess()) return;
         if (controller.skillRequiresTargetPick(skillIndex)) {
             enterTargetMode(skillIndex);
         } else {
@@ -454,8 +467,33 @@ public class CombatScreen implements Screen {
         return I18n.t("combat.log.support", attacker.id(), skill.displayName(), target.id());
     }
 
+    /** Sprint 11 B1 — accumulates time since current actor became "pending" so the
+     *  UI can wait {@code controller.pacingDelaySec()} before invoking the enemy turn. */
+    private float pacingTimer = 0f;
+
+    /** Read SHADOW_ACTION_DELAY env var (seconds, float). Returns the given default
+     *  if missing or unparseable. 0 disables pacing. */
+    private static float actionDelayFromEnv(float defaultSec) {
+        String env = System.getenv("SHADOW_ACTION_DELAY");
+        if (env != null && !env.isBlank()) {
+            try { return Float.parseFloat(env.trim()); } catch (NumberFormatException ignored) {}
+        }
+        return defaultSec;
+    }
+
     @Override
     public void render(float delta) {
+        // Sprint 11 B1 — drive pending enemy turns after the pacing delay elapses.
+        if (controller.isAwaitingNonPlayerProcess()) {
+            pacingTimer += delta;
+            if (pacingTimer >= controller.pacingDelaySec()) {
+                pacingTimer = 0f;
+                controller.processPendingNonPlayerTurn();
+            }
+        } else {
+            pacingTimer = 0f;
+        }
+
         for (CombatantView v : heroViews) v.update(delta);
         for (CombatantView v : enemyViews) v.update(delta);
         particles.update(delta);

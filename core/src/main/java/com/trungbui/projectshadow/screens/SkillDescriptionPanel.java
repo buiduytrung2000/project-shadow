@@ -58,8 +58,18 @@ public final class SkillDescriptionPanel extends Table {
     /**
      * Populate the panel for the given skill and show it. Safe to call repeatedly
      * (the existing labels are overwritten in place — no actor churn).
+     *
+     * <p>Falls back to multiplier-only damage display (no actor context).</p>
      */
     public void showFor(SkillData skill) {
+        showFor(skill, SkillData.NO_ACTOR_CONTEXT, SkillData.NO_ACTOR_CONTEXT);
+    }
+
+    /**
+     * Sprint 11 B1 — populate with actor context so the damage line shows the
+     * real range (e.g. "Dmg 6..12") instead of the abstract multiplier.
+     */
+    public void showFor(SkillData skill, int actorDmgMin, int actorDmgMax) {
         if (skill == null) {
             hide();
             return;
@@ -67,7 +77,7 @@ public final class SkillDescriptionPanel extends Table {
         // Refresh title in case locale changed since construction
         titleLabel.setText(I18n.t("skill.tooltip.title"));
         nameLabel.setText(skill.displayName());
-        bodyLabel.setText(skill.formattedDescription());
+        bodyLabel.setText(skill.formattedDescription(actorDmgMin, actorDmgMax));
         setVisible(true);
     }
 

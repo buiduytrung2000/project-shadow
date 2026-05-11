@@ -5,12 +5,12 @@ Goblin Shaman,enemy_01_special,12,3,6,0.05,0.1,80,sk_e_stab,,item_c01,0.3,sk_e_s
 Goblin Tank,enemy_01_tank,18,2,5,0.05,0.1,80,sk_e_stab,,item_c01,0.3,,Tankier variant with 1.5x HP and 0.8x damage,Tank
 Shadow Wisp,enemy_03,8,2,5,0.15,0.3,85,sk_e_curse,sk_e_drain_light,item_c05,0.2,,Fragile magic enemy with high crit and dual skills,Base
 Shadow Wisp Tank,enemy_03_tank,12,2,4,0.15,0.3,85,sk_e_curse,sk_e_drain_light,item_c05,0.2,,Reinforced wisp with 1.5x HP and 0.8x damage,Tank
-Skeleton,enemy_02,18,5,8,0.06,0.2,75,sk_e_bone_club,,item_gold,0.5,,Undead warrior with moderate stats,Base
-Skeleton Assassin,enemy_02_assassin,13,7,11,0.06,0.2,75,sk_e_bone_club,,item_gold,0.5,,Fast skeleton with 0.7x HP and 1.4x damage,Assassin
-Skeleton Mage,enemy_02_special,18,5,8,0.06,0.2,75,sk_e_bone_club,sk_e_dark_bolt,item_gold,0.5,sk_e_dark_bolt,Skeleton with ranged dark magic attack,Special
-Skeleton Tank,enemy_02_tank,27,4,6,0.06,0.2,75,sk_e_bone_club,,item_gold,0.5,,Heavy armored skeleton with 1.5x HP and 0.8x damage,Tank
-Giant Zombie,enemy_b01,100,13,19,0.05,0.4,78,sk_e_b01_smash,sk_e_b01_putrid_breath,random_boss_pool,1.0,sk_e_b01_enrage,"Stage 1 Boss. HP 100 (Sprint 10 buff +20), dmg 13-19 (+5), 2 skill cơ bản + 1 enrage khi HP<30%. Drop ngẫu nhiên từ boss_pool.",Boss
-The Whispering Shade,enemy_b02,130,14,20,0.10,0.4,82,sk_e_b02_phantom_blade,sk_e_b02_drain_stress,random_boss_pool,1.0,sk_e_b02_form_shift,"Stage 2 Boss. HP 130 (Sprint 10 buff +20), dmg 14-20 (+5). Phantom blade single-target + drain stress AoE. HP<60% Haunting Aura. HP<30% Form Shift sang Hollow Echo.",Boss
-The Black Heart,enemy_b03,170,15,23,0.08,0.5,85,sk_e_b03_heart_pulse,sk_e_b03_mirror_form,random_boss_pool,1.0,sk_e_b03_true_heart,"Stage 3 FINAL Boss. HP 170 (Sprint 10 buff +20), dmg 15-23 (+5). 5 pha: Heart Pulse → Mirror Form → True Heart → Final Whisper.",Boss
-Echo Wraith,enemy_mb01,45,7,12,0.12,0.3,80,sk_e_mb01_echo_strike,sk_e_mb01_haunting_cry,random_uncommon_trinket,1.0,sk_e_mb01_phase_shift,"Stage 3 Miniboss (50% pool). HP 45. Echo Strike đánh 2 hero. Haunting Cry AoE stress. Phase Shift mỗi 3 lượt: né hoàn toàn đòn tiếp theo.",Miniboss
-Plague Bearer,enemy_mb02,50,6,10,0.05,0.35,78,sk_e_mb02_plague_strike,sk_e_mb02_disease_cloud,random_uncommon_trinket,1.0,sk_e_mb02_lifesteal,"Stage 3 Miniboss (50% pool). HP 50. Plague Strike áp disease (Plague/Fever/Nightmare random). Disease Cloud AoE poison. Lifesteal 30% sát thương gây ra.",Miniboss
+Skeleton,enemy_02,18,5,8,0.06,0.2,80,sk_e_bone_club,,item_gold,0.5,,Undead warrior with moderate stats (Sprint 11 acc 75→80),Base
+Skeleton Assassin,enemy_02_assassin,13,7,11,0.06,0.2,80,sk_e_bone_club,,item_gold,0.5,,Fast skeleton with 0.7x HP and 1.4x damage (Sprint 11 acc 75→80),Assassin
+Skeleton Mage,enemy_02_special,18,5,8,0.06,0.2,80,sk_e_bone_club,sk_e_dark_bolt,item_gold,0.5,sk_e_dark_bolt,Skeleton with ranged dark magic attack (Sprint 11 acc 75→80),Special
+Skeleton Tank,enemy_02_tank,27,4,6,0.06,0.2,80,sk_e_bone_club,,item_gold,0.5,,Heavy armored skeleton with 1.5x HP and 0.8x damage (Sprint 11 acc 75→80),Tank
+Giant Zombie,enemy_b01,100,13,19,0.05,0.4,90,sk_e_b01_smash,sk_e_b01_putrid_breath,random_boss_pool,1.0,sk_e_b01_enrage,"Stage 1 Boss. HP 100, dmg 13-19, acc 90 (Sprint 11 buff 78→90). 2 skill cơ bản + 1 enrage khi HP<30%.",Boss
+The Whispering Shade,enemy_b02,130,14,20,0.10,0.4,90,sk_e_b02_phantom_blade,sk_e_b02_drain_stress,random_boss_pool,1.0,sk_e_b02_form_shift,"Stage 2 Boss. HP 130, dmg 14-20, acc 90 (Sprint 11 buff 82→90). HP<60% Haunting Aura. HP<30% Form Shift Hollow Echo.",Boss
+The Black Heart,enemy_b03,170,15,23,0.08,0.5,90,sk_e_b03_heart_pulse,sk_e_b03_mirror_form,random_boss_pool,1.0,sk_e_b03_true_heart,"Stage 3 FINAL Boss. HP 170, dmg 15-23, acc 90 (Sprint 11 buff 85→90). 5 pha: Heart Pulse → Mirror Form → True Heart → Final Whisper.",Boss
+Echo Wraith,enemy_mb01,45,7,12,0.12,0.3,85,sk_e_mb01_echo_strike,sk_e_mb01_haunting_cry,random_uncommon_trinket,1.0,sk_e_mb01_phase_shift,"Stage 3 Miniboss. HP 45, acc 85 (Sprint 11 buff 80→85). Echo Strike + Haunting Cry + Phase Shift.",Miniboss
+Plague Bearer,enemy_mb02,50,6,10,0.05,0.35,85,sk_e_mb02_plague_strike,sk_e_mb02_disease_cloud,random_uncommon_trinket,1.0,sk_e_mb02_lifesteal,"Stage 3 Miniboss. HP 50, acc 85 (Sprint 11 buff 78→85). Plague Strike + Disease Cloud + Lifesteal.",Miniboss

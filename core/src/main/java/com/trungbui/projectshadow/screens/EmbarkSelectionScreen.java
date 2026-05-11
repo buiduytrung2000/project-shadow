@@ -109,9 +109,10 @@ public class EmbarkSelectionScreen implements Screen {
         }
 
         TextButton embark = new TextButton(I18n.t("embark.button"), skin);
-        // Sprint 10 B2: also disable if player can't afford supplies tax.
-        boolean canAffordTax = game.meta().gold() >= tax;
-        embark.setDisabled(selected.size() != PARTY_SIZE || !canAffordTax);
+        // Sprint 11 B1 debt model: embark always enabled when party = 4. Supplies
+        // tax can put gold into debt (negative). Visual warning via tax label color
+        // already shows red when unaffordable (line above).
+        embark.setDisabled(selected.size() != PARTY_SIZE);
         if (embark.isDisabled()) embark.setColor(Color.GRAY);
         embark.addListener(new ChangeListener() {
             @Override
