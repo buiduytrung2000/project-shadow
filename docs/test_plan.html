@@ -315,6 +315,65 @@
 
 <hr>
 
+<h1>Sprint 9+ — Combat Polish (3 follow-up branches, May 11)</h1>
+
+<h2>B3: Combat animations bugfix (commit <code>82316a3</code>)</h2>
+<p>Trước fix: chỉ <code>hurt</code> animation play. Sau fix: cả 3 (attack/hurt/dead).</p>
+<ul class="checklist">
+  <li>Click skill trong combat → attacker sprite play <strong>attack</strong> anim (visible swing/cast)</li>
+  <li>Target sprite play <strong>hurt</strong> anim đồng thời (shake + flash)</li>
+  <li>Kill enemy (HP→0) → enemy sprite play <strong>dead</strong> anim 1 lần → stays at last frame</li>
+  <li>Multiple kills không gây stuck state</li>
+  <li>Hero chết cũng play dead anim đúng</li>
+  <li>Verify auto: <code>CombatantViewTest</code> 5 cases pass</li>
+</ul>
+
+<h2>B1: Combat reward system (commit <code>f257070</code>)</h2>
+<p>Trước fix: kill boss → 0g reward. Sau fix: gold + items + stress relief mỗi combat win.</p>
+
+<h3>Bug fix — Boss reward</h3>
+<ul class="checklist">
+  <li>Kill enemy_b01 Giant Zombie → meta.gold tăng <strong>200g</strong> (verify trong meta.json sau victory)</li>
+  <li>Boss drop 1 item từ weighted pool (trinket_common 35% / trinket_uncommon 30% / consumable_rare 15% / relic 15% / cursed 5%)</li>
+  <li>Item appended to run inventory → flow to meta khi victory</li>
+  <li>Same stage seed → cùng boss drop (deterministic)</li>
+  <li>Verify auto: <code>BossRewardParsingTest</code> 5 cases pass</li>
+</ul>
+
+<h3>Per-combat auto-drop</h3>
+<ul class="checklist">
+  <li>Win combat L1.A (1 Goblin Base) → +5..10g run gold</li>
+  <li>Win combat với Tank/Special variant → +6..12g (×1.2 multiplier)</li>
+  <li>Win combat với enemy có dropItem (e.g. enemy_01 → item_c01 30%) → ~30% chance item vào inventory</li>
+  <li>enemy_02 (dropItem=item_gold) → KHÔNG có item_gold trong inventory, thay vào +20g bonus</li>
+  <li>Mỗi win → -3 stress cho 1 random alive hero (verify run state)</li>
+  <li>Verify auto: <code>CombatRewardRollerTest</code> 7 cases pass</li>
+</ul>
+
+<h3>Reward node fix</h3>
+<ul class="checklist">
+  <li>Click reward node trên StageMap → enter NodeInfoScreen → list drops</li>
+  <li>Click "Continue" → drops applied vào run state (gold + items)</li>
+  <li>Gold counter visible tăng đúng số</li>
+</ul>
+
+<h2>B2: Skill description tooltip (commit <code>9777fc8</code>)</h2>
+<p>Tooltip floating panel top-right hiển thị mô tả skill khi hover.</p>
+<ul class="checklist">
+  <li>Combat → hover qua skill button → panel hiện title + tên skill (gold) + description</li>
+  <li>Panel hiển thị: damage multiplier, target type, cooldown, stress damage, effect</li>
+  <li>Hover sang skill button khác → panel update sang skill mới (không flicker)</li>
+  <li>Hover ra ngoài skill row → panel ẩn</li>
+  <li>Skill có description rõ ràng (vd <code>sk_w1</code> "Đòn cơ bản. Đánh 1 địch hàng đầu, không hiệu ứng phụ.")</li>
+  <li>Toggle EN locale → labels đổi sang English ("Target:", "CD:", ...) — description vẫn VN vì CSV chưa có descriptionEn (acceptable)</li>
+  <li>Skill có cooldown 0 → KHÔNG hiển thị "CD:" line</li>
+  <li>Skill có primaryEffectId → hiển thị effect line với magnitude + duration</li>
+  <li>Turn change → panel ẩn (refreshSkillButtons clears)</li>
+  <li>Verify auto: <code>SkillDataFormatTest</code> 7 cases pass</li>
+</ul>
+
+<hr>
+
 <h1>Extras — Design Lock 2026-05-11</h1>
 
 <h2>Hamlet economy (3-tier upgrade plan)</h2>
