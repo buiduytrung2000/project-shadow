@@ -31,6 +31,12 @@ public final class DamageFormula {
         boolean crit = rng.nextDouble() < attacker.effectiveCritChance();
         double finalDmg = (crit ? base * CRIT_MULTIPLIER : base) * target.damageReceivedMultiplier();
 
+        // Sprint 12 B1 — Fearful trait (trait_a03) reduces outgoing damage 20%.
+        // Applied multiplicatively after crit so crits and non-crits both suffer.
+        if (attacker instanceof com.trungbui.projectshadow.domain.Hero h) {
+            finalDmg *= ConditionResolver.outgoingDamageMultiplier(h);
+        }
+
         int hpDamage = (int) Math.round(finalDmg);
         return new AttackResult(true, crit, hpDamage, skill.stressDamage());
     }

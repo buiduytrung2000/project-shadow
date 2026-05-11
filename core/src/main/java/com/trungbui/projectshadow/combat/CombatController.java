@@ -143,6 +143,15 @@ public class CombatController {
             return true;
         }
 
+        // Sprint 12 B1 — Paranoia disease (dis_04): 15% chance to fail the
+        // action. Hero loses the turn. Cowardly already consumed above; this
+        // is independent.
+        if (ConditionResolver.rollParanoiaActionFail(hero, rng)) {
+            log.add(hero.id() + " bị Hoang Tưởng — hành động thất bại!");
+            advanceTurn();
+            return true;
+        }
+
         // Sprint 11 B2 — Bloodthirsty forced-attack: ignore caller's skillIndex
         // if hero has trait_07; auto-pick first available offensive skill.
         if (ConditionResolver.hasForcedAttack(hero)) {
@@ -376,6 +385,11 @@ public class CombatController {
                         heartAttackHero = h;
                     }
                 }
+                // Sprint 12 B1 — stress on crit. If a crit lands on a Hero target,
+                // apply +5 stress (Sprint 3 spec finally implemented).
+                if (result.crit() && target instanceof Hero h) {
+                    h.takeStressDamage(ConditionResolver.STRESS_ON_CRIT);
+                }
                 // Sprint 11 B2: on-kill trigger for hero attackers. Bloodthirsty
                 // gains a stack here; other on_kill effects could hook in later.
                 if (targetWasAlive && !target.isAlive() && attacker instanceof Hero killer) {
@@ -387,6 +401,14 @@ public class CombatController {
                         && target instanceof com.trungbui.projectshadow.domain.Enemy enemyTarget
                         && "Boss".equalsIgnoreCase(enemyTarget.data().variantType())) {
                     listener.onBossDeath(target);
+                }
+                // Sprint 12 B1 — stress on ally death. If a Hero target just
+                // died, all OTHER alive heroes take +10 stress (Sprint 3 spec).
+                if (targetWasAlive && !target.isAlive() && target instanceof Hero deadHero) {
+                    for (Hero ally : encounter.heroes()) {
+                        if (ally == deadHero || !ally.isAlive()) continue;
+                        ally.takeStressDamage(ConditionResolver.STRESS_ON_ALLY_DEATH);
+                    }
                 }
             }
         } else {
