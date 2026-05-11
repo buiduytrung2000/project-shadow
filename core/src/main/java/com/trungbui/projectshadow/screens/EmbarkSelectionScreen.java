@@ -17,6 +17,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
 import com.trungbui.projectshadow.data.model.HeroData;
 import com.trungbui.projectshadow.i18n.I18n;
+import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.save.HeroState;
 import com.trungbui.projectshadow.ui.FontFactory;
 
@@ -73,6 +74,14 @@ public class EmbarkSelectionScreen implements Screen {
         status.setColor(selected.size() == PARTY_SIZE ? Color.LIME : Color.WHITE);
         root.add(status).colspan(2).pad(10).row();
 
+        // Sprint 10 B2 — supplies tax preview. Stage hardcoded as Stage 1 today;
+        // when stage selection UI lands, derive from selected stage.
+        int taxStageAct = 1;
+        int tax = HamletService.suppliesTax(taxStageAct);
+        Label taxPreview = new Label(I18n.t("embark.suppliesTax", taxStageAct, tax), skin);
+        taxPreview.setColor(game.meta().gold() >= tax ? Color.LIGHT_GRAY : Color.SALMON);
+        root.add(taxPreview).colspan(2).pad(10).row();
+
         for (HeroState rs : game.meta().roster()) {
             HeroData data = game.gameData().heroes().get(rs.heroId());
             String name = data != null ? data.displayName() : rs.heroId();
@@ -100,7 +109,9 @@ public class EmbarkSelectionScreen implements Screen {
         }
 
         TextButton embark = new TextButton(I18n.t("embark.button"), skin);
-        embark.setDisabled(selected.size() != PARTY_SIZE);
+        // Sprint 10 B2: also disable if player can't afford supplies tax.
+        boolean canAffordTax = game.meta().gold() >= tax;
+        embark.setDisabled(selected.size() != PARTY_SIZE || !canAffordTax);
         if (embark.isDisabled()) embark.setColor(Color.GRAY);
         embark.addListener(new ChangeListener() {
             @Override

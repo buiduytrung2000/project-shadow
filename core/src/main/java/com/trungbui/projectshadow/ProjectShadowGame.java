@@ -46,6 +46,18 @@ public class ProjectShadowGame extends Game {
             List.of("hero_01", "hero_13", "hero_05", "hero_03");
     private static final String DEFAULT_STAGE = "stage_1";
 
+    /** Sprint 10 B2 — extract stage act (1/2/3) from a stageId like "stage_1". */
+    static int stageActFromId(String stageId) {
+        if (stageId == null) return 0;
+        int us = stageId.lastIndexOf('_');
+        if (us < 0 || us == stageId.length() - 1) return 0;
+        try {
+            return Integer.parseInt(stageId.substring(us + 1));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     /** Sprint 10 B1 — formerly hardcoded {@code 42L}. Now generated per-run by
      *  {@link #generateRunSeed()} unless the env var {@code SHADOW_FIXED_SEED}
      *  is set (dev/test override). Random seed → each run has a unique stage map. */
@@ -188,9 +200,16 @@ public class ProjectShadowGame extends Game {
         }
     }
 
-    /** Start a new run with the chosen 4 heroes (must already be in the meta roster). */
+    /** Start a new run with the chosen 4 heroes (must already be in the meta roster).
+     *  <p>Sprint 10 B2: deducts supplies tax (Option C) before run starts. If player
+     *  can't afford, throws {@code HamletException} — caller (EmbarkSelectionScreen)
+     *  should pre-validate via {@code HamletService.suppliesTax(stageAct)}.</p> */
     public void startNewRun(List<String> heroIds) {
         Screen prev = getScreen();
+        // Sprint 10 B2 — supplies tax up-front. Non-refundable.
+        int stageAct = stageActFromId(DEFAULT_STAGE);
+        MetaState afterTax = HamletService.paySuppliesTax(meta, stageAct);
+        applyMeta(afterTax);
         // Sprint 10 B1: if roster exceeds SOFT_ROSTER_CAP, auto-cull random excess heroes
         // (none in the picked party). This is destructive — heroes are permanently dropped.
         // Player was warned by HamletScreen UI when cap was exceeded.
@@ -320,12 +339,22 @@ public class ProjectShadowGame extends Game {
         CombatReward reward = rollRewardForNode(resolvedNode);
         runSession.applyCombatReward(reward);
 
+        // Sprint 10 B2 — boss kill grants Heirloom currency into meta (was reserved
+        // Sprint 8.5 followup; now wired). 1/2/4 per Stage 1/2/3 boss.
+        if (resolvedNode instanceof BossNode) {
+            int stageAct = stageActFromId(runSession.state().stageId());
+            int heirloomDrop = HamletService.heirloomFromBoss(stageAct);
+            if (heirloomDrop > 0) {
+                applyMeta(meta.withHeirloomDelta(heirloomDrop));
+            }
+        }
+
         try {
             runSession.completeNode(nodeLabel);
         } catch (IOException e) {
             throw new RuntimeException("Failed to save run after combat at " + nodeLabel, e);
         }
-        // TODO Sprint 10: show CombatRewardPopup with `reward` before transitioning. For
+        // TODO Sprint 10 B3: show CombatRewardPopup with `reward` before transitioning. For
         // now the reward is silently applied — players see gold counter change next screen.
         if (runSession.isOnBossNode()) {
             applyOutcomeAndArchive(true);
