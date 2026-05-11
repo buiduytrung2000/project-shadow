@@ -42,9 +42,36 @@ public final class ConditionResolver {
     public static final String TRAIT_MASOCHIST = "trait_04";
     public static final String TRAIT_BLOODTHIRSTY = "trait_07";
 
+    // Sprint 12 B1 — 4 more Affliction traits.
+    public static final String TRAIT_PARANOID = "trait_a01";
+    public static final String TRAIT_SELFISH = "trait_a02";
+    public static final String TRAIT_FEARFUL = "trait_a03";
+    public static final String TRAIT_HOPELESS = "trait_a04";
+
+    // Sprint 12 B1 — 6 disease IDs.
+    public static final String DISEASE_FEVER = "dis_01";
+    public static final String DISEASE_BLINDNESS = "dis_02";
+    public static final String DISEASE_NIGHTMARE = "dis_03";
+    public static final String DISEASE_PARANOIA = "dis_04";
+    public static final String DISEASE_PLAGUE = "dis_05";
+    public static final String DISEASE_CURSED = "dis_06";
+
     public static final double COWARDLY_SKIP_CHANCE = 0.20;
     public static final int COWARDLY_STRESS_THRESHOLD = 50;
     public static final int MASOCHIST_STRESS_TO_ALLIES = 5;
+
+    // Sprint 12 B1 — new effect magnitudes.
+    public static final int PARANOID_ALLY_STRESS_PER_TURN = 1;
+    public static final double FEARFUL_DMG_MULTIPLIER = 0.80; // -20% outgoing
+    public static final int HOPELESS_ACC_DEBUFF = 10;
+    public static final double FEVER_MAX_HP_MULT = 0.85;     // -15% max HP
+    public static final int BLINDNESS_ACC_DEBUFF = 20;
+    public static final int NIGHTMARE_STRESS_PER_TURN = 2;
+    public static final double PARANOIA_FAIL_CHANCE = 0.15;
+    public static final double PLAGUE_MAX_HP_MULT = 0.75;    // -25% max HP
+    public static final double PLAGUE_SPREAD_CHANCE = 0.10;
+    public static final int STRESS_ON_CRIT = 5;
+    public static final int STRESS_ON_ALLY_DEATH = 10;
 
     private ConditionResolver() {
     }
@@ -70,6 +97,33 @@ public final class ConditionResolver {
 
         // Bloodthirsty: forced attack — flag is handled by caller via
         // hasForcedAttack() check in this class. No persistent flag set here.
+
+        // Sprint 12 B1 — Paranoid: all alive allies +1 stress.
+        if (hero.traits().contains(TRAIT_PARANOID) && encounter != null) {
+            for (Hero ally : encounter.heroes()) {
+                if (ally == hero || !ally.isAlive()) continue;
+                ally.takeStressDamage(PARANOID_ALLY_STRESS_PER_TURN);
+            }
+        }
+
+        // Sprint 12 B1 — Nightmare: +2 stress/turn to self.
+        if (hero.diseases().contains(DISEASE_NIGHTMARE)) {
+            hero.takeStressDamage(NIGHTMARE_STRESS_PER_TURN);
+        }
+
+        // Sprint 12 B1 — Plague: 10% chance/turn to spread to a disease-free ally.
+        if (hero.diseases().contains(DISEASE_PLAGUE) && encounter != null
+                && rng.nextDouble() < PLAGUE_SPREAD_CHANCE) {
+            java.util.List<Hero> candidates = new java.util.ArrayList<>();
+            for (Hero ally : encounter.heroes()) {
+                if (ally == hero || !ally.isAlive()) continue;
+                if (!ally.diseases().contains(DISEASE_PLAGUE)) candidates.add(ally);
+            }
+            if (!candidates.isEmpty()) {
+                Hero infected = candidates.get(rng.nextInt(candidates.size()));
+                infected.addDisease(DISEASE_PLAGUE);
+            }
+        }
     }
 
     /**
@@ -149,7 +203,55 @@ public final class ConditionResolver {
     public static boolean isImplemented(String conditionId) {
         return TRAIT_COWARDLY.equals(conditionId)
                 || TRAIT_MASOCHIST.equals(conditionId)
-                || TRAIT_BLOODTHIRSTY.equals(conditionId);
+                || TRAIT_BLOODTHIRSTY.equals(conditionId)
+                || TRAIT_PARANOID.equals(conditionId)
+                || TRAIT_SELFISH.equals(conditionId)
+                || TRAIT_FEARFUL.equals(conditionId)
+                || TRAIT_HOPELESS.equals(conditionId)
+                || DISEASE_FEVER.equals(conditionId)
+                || DISEASE_BLINDNESS.equals(conditionId)
+                || DISEASE_NIGHTMARE.equals(conditionId)
+                || DISEASE_PARANOIA.equals(conditionId)
+                || DISEASE_PLAGUE.equals(conditionId)
+                || DISEASE_CURSED.equals(conditionId);
+    }
+
+    /** Sprint 12 B1 — Fearful outgoing damage multiplier. Called by
+     *  {@link com.trungbui.projectshadow.combat.DamageFormula#resolve}
+     *  after computing base damage. Returns multiplier (1.0 = no change). */
+    public static double outgoingDamageMultiplier(Hero attacker) {
+        if (attacker == null) return 1d;
+        if (attacker.traits().contains(TRAIT_FEARFUL)) return FEARFUL_DMG_MULTIPLIER;
+        return 1d;
+    }
+
+    /** Sprint 12 B1 — Hopeless + Blindness accuracy debuff. Returns total
+     *  amount to subtract from base accuracy (>= 0). */
+    public static int accuracyDebuff(Hero hero) {
+        if (hero == null) return 0;
+        int debuff = 0;
+        if (hero.traits().contains(TRAIT_HOPELESS)) debuff += HOPELESS_ACC_DEBUFF;
+        if (hero.diseases().contains(DISEASE_BLINDNESS)) debuff += BLINDNESS_ACC_DEBUFF;
+        return debuff;
+    }
+
+    /** Sprint 12 B1 — Fever + Plague max-HP multiplier. Multiplicative if
+     *  hero has both. Returns 1.0 if no disease applies. */
+    public static double maxHpMultiplier(Hero hero) {
+        if (hero == null) return 1d;
+        double mult = 1d;
+        if (hero.diseases().contains(DISEASE_FEVER)) mult *= FEVER_MAX_HP_MULT;
+        if (hero.diseases().contains(DISEASE_PLAGUE)) mult *= PLAGUE_MAX_HP_MULT;
+        return mult;
+    }
+
+    /** Sprint 12 B1 — Paranoia action-fail roll. Called by
+     *  {@code CombatController.executePlayerSkill} BEFORE resolving the skill.
+     *  Returns true if the action should fail (skip turn). */
+    public static boolean rollParanoiaActionFail(Hero hero, RandomGenerator rng) {
+        if (hero == null || rng == null) return false;
+        if (!hero.diseases().contains(DISEASE_PARANOIA)) return false;
+        return rng.nextDouble() < PARANOIA_FAIL_CHANCE;
     }
 
     /** Defensive lookup helper (not currently used in MVP — for Sprint 12). */

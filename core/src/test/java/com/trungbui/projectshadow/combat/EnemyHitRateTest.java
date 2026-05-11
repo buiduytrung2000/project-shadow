@@ -60,8 +60,8 @@ class EnemyHitRateTest {
 
     @Test
     void bossB01AttacksFreshHero_hitsAtAdvertisedRate() {
-        // enemy_b01 Giant Zombie: accuracy 78. sk_e_b01_smash: accuracyModifier 0.
-        // Expect ~78% hits.
+        // enemy_b01 Giant Zombie: accuracy 90 (Sprint 11 B1 buff: was 78).
+        // sk_e_b01_smash: accuracyModifier 0. Expect ~90% hits.
         Enemy boss = new Enemy(gd.enemies().get("enemy_b01"), Position.POS_1, gd.effects());
         var skillData = gd.enemySkills().get("sk_e_b01_smash");
         SkillData wrapped = new SkillData(
@@ -82,7 +82,7 @@ class EnemyHitRateTest {
             if (r.hit()) hits++;
         }
         double rate = hits / (double) trials;
-        assertThat(rate).isBetween(0.68, 0.88);
+        assertThat(rate).isBetween(0.84, 0.96);
     }
 
     private SkillData wrapEnemyStab() {

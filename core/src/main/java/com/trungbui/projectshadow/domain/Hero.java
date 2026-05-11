@@ -102,7 +102,11 @@ public class Hero implements Combatant {
 
     @Override
     public int maxHp() {
-        return data.baseHp() + level * data.levelUpHp();
+        int base = data.baseHp() + level * data.levelUpHp();
+        // Sprint 12 B1 — Fever (-15%) / Plague (-25%) max HP debuffs (multiplicative).
+        // Floor at 1 to keep hero alive at all.
+        double mult = com.trungbui.projectshadow.combat.ConditionResolver.maxHpMultiplier(this);
+        return Math.max(1, (int) Math.round(base * mult));
     }
 
     @Override
@@ -129,6 +133,16 @@ public class Hero implements Combatant {
     @Override
     public int accuracy() {
         return data.baseAccuracy();
+    }
+
+    /** Sprint 12 B1 — apply Hopeless (-10) + Blindness (-20) on top of the
+     *  default effective-accuracy (which factors active flat effects).
+     *  Floored at 0. */
+    @Override
+    public int effectiveAccuracy() {
+        int base = Combatant.super.effectiveAccuracy();
+        int debuff = com.trungbui.projectshadow.combat.ConditionResolver.accuracyDebuff(this);
+        return Math.max(0, base - debuff);
     }
 
     /** Sprint 11 B3 — was hardcoded 0. Now reads HeroData.baseDodge +
@@ -172,6 +186,16 @@ public class Hero implements Combatant {
         // 5% per stack, max 5 stacks → max +25% dmg.
         double mult = 1d + 0.05d * bloodthirstyStacks;
         return (int) Math.round(base * mult);
+    }
+
+    /** Sprint 12 B1 — Selfish trait (trait_a02): refuses healing. heal() is
+     *  a no-op when the hero has the trait. Applied at the heal site so all
+     *  healing sources (skills, items, rest options, effects) are blocked
+     *  in one place. */
+    @Override
+    public void heal(int amount) {
+        if (traits.contains(com.trungbui.projectshadow.combat.ConditionResolver.TRAIT_SELFISH)) return;
+        Combatant.super.heal(amount);
     }
 
     /** Sprint 11 B3 — Cursed disease (dis_06): -30 dodge. Floor at 0
