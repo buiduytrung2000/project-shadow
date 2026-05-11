@@ -17,10 +17,12 @@ public class CombatRenderer implements Disposable {
     public static final int VIRTUAL_WIDTH = 1920;
     public static final int VIRTUAL_HEIGHT = 1080;
 
-    private static final float HERO_X = 250f;
-    private static final float ENEMY_X = 1520f;
-    private static final float ROW_TOP_Y = 950f;
-    private static final float ROW_GAP_Y = 220f;
+    // Horizontal row layout: POS_1 sát đường ranh giới 2 phe.
+    private static final float HERO_FRONT_X = 680f;   // POS_1 hero — rightmost của cluster heroes
+    private static final float ENEMY_FRONT_X = 1090f; // POS_1 enemy — leftmost của cluster enemies
+    private static final float COMBATANT_GAP_X = 50f;
+    private static final float COMBATANT_STEP_X = CombatantView.WIDTH + COMBATANT_GAP_X;
+    private static final float COMBATANT_BASE_Y = 440f;
     private static final float BAR_WIDTH = CombatantView.WIDTH;
     private static final float HP_BAR_HEIGHT = 18f;
     private static final float STRESS_BAR_HEIGHT = 12f;
@@ -34,20 +36,22 @@ public class CombatRenderer implements Disposable {
     }
 
     public List<CombatantView> layoutHeroes(List<? extends Combatant> heroes) {
-        return layoutColumn(heroes, HERO_X);
+        // Heroes: POS_1 ở rightmost → back rows trôi sang trái (stepX âm).
+        return layoutRow(heroes, HERO_FRONT_X, -COMBATANT_STEP_X);
     }
 
     public List<CombatantView> layoutEnemies(List<? extends Combatant> enemies) {
-        return layoutColumn(enemies, ENEMY_X);
+        // Enemies: POS_1 ở leftmost → back rows trôi sang phải (stepX dương).
+        return layoutRow(enemies, ENEMY_FRONT_X, +COMBATANT_STEP_X);
     }
 
-    private List<CombatantView> layoutColumn(List<? extends Combatant> combatants, float baseX) {
+    private List<CombatantView> layoutRow(List<? extends Combatant> combatants, float frontX, float stepX) {
         return java.util.stream.IntStream.range(0, combatants.size())
                 .mapToObj(i -> {
                     CombatantView v = new CombatantView(
                             combatants.get(i),
-                            baseX,
-                            ROW_TOP_Y - i * ROW_GAP_Y - CombatantView.HEIGHT);
+                            frontX + i * stepX,
+                            COMBATANT_BASE_Y);
                     if (spriteAtlas.isLoaded()) {
                         v.attachAnimator(new SpriteAnimator(spriteAtlas, combatants.get(i).id()));
                     }
