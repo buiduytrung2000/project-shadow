@@ -25,6 +25,7 @@ class HeroStressSystemTest {
                 "DPS", "Front",
                 30, 5, 10, 80, 0.05, 5, 0.0, /* baseStressResist */
                 3, 1, 0.01, 0.02,
+                /* Sprint 11 B3: baseDodge, levelUpDodge */ 0, 0d,
                 java.util.List.of("sk_test"), java.util.List.of("sk_test"),
                 ""
         );

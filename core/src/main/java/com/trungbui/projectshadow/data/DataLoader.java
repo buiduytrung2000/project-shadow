@@ -117,13 +117,26 @@ public final class DataLoader {
             String[] row;
             while ((row = csv.readNext()) != null) {
                 if (isBlankRow(row)) continue;
+                // Sprint 11 B3 — Base Dodge / LevelUp Dodge are new columns.
+                // Backward-compatible: if missing in CSV, derive a sensible default
+                // from Position (Front=0, Back=2) so existing data continues working
+                // without editing every row. Designer can override per-hero by
+                // adding the columns later.
+                String position = cell(row, h, "Position");
+                int defaultBaseDodge = "Back".equalsIgnoreCase(position) ? 2 : 0;
+                int baseDodge = h.containsKey("Base Dodge")
+                        ? parseInt(cell(row, h, "Base Dodge"))
+                        : defaultBaseDodge;
+                double levelUpDodge = h.containsKey("LevelUp Dodge")
+                        ? parseDouble(cell(row, h, "LevelUp Dodge"))
+                        : 0d;
                 out.add(new HeroData(
                         cell(row, h, "Rarity"),
                         cell(row, h, "Name (VN)"),
                         cell(row, h, "Name (EN)"),
                         cell(row, h, "Hero ID"),
                         cell(row, h, "Role"),
-                        cell(row, h, "Position"),
+                        position,
                         parseInt(cell(row, h, "Base HP")),
                         parseInt(cell(row, h, "Base DMG Min")),
                         parseInt(cell(row, h, "Base DMG Max")),
@@ -135,6 +148,8 @@ public final class DataLoader {
                         parseInt(cell(row, h, "LevelUp DMG")),
                         parseDouble(cell(row, h, "LevelUp Crit")),
                         parseDouble(cell(row, h, "LevelUp Stress Resist")),
+                        baseDodge,
+                        levelUpDodge,
                         parseStringList(cell(row, h, "Default Skills")),
                         parseStringList(cell(row, h, "Available Skills")),
                         cell(row, h, "Notes")

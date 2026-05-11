@@ -22,6 +22,12 @@ public record HeroData(
         int levelUpDmg,
         double levelUpCrit,
         double levelUpStressResist,
+        /** Sprint 11 B3 — base dodge stat. Was hardcoded 0 on Hero pre-Sprint-11.
+         *  Distribution: Tank/Warrior 0, Cleric/Caster 2-3, Archer/Rogue 4-6,
+         *  Assassin/Monk 6-8. Cursed disease applies -30 on top of this. */
+        int baseDodge,
+        /** Sprint 11 B3 — per-level dodge gain (small; 1 every 2-3 levels). */
+        double levelUpDodge,
         List<String> defaultSkills,
         List<String> availableSkills,
         String notes

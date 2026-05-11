@@ -173,6 +173,16 @@ public class CombatScreen implements Screen {
             public void onHeroHeartAttack(Hero hero) {
                 pushLog(I18n.t("combat.log.heartAttack", hero.data().displayName()));
             }
+
+            @Override
+            public void onBossDeath(Combatant boss) {
+                // Sprint 11 B3 — boss death epic moment. Add a dramatic log line
+                // and trigger zoom-in on the boss view. The combat-ended flow
+                // (showContinueButton + reward popup) follows the existing path;
+                // we just amplify the visual moment here.
+                pushLog(I18n.t("combat.log.bossDeath", boss.id()));
+                triggerBossDeathZoom(boss);
+            }
         });
 
         layoutCombatants();
@@ -404,6 +414,21 @@ public class CombatScreen implements Screen {
         }
         for (CombatantView v : enemyViews) {
             if (v.combatant() == attacker) v.triggerAttack();
+        }
+    }
+
+    /** Sprint 11 B3 — boss epic-death moment. Scales the boss view up over 0.5s
+     *  to draw attention while the death anim plays, then lets the normal combat-end
+     *  flow take over. Uses Scene2D Actions on the CombatantView's stage actor —
+     *  if the view isn't a stage actor (current pure-renderer design), we just
+     *  flag it for the renderer (no-op stub for now; CombatRenderer can pick up
+     *  a "zoom factor" field per view in a follow-up). */
+    private void triggerBossDeathZoom(Combatant boss) {
+        if (boss == null) return;
+        for (CombatantView v : enemyViews) {
+            if (v.combatant() == boss) {
+                v.triggerEpicDeath();
+            }
         }
     }
 

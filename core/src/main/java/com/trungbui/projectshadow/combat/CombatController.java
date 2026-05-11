@@ -49,6 +49,13 @@ public class CombatController {
          *  notification-only. */
         default void onCowardlySkip(Hero hero) {
         }
+
+        /** Sprint 11 B3 — fired when a boss enemy dies (variantType=Boss, HP→0).
+         *  CombatScreen uses this to trigger a pause + zoom-in animation before
+         *  the regular victory flow (popup, transition). Fires once per combat.
+         *  Non-boss enemy deaths do NOT trigger this event. */
+        default void onBossDeath(Combatant boss) {
+        }
     }
 
     private final CombatEncounter encounter;
@@ -89,6 +96,8 @@ public class CombatController {
     public void start() {
         // Sprint 11 B2 — reset per-combat condition counters (Bloodthirsty stacks etc).
         ConditionResolver.onCombatStart(encounter);
+        // Sprint 11 B3 — reset boss one-shot tracker.
+        usedBossSkillsThisCombat.clear();
         encounter.startRound();
         listener.onRoundStarted(encounter.roundNumber());
         Combatant first = encounter.currentActor();
@@ -249,9 +258,62 @@ public class CombatController {
         return pacingDelaySec;
     }
 
+    /** Sprint 11 B3 — boss skill IDs that fire only once per combat. Once used,
+     *  the boss falls back to skill1/skill2. enrage/form_shift/true_heart/
+     *  final_whisper are all single-trigger phase transitions per spec. */
+    private static final java.util.Set<String> ONE_SHOT_BOSS_SKILLS = java.util.Set.of(
+            "sk_e_b01_enrage",
+            "sk_e_b02_form_shift",
+            "sk_e_b02_haunting_aura",
+            "sk_e_b03_true_heart",
+            "sk_e_b03_final_whisper",
+            "sk_e_b03_mirror_form"
+    );
+
+    /** Tracks per-combat boss skill usage so one-shots fire exactly once. */
+    private final java.util.Set<String> usedBossSkillsThisCombat = new java.util.HashSet<>();
+
+    /** Sprint 11 B3 — pick the right boss skill for the current HP%.
+     *  Phase rules:
+     *   - HP < 30% AND specialSkill exists AND not yet used → specialSkill
+     *   - HP < 60% AND skill2 exists → skill2 (alternates with skill1, 50/50)
+     *   - else → skill1
+     *  Non-boss enemies always use skill1 (legacy behavior).
+     */
+    String pickEnemySkillId(Enemy enemy) {
+        var enemyData = enemy.data();
+        boolean isBoss = "Boss".equalsIgnoreCase(enemyData.variantType());
+        if (!isBoss) return enemyData.skill1();
+
+        double hpRatio = enemy.currentHp() / (double) enemy.maxHp();
+        String special = enemyData.specialSkill();
+        if (special != null && !special.isBlank()
+                && hpRatio < 0.30
+                && !usedBossSkillsThisCombat.contains(special)) {
+            usedBossSkillsThisCombat.add(special);
+            return special;
+        }
+
+        String s2 = enemyData.skill2();
+        if (s2 != null && !s2.isBlank() && hpRatio < 0.60) {
+            // 50/50 between skill1 and skill2 in mid-phase. Skip if skill2 is in
+            // the one-shot set and already used.
+            if (ONE_SHOT_BOSS_SKILLS.contains(s2) && usedBossSkillsThisCombat.contains(s2)) {
+                return enemyData.skill1();
+            }
+            if (rng.nextBoolean()) {
+                if (ONE_SHOT_BOSS_SKILLS.contains(s2)) usedBossSkillsThisCombat.add(s2);
+                return s2;
+            }
+        }
+        return enemyData.skill1();
+    }
+
     private void runEnemyTurn(Enemy enemy) {
         var enemyData = enemy.data();
-        String skillId = enemyData.skill1();
+        // Sprint 11 B3 — boss phase logic: HP-threshold based skill dispatch.
+        // Normal enemies still use skill1 only.
+        String skillId = pickEnemySkillId(enemy);
         var skillData = data.enemySkills().get(skillId);
         if (skillData == null) {
             advanceTurn();
@@ -318,6 +380,13 @@ public class CombatController {
                 // gains a stack here; other on_kill effects could hook in later.
                 if (targetWasAlive && !target.isAlive() && attacker instanceof Hero killer) {
                     ConditionResolver.onKill(killer);
+                }
+                // Sprint 11 B3: boss-death event for UI pause+zoom. Fires once per
+                // boss kill; non-boss enemies do not trigger this.
+                if (targetWasAlive && !target.isAlive()
+                        && target instanceof com.trungbui.projectshadow.domain.Enemy enemyTarget
+                        && "Boss".equalsIgnoreCase(enemyTarget.data().variantType())) {
+                    listener.onBossDeath(target);
                 }
             }
         } else {
