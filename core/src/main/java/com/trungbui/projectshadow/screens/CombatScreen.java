@@ -119,6 +119,7 @@ public class CombatScreen implements Screen {
         controller.setListener(new CombatController.Listener() {
             @Override
             public void onActionResolved(Combatant attacker, Combatant target, SkillData skill, AttackResult result) {
+                triggerAttackView(attacker);
                 triggerHitView(target);
                 pushLog(formatActionLog(attacker, target, skill, result));
                 playActionSfx(skill, result);
@@ -275,6 +276,16 @@ public class CombatScreen implements Screen {
         String side = actor instanceof Hero ? I18n.t("combat.player") : I18n.t("combat.enemy");
         statusLabel.setText(I18n.t("combat.round",
                 controller.encounter().roundNumber(), side, name, actor.id()));
+    }
+
+    private void triggerAttackView(Combatant attacker) {
+        if (attacker == null) return;
+        for (CombatantView v : heroViews) {
+            if (v.combatant() == attacker) v.triggerAttack();
+        }
+        for (CombatantView v : enemyViews) {
+            if (v.combatant() == attacker) v.triggerAttack();
+        }
     }
 
     private void triggerHitView(Combatant target) {
