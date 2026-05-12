@@ -45,9 +45,33 @@ public class CombatEncounter {
         phase = phaseForActor(turnOrder.get(0));
     }
 
+    /**
+     * Sprint 12 B4 — per-action turn-order re-sort.
+     *
+     * <p>After the current actor finishes, we recompute the order of the
+     * REMAINING combatants based on each one's <em>current</em>
+     * {@link Combatant#effectiveSpeed()}. This means a speed buff applied
+     * mid-round (e.g. via {@code item_c11} Amber Essence) takes effect on
+     * the very next turn — pre-Sprint-12 the order was fixed at round start.</p>
+     *
+     * <p>"One action per actor per round" still holds: an actor that has
+     * already acted is never picked twice. Dead combatants are skipped.</p>
+     */
     public boolean advanceTurn() {
         if (turnOrder.isEmpty()) return false;
         currentTurnIndex++;
+        // Sprint 12 B4 — resort the tail of turnOrder by current speed before
+        // picking the next alive actor. We sort the sublist [currentTurnIndex,
+        // turnOrder.size()) in place so the snapshot returned by turnOrder()
+        // also reflects the latest computed order.
+        if (currentTurnIndex < turnOrder.size()) {
+            List<Combatant> tail = new ArrayList<>(
+                    turnOrder.subList(currentTurnIndex, turnOrder.size()));
+            tail.sort(Comparator.comparingInt(Combatant::effectiveSpeed).reversed());
+            for (int i = 0; i < tail.size(); i++) {
+                turnOrder.set(currentTurnIndex + i, tail.get(i));
+            }
+        }
         while (currentTurnIndex < turnOrder.size() && !turnOrder.get(currentTurnIndex).isAlive()) {
             currentTurnIndex++;
         }
