@@ -22,10 +22,10 @@
 
   "layout": {
     "type": "layered_tree",
-    "edge_topology": "fully_connected",
+    "edge_topology": "dag_branching",
     "num_layers": 7,
     "total_nodes": 22,
-    "paths_per_run": 8,
+    "paths_per_run": "8-16 (variable, DAG branching)",
     "layer_node_counts": [1, 4, 4, 4, 4, 3, 1, 1],
 
     "first_node_fixed": {

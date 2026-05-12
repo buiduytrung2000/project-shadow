@@ -16,10 +16,10 @@
 
   "layout": {
     "type": "layered_tree",
-    "edge_topology": "fully_connected",
-    "num_layers": 3,
-    "total_nodes": 6,
-    "paths_per_run": 4,
+    "edge_topology": "dag_branching",
+    "num_layers": 4,
+    "total_nodes": 14,
+    "paths_per_run": "4-8 (variable, DAG branching)",
     "first_node_fixed": {
       "type": "combat",
       "label": "L1.A",
@@ -37,7 +37,7 @@
     "pre_boss_alt_layer": {
       "label_prefix": "PB",
       "num_nodes": 1,
-      "comment": "Sprint 10 B3 — optional tier-3 elite node between layer_3 and boss. Player chooses: take the easier rest/event path or the elite skirmish (extra reward).",
+      "comment": "Sprint 10 B3 — optional tier-4 elite node between layer_4 and boss. Player chooses: take the easier rest/event path or the elite skirmish (extra reward).",
       "elite": {
         "enemies": ["enemy_02"],
         "variants_allowed": ["Tank", "Assassin"],
@@ -47,27 +47,50 @@
         "rewards": { "gold_bonus": 50, "item_drop_chance": 0.5 }
       }
     },
-    "layer_2": {
-      "label_prefix": "L2",
-      "num_nodes": 2,
-      "edges_in": "fully_connected_from_layer_1",
-      "edges_out": "fully_connected_to_layer_3",
-      "node_generation": {
-        "type": "random_from_pool_weighted",
-        "weights": { "combat": 50, "event": 25, "rest": 15, "reward": 10 }
+    "middle_layers": [
+      {
+        "name": "L2",
+        "num_nodes": 2,
+        "edges_in": "dag_branching_from_layer_1",
+        "edges_out": "dag_branching_to_layer_3",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 45, "event": 25, "rest": 15, "reward": 15 }
+        }
+      },
+      {
+        "name": "L3",
+        "num_nodes": 3,
+        "edges_in": "dag_branching_from_layer_2",
+        "edges_out": "dag_branching_to_layer_4",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 45, "event": 20, "rest": 15, "reward": 12, "elite": 8 }
+        }
+      },
+      {
+        "name": "L4",
+        "num_nodes": 4,
+        "edges_in": "dag_branching_from_layer_3",
+        "edges_out": "dag_branching_to_boss",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "combat": 35, "event": 25, "rest": 20, "reward": 15, "elite": 5 },
+          "constraint": "if_player_came_from_combat_node: bias_away_from_combat (combat weight halved)"
+        }
+      },
+      {
+        "name": "L5",
+        "num_nodes": 3,
+        "edges_in": "dag_branching_from_layer_4",
+        "edges_out": "all_to_boss",
+        "node_generation": {
+          "type": "random_from_pool_weighted",
+          "weights": { "rest": 35, "event": 30, "reward": 25, "combat": 10 },
+          "constraint": "if_layer_5_node_is_combat: must_use_pre_boss_pool (1 goblin only)"
+        }
       }
-    },
-    "layer_3": {
-      "label_prefix": "L3",
-      "num_nodes": 2,
-      "edges_in": "fully_connected_from_layer_2",
-      "edges_out": "all_to_boss",
-      "node_generation": {
-        "type": "random_from_pool_weighted",
-        "weights": { "combat": 40, "event": 30, "rest": 20, "reward": 10 },
-        "constraint": "if_player_came_from_combat_node: bias_away_from_combat (combat weight halved)"
-      }
-    }
+    ]
   },
 
   "rules": [
@@ -75,8 +98,8 @@
     "no_consecutive_reward",
     "max_combat_per_run: 3",
     "min_event_per_run: 1",
-    "if_layer_3_node_is_combat_and_path_ends_into_boss: must_use_pre_boss_pool (1 goblin only)",
-    "if_player_has_full_party_hp_before_boss: spawn_extra_reward_node (replaces 1 layer_3 node with reward)"
+    "if_layer_5_node_is_combat_and_path_ends_into_boss: must_use_pre_boss_pool (1 goblin only)",
+    "if_player_has_full_party_hp_before_boss: spawn_extra_reward_node (replaces 1 layer_5 node with reward)"
   ],
 
   "pools": {

@@ -88,25 +88,34 @@ class StageGeneratorIntegrationTest {
     }
 
     @Test
-    void stage1_layerSizes_match2_2() {
+    void stage1_layerSizes_match4Floors() {
+        // B2 L.2: Stage 1 redesigned to 4 floors (L2=2, L3=3, L4=4, L5=3) + PB.
         StageConfig cfg = gd.stages().get("stage_1");
         StageTree tree = StageGenerator.generate(cfg, 42L);
         long l1 = tree.nodes().keySet().stream().filter(k -> k.startsWith("L1")).count();
         long l2 = tree.nodes().keySet().stream().filter(k -> k.startsWith("L2")).count();
         long l3 = tree.nodes().keySet().stream().filter(k -> k.startsWith("L3")).count();
+        long l4 = tree.nodes().keySet().stream().filter(k -> k.startsWith("L4")).count();
+        long l5 = tree.nodes().keySet().stream().filter(k -> k.startsWith("L5")).count();
         assertThat(l1).isEqualTo(1);
         assertThat(l2).isEqualTo(2);
-        assertThat(l3).isEqualTo(2);
+        assertThat(l3).isEqualTo(3);
+        assertThat(l4).isEqualTo(4);
+        assertThat(l5).isEqualTo(3);
     }
 
     @Test
-    void stage1_fullyConnectedBetweenLayers() {
+    void stage1_dagBranching_l2NodesReachableFromL1A() {
+        // B2 L.1: under dag_branching, connectivity invariant ensures every L2 node
+        // has at least one incoming edge (reachable from L1.A since L1.A is the only source).
         StageConfig cfg = gd.stages().get("stage_1");
         StageTree tree = StageGenerator.generate(cfg, 42L);
         List<StageNode> l2 = tree.nodes().values().stream()
                 .filter(n -> n.label().startsWith("L2")).toList();
-        for (String l2Label : l2.stream().map(StageNode::label).toList()) {
-            assertThat(tree.edgesFrom("L1.A")).contains(l2Label);
+        for (StageNode l2Node : l2) {
+            assertThat(tree.hasPath("L1.A", l2Node.label()))
+                    .as("L2 node %s should be reachable from L1.A", l2Node.label())
+                    .isTrue();
         }
     }
 

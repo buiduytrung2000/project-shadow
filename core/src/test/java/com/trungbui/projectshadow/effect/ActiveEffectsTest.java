@@ -19,7 +19,7 @@ class ActiveEffectsTest {
                 id, "Test", "Test", "dot", true, null,
                 "turns", String.valueOf(duration), "hp", "flat_per_turn", value,
                 canStack, canStack ? maxStacks : null,
-                "on_turn_start", null, null, null, null, ""
+                "on_turn_start", null, null, null, null, "", null
         );
     }
 
@@ -28,7 +28,7 @@ class ActiveEffectsTest {
                 id, "Test", "Test", "hot", true, null,
                 "turns", String.valueOf(duration), "hp", "flat_per_turn", value,
                 false, null,
-                "on_turn_start", null, null, null, null, ""
+                "on_turn_start", null, null, null, null, "", null
         );
     }
 
@@ -37,7 +37,7 @@ class ActiveEffectsTest {
                 id, "Test", "Test", "buff", true, null,
                 "turns", String.valueOf(duration), stat, "percent", value,
                 false, null,
-                "passive", null, null, null, null, ""
+                "passive", null, null, null, null, "", null
         );
     }
 
@@ -46,7 +46,7 @@ class ActiveEffectsTest {
                 id, "Test", "Test", "buff", true, null,
                 "turns", String.valueOf(duration), stat, "flat", value,
                 false, null,
-                "passive", null, null, null, null, ""
+                "passive", null, null, null, null, "", null
         );
     }
 
@@ -55,7 +55,7 @@ class ActiveEffectsTest {
                 id, "Test", "Test", "heal", true, null,
                 "instant", "", "hp", "flat", value,
                 false, null,
-                "on_use", null, null, null, null, ""
+                "on_use", null, null, null, null, "", null
         );
     }
 
@@ -64,7 +64,7 @@ class ActiveEffectsTest {
                 id, "Test", "Test", "debuff", true, null,
                 "turns", "1", "action", "skip", "skip turn",
                 false, null,
-                "on_hit", null, null, null, null, ""
+                "on_hit", null, null, null, null, "", null
         );
     }
 
@@ -140,7 +140,7 @@ class ActiveEffectsTest {
         EffectData perm = new EffectData(
                 "eff_perm", "Test", "Test", "permanent_buff", false, null,
                 "permanent", "", "accuracy", "flat", "+5",
-                false, null, "passive", null, null, null, null, ""
+                false, null, "passive", null, null, null, null, "", null
         );
         Map<String, EffectData> cat = Map.of("eff_perm", perm);
         ActiveEffects ae = new ActiveEffects(cat);

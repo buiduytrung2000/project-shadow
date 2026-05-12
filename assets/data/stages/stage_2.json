@@ -16,11 +16,11 @@
 
   "layout": {
     "type": "layered_tree",
-    "edge_topology": "fully_connected",
+    "edge_topology": "dag_branching",
     "num_layers": 5,
-    "total_nodes": 13,
-    "paths_per_run": 6,
-    "layer_node_counts": [1, 3, 3, 3, 2, 1],
+    "total_nodes": 14,
+    "paths_per_run": "6-12 (variable, DAG branching)",
+    "layer_node_counts": [1, 3, 4, 3, 2, 1],
 
     "first_node_fixed": {
       "type": "combat",
@@ -52,7 +52,7 @@
       },
       {
         "name": "L3",
-        "num_nodes": 3,
+        "num_nodes": 4,
         "edges_in": "fully_connected_from_layer_2",
         "edges_out": "fully_connected_to_next_layer",
         "node_generation": {

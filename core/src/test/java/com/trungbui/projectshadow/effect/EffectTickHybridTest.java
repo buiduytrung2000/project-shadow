@@ -30,7 +30,7 @@ class EffectTickHybridTest {
                 "eff_bleed_t1", "Bleed", "Bleed", "dot", true, null,
                 "turns", "3", "hp", "flat_per_turn", "-1",
                 true, 3,
-                "on_turn_start", null, null, null, null, ""
+                "on_turn_start", null, null, null, null, "", null
         );
     }
 
