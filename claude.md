@@ -288,6 +288,53 @@ main mới nhất (PR #7-18 đã thêm test). Round 3 không thêm test (visual 
 work). 1 pre-existing flake (`EnemyHitRateTest.bossB01...`) trên main từ
 trước, không liên quan.
 
+### Sprint 9+ Round 4 — UI asset pack Phase 2 (PR #24, 2026-05-12)
+
+Continuation của Round 3 — thêm 12 components mới cho gameplay UI elements
+chưa có asset (node icons, combat HUD, decorative frames). **Atlas grows
+15 → 27 regions** (512×256 → 1024×256). Chưa wire vào screen ở PR này;
+SkinLoader expose constants sẵn cho future opt-in.
+
+- [x] **PR #24 — `feat/ui-asset-pack-round2`** (commit `dae344c`):
+  - **7 stage map node icons** (48×48, 1-1 mapping với `NodeType`):
+    - `ui_node_combat` — crossed swords + target dial
+    - `ui_node_elite` — crowned sword + golden star
+    - `ui_node_miniboss` — cracked horned skull
+    - `ui_node_boss` — fanged demonic skull, curved horns
+    - `ui_node_event` — open scroll with `?`
+    - `ui_node_rest` — campfire + firewood
+    - `ui_node_reward` — wooden chest + spilled coins
+  - **3 combat HUD status icons** (32×32):
+    - `ui_icon_hp` — anatomical red heart
+    - `ui_icon_stress` — cracked skull + purple psychic aura
+    - `ui_icon_shield` — heater shield + iron rivets
+  - **2 NinePatch decorative frames** (stretchable):
+    - `ui_frame_portrait` (96×96, margin 16) — hero portrait frame
+    - `ui_banner_title` (128×128, margin 20) — screen title banner
+  - **SkinLoader** thêm 12 public constant (`NODE_*`, `ICON_HP/STRESS/SHIELD`,
+    `FRAME_PORTRAIT`, `BANNER_TITLE`). Status + node icons là
+    `TextureRegionDrawable`, frames là `NinePatchDrawable`. Mọi drawable
+    register dưới cả type cụ thể + `Drawable.class` (consistent với PR #20).
+  - **Process script** (`scripts/process_pixellab_ui.sh`) — jq parser
+    handle JSON sections mới (`node_icons` / `status_icons` / `frames`).
+    `ASSETS` array expand đầy đủ 27 components.
+  - **Wave generation**: 8 jobs + 4 jobs (rate limit 8 concurrent), tổng
+    ~3 phút. Không có job nào fail timeout lần này (Round 3 có 1).
+
+**Wiring vẫn pending** (deferred to future sprint, mỗi cái là PR riêng):
+- A. StageMapScreen `buildNodeButtons()` — đính `NODE_*` icon vào node
+  button thay vì chỉ TextButton + color tint
+- B. `CombatRenderer.drawHpBar()` / `drawStressBar()` — đính HP/Stress
+  icon đầu mỗi bar
+- C. HamletScreen title — wrap "HAMLET" label bằng `ui_banner_title`
+- D. EmbarkSelectionScreen + GuildScreen hero list — wrap portrait/icon
+  bằng `ui_frame_portrait`
+
+Test count: 451 (Round 3 baseline) → **488 (Round 4 baseline)** sau khi
+rebase lên main (PRs upstream giữa Round 3 và Round 4 thêm test). Round 4
+không thêm test — visual-only. Pre-existing `EnemyHitRateTest` flake
+hết flake (RNG seed thay đổi do upstream commit).
+
 ### Sprint mở rộng (deferred — documented for future sprint)
 - **Reward "combo 3" full feature**: streak bonus (compounding +10% gold,
   capped at 1.5×, reset on rest) + Pick 1 of 3 reward cards (Slay-the-Spire
@@ -361,4 +408,4 @@ trước, không liên quan.
 
 ---
 
-*Last update: 2026-05-11 · Tests: **~451 passing** ✅ (1 pre-existing flake) · PixelLab assets: 33 chars/enemies/tiles + 15 UI components · Sprint 9+ Round 3 (UI asset pack) merged via PR #16/#20*
+*Last update: 2026-05-12 · Tests: **488 passing** ✅ · PixelLab assets: 33 chars/enemies/tiles + **27 UI components** (Round 3+4) · Sprint 9+ Round 4 (UI asset pack Phase 2) merged via PR #24*
