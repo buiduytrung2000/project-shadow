@@ -54,12 +54,32 @@ public final class SkinLoader {
     public static final String ICON_SETTINGS = "ui-icon-settings";
     public static final String ICON_CLOSE = "ui-icon-close";
 
+    // Round 2 — Stage map node icons. Map NodeType.COMBAT/ELITE/... → these.
+    public static final String NODE_COMBAT = "ui-node-combat";
+    public static final String NODE_ELITE = "ui-node-elite";
+    public static final String NODE_MINIBOSS = "ui-node-miniboss";
+    public static final String NODE_BOSS = "ui-node-boss";
+    public static final String NODE_EVENT = "ui-node-event";
+    public static final String NODE_REST = "ui-node-rest";
+    public static final String NODE_REWARD = "ui-node-reward";
+
+    // Round 2 — Combat HUD status icons.
+    public static final String ICON_HP = "ui-icon-hp";
+    public static final String ICON_STRESS = "ui-icon-stress";
+    public static final String ICON_SHIELD = "ui-icon-shield";
+
+    // Round 2 — Decorative frames.
+    public static final String FRAME_PORTRAIT = "ui-frame-portrait";
+    public static final String BANNER_TITLE = "ui-banner-title";
+
     // NinePatch margins per source region. Tuned to the PixelLab outputs —
     // adjust if the generated borders feel too thick/thin.
     private static final int BTN_MARGIN = 16;
     private static final int PANEL_MAIN_MARGIN = 24;
     private static final int PANEL_TOOLTIP_MARGIN = 12;
     private static final int POPUP_MARGIN = 28;
+    private static final int FRAME_PORTRAIT_MARGIN = 16;
+    private static final int BANNER_TITLE_MARGIN = 20;
 
     private SkinLoader() {}
 
@@ -102,6 +122,24 @@ public final class SkinLoader {
         registerIcon(skin, ICON_HEIRLOOM, "ui_icon_heirloom");
         registerIcon(skin, ICON_SETTINGS, "ui_icon_settings");
         registerIcon(skin, ICON_CLOSE, "ui_icon_close");
+
+        // Round 2 — stage map node type icons.
+        registerIcon(skin, NODE_COMBAT, "ui_node_combat");
+        registerIcon(skin, NODE_ELITE, "ui_node_elite");
+        registerIcon(skin, NODE_MINIBOSS, "ui_node_miniboss");
+        registerIcon(skin, NODE_BOSS, "ui_node_boss");
+        registerIcon(skin, NODE_EVENT, "ui_node_event");
+        registerIcon(skin, NODE_REST, "ui_node_rest");
+        registerIcon(skin, NODE_REWARD, "ui_node_reward");
+
+        // Round 2 — combat status icons.
+        registerIcon(skin, ICON_HP, "ui_icon_hp");
+        registerIcon(skin, ICON_STRESS, "ui_icon_stress");
+        registerIcon(skin, ICON_SHIELD, "ui_icon_shield");
+
+        // Round 2 — decorative frames (NinePatch — stretchable).
+        registerNinePatch(skin, FRAME_PORTRAIT, "ui_frame_portrait", FRAME_PORTRAIT_MARGIN);
+        registerNinePatch(skin, BANNER_TITLE, "ui_banner_title", BANNER_TITLE_MARGIN);
 
         if (skin.has(DRAWABLE_BTN_UP, NinePatchDrawable.class)) {
             registerButtonStyles(skin);
