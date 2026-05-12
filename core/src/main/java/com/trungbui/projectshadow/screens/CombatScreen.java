@@ -102,6 +102,11 @@ public class CombatScreen implements Screen {
      *  combat (no items tab in that mode). */
     private com.trungbui.projectshadow.run.RunSession runSession;
 
+    /** Sprint 13 B3 — persistent settings for speed toggle. Null in standalone mode. */
+    private com.trungbui.projectshadow.meta.SettingsManager settingsManager;
+    /** Sprint 13 B3 — whether combat speed x2 is active for this combat session. */
+    private boolean speedMode2x = false;
+
     /** Standalone combat (no run loop wiring). Used for the Sprint 5 demo. */
     public CombatScreen(GameData gameData) {
         this(gameData, CombatScenario.buildDefault(gameData), null, null);
@@ -137,6 +142,8 @@ public class CombatScreen implements Screen {
         // Env var SHADOW_ACTION_DELAY (seconds, float) overrides for tuning;
         // 0 disables (legacy synchronous mode, used by tests).
         controller.setPacingDelaySec(actionDelayFromEnv(0.7f));
+        // Sprint 13 B3 — pass skin to renderer so bar icons and effect icons can be drawn.
+        renderer.setSkin(this.skin);
 
         this.skillTable = new Table();
         this.statusLabel = new Label("", skin);
@@ -215,7 +222,28 @@ public class CombatScreen implements Screen {
         root.top().pad(20);
 
         statusLabel.setColor(Color.WHITE);
-        root.add(statusLabel).expandX().left().pad(20).row();
+
+        // Sprint 13 B3 — speed x2 toggle button. Top-right next to status label.
+        TextButton speedToggle = new TextButton(I18n.t("combat.speed.toggle.off"), skin);
+        speedToggle.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                speedMode2x = !speedMode2x;
+                applySpeedMode();
+                speedToggle.setText(speedMode2x
+                        ? I18n.t("combat.speed.toggle.on")
+                        : I18n.t("combat.speed.toggle.off"));
+                if (settingsManager != null) {
+                    settingsManager.setCombatSpeed2x(speedMode2x);
+                    try { settingsManager.save(); } catch (java.io.IOException ignored) {}
+                }
+            }
+        });
+
+        Table topRow = new Table();
+        topRow.add(statusLabel).expandX().left().pad(10);
+        topRow.add(speedToggle).right().pad(10).width(80).height(40);
+        root.add(topRow).expandX().fillX().pad(10).row();
 
         Table center = new Table();
         center.add().expand();
@@ -545,6 +573,11 @@ public class CombatScreen implements Screen {
         controller.setStageId(stageId);
     }
 
+    /** Sprint 13 B3 — wire the settings manager so the speed toggle can persist. */
+    public void setSettingsManager(com.trungbui.projectshadow.meta.SettingsManager sm) {
+        this.settingsManager = sm;
+    }
+
     private void showContinueButton(CombatEncounter.Side winner) {
         if (onWin == null && onLose == null) return; // standalone mode — no callback wiring
         skillTable.clear();
@@ -770,13 +803,28 @@ public class CombatScreen implements Screen {
         mux.addProcessor(new CombatInputAdapter());
         Gdx.input.setInputProcessor(mux);
         if (audio != null) audio.playMusic("combat_theme", true);
+        // Sprint 13 B3 — load speed setting before starting controller so the first
+        // action already uses the persisted pacing preference.
+        if (settingsManager != null) {
+            speedMode2x = settingsManager.combatSpeed2x();
+        }
+        applySpeedMode();
         // Sprint 13 B3: start controller here (after setStageId/setRunSession are called).
         controller.start();
+    }
+
+    /** Applies the current speedMode2x to controller pacing + CombatantView multiplier. */
+    private void applySpeedMode() {
+        float pacing = speedMode2x ? 0.35f : actionDelayFromEnv(0.7f);
+        controller.setPacingDelaySec(pacing);
+        com.trungbui.projectshadow.render.CombatantView.globalSpeedMultiplier = speedMode2x ? 2f : 1f;
     }
 
     @Override
     public void hide() {
         Gdx.input.setInputProcessor(null);
+        // Reset global speed multiplier so other screens/views are unaffected.
+        com.trungbui.projectshadow.render.CombatantView.globalSpeedMultiplier = 1f;
     }
 
     @Override

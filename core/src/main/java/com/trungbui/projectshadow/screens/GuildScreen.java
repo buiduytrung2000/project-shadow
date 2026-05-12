@@ -7,11 +7,13 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
@@ -151,7 +153,15 @@ public class GuildScreen implements Screen {
                     }
                 });
 
-                root.add(heroLabel).pad(10).left();
+                // Sprint 13 B3 — wrap hero label in FRAME_PORTRAIT NinePatch if atlas loaded.
+                if (SkinLoader.hasComponents(skin) && skin.has(SkinLoader.FRAME_PORTRAIT, Drawable.class)) {
+                    Container<Label> framed = new Container<>(heroLabel);
+                    framed.background(skin.getDrawable(SkinLoader.FRAME_PORTRAIT));
+                    framed.pad(8f);
+                    root.add(framed).pad(10).left();
+                } else {
+                    root.add(heroLabel).pad(10).left();
+                }
                 root.add(btn).pad(10).width(280).height(60);
                 root.row();
             }

@@ -10,6 +10,14 @@ public class CombatantView {
     public static final float WIDTH = 150f;
     public static final float HEIGHT = 200f;
     private static final float SHAKE_DURATION = 0.4f;
+
+    /**
+     * Sprint 13 B3 — global animation speed multiplier. Set to 2.0 when combat
+     * speed x2 is active; 1.0 otherwise. Read in {@link #update(float)} to scale
+     * delta so all animations (shake, flash, epic-death, sprite frames) run at
+     * the configured speed. Shared across all view instances for a given combat.
+     */
+    public static volatile float globalSpeedMultiplier = 1f;
     /** Sprint 11 B3 — duration of the boss epic-death zoom-in. ~1.5s gives a
      *  noticeable dramatic beat without making the player wait too long. */
     private static final float EPIC_DEATH_DURATION = 1.5f;
@@ -104,9 +112,11 @@ public class CombatantView {
     }
 
     public void update(float delta) {
-        if (shakeTimer > 0f) shakeTimer = Math.max(0f, shakeTimer - delta);
-        if (flashTimer > 0f) flashTimer = Math.max(0f, flashTimer - delta);
-        if (epicDeathTimer > 0f) epicDeathTimer = Math.max(0f, epicDeathTimer - delta);
+        // Sprint 13 B3 — scale delta by global speed multiplier (x2 mode).
+        float scaledDelta = delta * globalSpeedMultiplier;
+        if (shakeTimer > 0f) shakeTimer = Math.max(0f, shakeTimer - scaledDelta);
+        if (flashTimer > 0f) flashTimer = Math.max(0f, flashTimer - scaledDelta);
+        if (epicDeathTimer > 0f) epicDeathTimer = Math.max(0f, epicDeathTimer - scaledDelta);
 
         // Detect alive→dead transition: trigger DEAD animation once. SpriteAnimator
         // holds the last frame (PlayMode.NORMAL on DEAD) so the corpse stays visible.
@@ -116,7 +126,7 @@ public class CombatantView {
         }
         wasAlive = alive;
 
-        if (animator != null) animator.update(delta);
+        if (animator != null) animator.update(scaledDelta);
     }
 
     private static Color colorFor(Combatant c) {

@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -56,7 +57,17 @@ public class HamletScreen implements Screen {
         root.setFillParent(true);
         root.top().pad(40);
 
-        Label title = new Label(I18n.t("hamlet.title"), new Label.LabelStyle(titleFont, Color.GOLD));
+        Label titleLabel = new Label(I18n.t("hamlet.title"), new Label.LabelStyle(titleFont, Color.GOLD));
+        // Sprint 13 B3 — wrap title in BANNER_TITLE NinePatch if components atlas is loaded.
+        Actor title;
+        if (SkinLoader.hasComponents(skin) && skin.has(SkinLoader.BANNER_TITLE, Drawable.class)) {
+            Container<Label> bannerContainer = new Container<>(titleLabel);
+            bannerContainer.background(skin.getDrawable(SkinLoader.BANNER_TITLE));
+            bannerContainer.pad(12f);
+            title = bannerContainer;
+        } else {
+            title = titleLabel;
+        }
         Label gold = new Label(I18n.t("hamlet.gold", game.meta().gold()), skin);
 
         // VN/EN toggle button — top-right

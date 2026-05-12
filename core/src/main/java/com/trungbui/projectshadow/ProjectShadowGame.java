@@ -362,6 +362,8 @@ public class ProjectShadowGame extends Game {
         cs.setRunSession(runSession);
         // Sprint 13 B3 — wire stage ID for environmental modifiers.
         cs.setStageId(runSession.state().stageId());
+        // Sprint 13 B3 — wire settings manager so speed toggle persists.
+        cs.setSettingsManager(settings);
 
         if (showCardPicker) {
             // Sprint 13 B2 — Elite / Miniboss / Boss: offer 3 rarity-weighted item cards.
