@@ -1,791 +1,222 @@
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
-
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
-
-## 1. Think Before Coding
-
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-Before implementing:
-
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
-
-## 2. Simplicity First
-
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
----
-
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
-
 # 🌑 Project Shadow — Game Design Hub
 
-> **Tên game:** **Project Shadow** (final, không phải codename)
-> **Genre:** Turn-based dungeon crawl roguelite (lấy cảm hứng Darkest Dungeon)
-> **Engine:** libGDX + JDK 21 · **Target platforms:** Windows, macOS, Linux desktop
-> **Solo dev project** · **Status:** Sprints 1-12 complete (MVP feature-complete); Sprint 13+ post-MVP polish / Stages 2-3 content
+> **Tên game:** **Project Shadow** (final)
+> **Genre:** Turn-based dungeon crawl roguelite (cảm hứng Darkest Dungeon)
+> **Engine:** libGDX + JDK 21 · **Platforms:** Windows, macOS, Linux desktop
+> **Solo dev** · **Status:** Sprints 1-12 complete (MVP feature-complete); Sprint 13+ post-MVP polish / Stages 2-3 content
+> **Tests:** 509 passing ✅ · **Date:** 2026-05-12
+
+> Behavioral guidelines (Think Before Coding / Simplicity / Surgical Changes / Goal-Driven) đã có ở `~/.claude/CLAUDE.md` — không lặp lại đây.
 
 ---
 
-## 📖 Tổng quan dự án
+## 📖 Tổng quan
 
-**Project Shadow** là một game RPG chiến thuật theo lượt nơi người chơi dẫn dắt 4 "linh hồn sa ngã" qua các ngục tối ngẫu nhiên, đối mặt với enemies, stress, bệnh tật và affliction. Lấy cảm hứng từ **Darkest Dungeon** nhưng _điều chỉnh để dễ tiếp cận hơn_ — độ khó tăng dần theo lựa chọn của người chơi.
+RPG chiến thuật theo lượt, dẫn 4 "linh hồn sa ngã" qua ngục tối ngẫu nhiên, đối mặt enemies + stress + bệnh tật + affliction. Cảm hứng Darkest Dungeon, _điều chỉnh để dễ tiếp cận hơn_.
 
 ### Mục tiêu MVP
 
-- **3 stage** với boss riêng (b01 Giant Zombie, b02 Whispering Shade, b03 Black Heart).
-- **14 lớp nhân vật**, mỗi lớp 10 skill (chọn 4 / run).
-- **15 enemies** (11 thường + 3 boss + 2 miniboss Stage 3).
-- **50 items** (consumable + trinket + class-specific + relic + cursed).
-- **Hamlet hub** với 4 công trình (Stagecoach, Guild, Survivalist, Caretaker).
-- **Stress system** với Affliction (70%) / Virtue (30%) khi stress ≥ 100.
-- **Pathway dạng cây** (layered_tree) — branching, weighted random.
-- **Permadeath**, **save/load JSON**, **i18n VN/EN**.
+- **3 stage** với boss riêng (b01 Giant Zombie, b02 Whispering Shade, b03 Black Heart)
+- **14 lớp nhân vật**, mỗi lớp 10 skill (chọn 4 / run)
+- **16 enemies** (11 thường + Poison Vine + 3 boss + 2 miniboss Stage 3)
+- **50 items** (consumable + trinket + class-specific + relic + cursed)
+- **Hamlet hub** với 4 công trình (Stagecoach, Guild, Survivalist, Caretaker)
+- **Stress system** với Affliction (70%) / Virtue (30%) khi stress ≥ 100
+- **Pathway dạng cây** (layered_tree) — branching, weighted random
+- **Permadeath**, **save/load JSON**, **i18n VN/EN**
 
 ### Ba trụ cột thiết kế
 
-1. **Dễ tiếp cận, khó làm chủ** — Stage 1 nhẹ nhàng, Stage 3 đè áp lực tâm lý lẫn chiến thuật.
-2. **Ngẫu nhiên bất định nhưng công bằng** — Mỗi run unique nhưng player có thể đọc và quyết định.
-3. **Tâm lý đội nhóm là vũ khí &amp; kẻ thù** — Stress + disease + trait ảnh hưởng trực tiếp hành vi.
+1. **Dễ tiếp cận, khó làm chủ** — Stage 1 nhẹ, Stage 3 đè áp lực tâm lý lẫn chiến thuật.
+2. **Ngẫu nhiên bất định nhưng công bằng** — Mỗi run unique nhưng player đọc được và quyết định.
+3. **Tâm lý đội nhóm là vũ khí & kẻ thù** — Stress + disease + trait ảnh hưởng trực tiếp hành vi.
 
 ---
 
 ## 📚 Danh mục tài liệu
 
-Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
+Docs ở `docs/` (chung `docs/style.css`):
 
-| File                                                                     | Nội dung                                                                                                |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [docs/design_overview.html](docs/design_overview.html)                   | **Thiết kế tổng quan** — Concept, Cốt truyện, Core Loop (micro/mid/macro), Art Style, Âm thanh          |
-| [docs/game_systems.html](docs/game_systems.html)                         | **Hệ thống &amp; Cân bằng** — Bảng Heroes/Enemies/Items/Diseases/Traits + công thức damage              |
-| [docs/technical_data.html](docs/technical_data.html)                     | **Kỹ thuật &amp; Data** — JSON schemas (hero/skill/enemy/item/event/effect), API pseudocode, flowcharts |
-| [docs/pathway_stage1.html](docs/pathway_stage1.html)                     | **Stage 1 pathway** — JSON đầy đủ, pools, rules, thuật toán sinh stage (pseudocode)                     |
-| [docs/project_plan.html](docs/project_plan.html)                         | **Kế hoạch &amp; Scope** — Sprint plan 9 sprints, Roadmap 48 tuần, Feature List với status              |
-| [docs/notes_and_considerations.html](docs/notes_and_considerations.html) | **Notes** — Out-of-scope, có thể phát triển thêm (post-MVP), còn mơ hồ                                  |
-| [docs/test_plan.html](docs/test_plan.html)                               | **Test Plan** — Checklist test thủ công chi tiết cho 9 sprints + extras + regression suite              |
+| File | Nội dung |
+| --- | --- |
+| [design_overview.html](docs/design_overview.html) | Concept, Cốt truyện, Core Loop, Art Style, Âm thanh |
+| [game_systems.html](docs/game_systems.html) | Bảng Heroes/Enemies/Items/Diseases/Traits + công thức damage |
+| [technical_data.html](docs/technical_data.html) | JSON schemas, API pseudocode, flowcharts |
+| [pathway_stage1.html](docs/pathway_stage1.html) | Stage 1 JSON đầy đủ, pools, rules |
+| [project_plan.html](docs/project_plan.html) | Sprint plan, Roadmap, Feature List |
+| [notes_and_considerations.html](docs/notes_and_considerations.html) | Out-of-scope, post-MVP, còn mơ hồ |
+| [test_plan.html](docs/test_plan.html) | Checklist test thủ công + regression suite |
 
-### Source data (CSV/JSON)
+### Source data
 
 - `assets/data/heroes.csv` — 14 heroes
 - `assets/data/skills.csv` — 140 skills
 - `assets/data/effects.csv` — 134 effects (data-driven)
 - `assets/data/items.csv` — 50 items
-- `assets/data/enemies.csv` — 16 enemies (incl. 3 boss + 2 miniboss + Poison Vine, post-Sprint-12 B3)
-- `assets/data/enemy_skills.csv` — 24 enemy skills (post-Sprint-12 B3 +sk_e_poison_strike)
+- `assets/data/enemies.csv` — 16 enemies
+- `assets/data/enemy_skills.csv` — 24 enemy skills
 - `assets/data/events.csv` — 11 events
-- `assets/data/diseases_traits.csv` — 18 rows (6 disease + 12 trait incl. 6 Affliction + 6 Virtue, post-Sprint-9+ Round 2 + reclassifications)
-- `assets/data/stages/stage_1.json` — Stage 1 (layered_tree, fully implemented)
-- `assets/data/stages/stage_2.json` — Stage 2 spec (boss enemy_b02)
-- `assets/data/stages/stage_3.json` — Stage 3 spec (miniboss layer + final boss enemy_b03)
+- `assets/data/diseases_traits.csv` — 18 rows (6 disease + 12 trait: 7 Affliction / 5 Virtue)
+- `assets/data/stages/stage_{1,2,3}.json` — Stage specs (Stage 1 full impl, 2-3 partial pools)
 
-### Code (Java/libGDX)
+### Code
 
 - `core/src/main/java/com/trungbui/projectshadow/` — game logic library
 - `lwjgl3/src/main/java/...` — desktop launcher
-- `core/src/test/java/...` — JUnit 5 tests (247 tests, all passing ✅)
+- `core/src/test/java/...` — JUnit 5 tests (509 passing)
 
 ---
 
-## 🛠️ Hướng dẫn sử dụng (solo dev)
+## 🛠️ Workflows
 
-### Khi cần **xem tổng quan**
-
-→ Đọc theo thứ tự: [design_overview](docs/design_overview.html) → [game_systems](docs/game_systems.html) → [project_plan](docs/project_plan.html).
-
-### Khi cần **implement feature mới**
-
-1. Check [project_plan.html § Feature List](docs/project_plan.html) — feature đã có spec chưa?
-2. Đọc [technical_data.html](docs/technical_data.html) cho JSON schema + API pseudocode.
-3. Update `assets/data/*.csv` hoặc `*.json` nếu thay đổi data shape.
-4. Update test ở `core/src/test/.../DataIntegrityTest.java` — sửa `loadCounts_match_expected` nếu thay số rows.
-5. Chạy `./gradlew core:test` để verify FK.
-
-### Khi cần **thêm nhân vật / enemy / item mới**
-
-1. Thêm row vào CSV tương ứng.
-2. Reference đến effects/skills phải tồn tại trong CSV gốc (FK check).
-3. Nếu pseudo-id (e.g. `random_boss_pool`) → thêm vào `DataLoaderDemo.KNOWN_TODO_REFS`.
-4. Update [game_systems.html](docs/game_systems.html) bảng tương ứng.
-5. Queue PixelLab AI sprite qua MCP nếu cần visual.
-
-### Khi cần **chạy game**
+### Chạy game
 
 ```bash
 ./gradlew lwjgl3:run         # Khởi động desktop
-./gradlew core:test          # Chạy 247 unit tests
+./gradlew core:test          # Chạy 509 unit tests
 ./gradlew core:runDemo       # CLI verify CSV/JSON load
-./gradlew core:packAssets    # Pack PNG → combatants.atlas
+./gradlew core:packAssets    # Pack combatant PNG → combatants.atlas
+./gradlew core:packUIComponents  # Pack UI PNG → components.atlas
 ```
 
-### Khi sprite atlas thay đổi
+### Implement feature mới
 
-1. PixelLab AI batch tạo sprite (xem [Notes & Considerations § PixelLab](docs/notes_and_considerations.html)).
-2. Download ZIP qua script `scripts/process_pixellab_sprites.sh`.
+1. Check [project_plan.html § Feature List](docs/project_plan.html) — đã có spec chưa?
+2. Đọc [technical_data.html](docs/technical_data.html) cho JSON schema + API pseudocode.
+3. Update CSV/JSON nếu data shape thay đổi.
+4. Update `DataIntegrityTest.loadCounts_match_expected` nếu thay số rows.
+5. `./gradlew core:test` để verify FK.
+
+### Thêm hero / enemy / item
+
+1. Thêm row vào CSV tương ứng.
+2. Mọi reference (effects/skills) phải tồn tại trong CSV gốc (FK check).
+3. Pseudo-id (e.g. `random_boss_pool`) → thêm vào `DataLoaderDemo.KNOWN_TODO_REFS`.
+4. Update bảng tương ứng trong [game_systems.html](docs/game_systems.html).
+5. Queue PixelLab AI sprite qua MCP nếu cần visual.
+
+### Sprite atlas thay đổi
+
+1. PixelLab AI batch tạo sprite (xem [notes_and_considerations.html § PixelLab](docs/notes_and_considerations.html)).
+2. Download ZIP qua `scripts/process_pixellab_sprites.sh` (combatants) hoặc `process_pixellab_ui.sh` (UI).
 3. Frames rename + copy vào `assets/sprites/raw/<id>_<tag>_<frame>.png`.
 4. `./gradlew core:packAssets` rebuild atlas.
 
-### Khi cần **kiểm tra game balance**
+### Kiểm tra game balance
 
-→ Gõ `/game-balance` trong Claude Code. Agent sẽ đọc toàn bộ CSV và xuất báo cáo:
+→ `/game-balance` trong Claude Code. Output: DPS / survivability / threat ranking + outlier flags (>1.5 SD) + suggested adjustments.
 
-- DPS ranking tất cả heroes
-- Survivability ranking
-- Enemy threat ranking theo Variant Type
-- Outlier flags (>1.5 SD so với group mean)
-- Suggested adjustments cụ thể
+### Download SFX
 
-### Khi cần **download SFX**
+1. Đăng ký key tại https://freesound.org/apiv2/apply/ → lưu `~/.freesound_key` hoặc `FREESOUND_API_KEY=<key>`.
+2. Edit `assets/audio/.sfx-manifest.json`.
+3. `scripts/fetch_sfx.sh` → OGG vào `assets/audio/sfx/`. IDs lưu `.freesound-ids.json`.
 
-1. Đăng ký API key miễn phí tại https://freesound.org/apiv2/apply/
-2. Lưu key vào `~/.freesound_key` hoặc set `FREESOUND_API_KEY=<key>`
-3. Edit `assets/audio/.sfx-manifest.json` nếu muốn thêm/sửa SFX
-4. Chạy `scripts/fetch_sfx.sh` → OGG files vào `assets/audio/sfx/`
-5. IDs tracking lưu tại `assets/audio/.freesound-ids.json`
+### CI/CD
 
-### Khi CI/CD fail
+- GitHub Actions tự chạy `core:test` mỗi push/PR → main (`.github/workflows/ci.yml`).
+- Fail → artifact "test results" trên job page có HTML report.
+- Verify local `./gradlew core:test` trước khi push.
 
-- GitHub Actions chạy tự động mỗi push/PR tại `.github/workflows/ci.yml`
-- Nếu fail: click vào job → "Upload test results" artifact → xem report HTML
-- Local verify: `./gradlew core:test` trước khi push
+### Sprint history
+
+Mọi sprint detail (per-PR commit hash, test delta per branch, code snippets) ở **`git log`** + **GitHub PR list**. Đừng viết lại vào file này.
 
 ---
 
-## 🏛️ Lịch sử các quyết định thiết kế quan trọng
+## 🏛️ Lịch sử quyết định thiết kế
 
-### Tại sao giữ Stress system (mặc dù phức tạp)?
+### Tại sao giữ Stress system?
 
-**Đặc trưng cốt lõi**. Cắt = mất identity, lẫn vào các roguelite turn-based khác. DD chứng minh stress là cơ chế hay nếu balance đúng — chúng ta giảm khắc nghiệt (Stage 1 ít stress) nhưng vẫn giữ Affliction/Virtue resolution để có "spike" cảm xúc.
+Đặc trưng cốt lõi. Cắt = mất identity, lẫn vào roguelite turn-based khác. Chúng ta giảm khắc nghiệt (Stage 1 ít stress) nhưng giữ Affliction/Virtue resolution để có "spike" cảm xúc.
 
-### Tại sao 14 lớp thay vì 4 (như plan ban đầu)?
+### Tại sao 14 lớp thay vì 4?
 
-**Đa dạng team composition**. Mỗi lớp CSV ~50 dòng (10 skill × ~5 col) — không quá tốn. Người chơi muốn experiment với 4-hero combos → 14 lớp cho ~1000 team comps khả thi. Plan ban đầu 4 lớp quá ít.
+Đa dạng team comp. Mỗi lớp ~50 dòng CSV — rẻ. 14 lớp = ~1000 team combos khả thi. 4 lớp quá ít.
 
-### Tại sao chỉ 3 stage (không phải 5-10)?
+### Tại sao 3 stage?
 
-**Scope solo dev**. Mỗi stage = pathway + pool + 1 boss + ~6 events + balance pass. 3 stage là sweet spot: đủ "vertical slice + 2 ext" cho roguelite. Stage 4-5 sẽ là DLC nếu game thành công.
+Scope solo dev. Mỗi stage = pathway + pool + 1 boss + ~6 events + balance pass. 3 stage = vertical slice + 2 ext, sweet spot cho roguelite. Stage 4-5 = DLC nếu game thành công.
 
-### Tại sao libGDX (không Godot/Unity)?
+### Tại sao libGDX?
 
-**Java/JDK 21 dev đã biết**, type-safe domain model, atlas + freetype + audio mature. Godot có nhưng dùng GDScript chậm cho game lớn. Unity license + .NET overhead không cần thiết cho 2D pixel.
+Java/JDK 21 dev đã biết, type-safe domain, atlas/freetype/audio mature. Godot GDScript chậm cho game lớn. Unity license + .NET overhead không cần cho 2D pixel.
 
 ### Tại sao data-driven effect resolver?
 
-**1 generic engine** đọc 134 effect rows từ CSV → switch behavior. Thay vì viết 134 class. Maintainability cao + designer có thể tinh chỉnh balance bằng spreadsheet.
+1 generic engine đọc 134 effect rows → switch behavior. Thay vì viết 134 class. Maintainability + designer chỉnh balance bằng spreadsheet.
 
-### Tại sao Stage 1 dùng `layered_tree` (không "DAG ngẫu nhiên")?
+### Tại sao Stage 1 `layered_tree` (không DAG ngẫu nhiên)?
 
-- **3 layer × 2 node/layer + fully_connected**: 4 path/run khả thi.
-- Đủ branching cho replay value, không quá phức tạp implementation.
-- Player thấy được full tree → có thể plan trước (giảm frustration).
+3 layer × 2 node + fully_connected → 4 path/run. Đủ branching cho replay value, không quá phức tạp impl. Player thấy được full tree → plan trước (giảm frustration).
 
-### Tại sao thêm `enemy_b02`, `enemy_b03`, `enemy_mb01/02` vào CSV?
+### Tại sao Permadeath ON?
 
-**Stage 2/3 JSON đã reference** → cần data layer match. Stage 3 cần miniboss layer (L6) để tạo "test cuối trước final boss" — giống DD's "Champion fight" pattern.
+Roguelite identity. Caretaker chữa **disease** ≠ revive hero. Casual có thể manual save scum.
 
-### Tại sao Permadeath ON by default?
+### Tại sao VN primary + EN secondary?
 
-**Roguelite identity**. Người chơi muốn casual có thể save scum (manual file backup), nhưng default = permadeath để keep stake. Caretaker chữa **disease** ≠ revive hero.
+Dev native VN, viết content nhanh hơn. VN gamer chưa được phục vụ với genre này. EN cho global. Toggle qua `I18n.toggleLocale()`.
 
-### Tại sao Vietnamese primary + English secondary?
+### Tại sao PixelLab AI?
 
-**Dev native VN**, viết content nhanh hơn. Market: VN gamer chưa được phục vụ với genre này. EN cho global reach. Hai ngôn ngữ qua `I18n.toggleLocale()` Sprint 9.
-
-### Tại sao PixelLab AI cho sprite?
-
-**Solo dev không có ~200h vẽ 30+ characters × 4 anims**. PixelLab AI cho consistent style + 5 credits/character (~$0.10 / char). Risk: server flake → đã có retry strategy (v2/v3/v4 nếu fail).
+Solo dev không có ~200h vẽ 30+ characters × 4 anims. PixelLab consistent style + ~$0.10/char. Risk: server flake → retry strategy v2/v3/v4.
 
 ---
 
-## ✅ Checklist hiện trạng dự án (2026-05-11)
+## ✅ Đã chốt — Design locks
 
-### Sprint 1-8 (Data + Logic + UI + Save + Hamlet)
-
-- [x] Data layer — 14 heroes, 140 skills, 134 effects, 50 items, 15 enemies, 23 enemy skills, 11 events, 14 traits, 3 stages
-- [x] Domain models (Hero, Combatant, CombatEncounter, Effect, ActiveEffects)
-- [x] Combat logic (turn order, damage formula, target selector)
-- [x] Effect resolver (data-driven, 134 effect types)
-- [x] Stage generator (`StageGenerator.generate(stage_1.json, seed)`)
-- [x] StageMapScreen render + click navigation
-- [x] Save/load run state (JSON `saves/run_*.json`)
-- [x] Hamlet hub: 4 buildings (Stagecoach/Guild/Survivalist/Caretaker)
-- [x] **247 unit tests passing** (DataIntegrityTest + 21 other test classes)
-
-### Sprint 9 (Polish) — đang chạy
-
-- [x] I18n VN + EN với toggle button
-- [x] AudioManager (music + SFX skeleton)
-- [x] Save/load Hamlet roster + meta state
-- [x] **PixelLab AI sprite batch — COMPLETE** (2026-05-11):
-  - [x] **14/14 heroes** ✅ base + 4 anims each (hero_02 missing dead anim only — minor, acceptable static fallback)
-  - [x] **3/3 boss** ✅ all 4 anims: enemy_b01 Giant Zombie (size 96), enemy_b02 Whispering Shade (v2), enemy_b03 Black Heart (v2)
-  - [x] **2/2 miniboss** ✅ all 4 anims: enemy_mb01 Echo Wraith (v2), enemy_mb02 Plague Bearer (v4)
-  - [x] **11/11 enemies** ✅ all 4 anims each (after multiple retries — v2/v3/v4/v5/v6 for the difficult ones)
-  - [x] **5/5 core items** queued (item_c01, c03, t02, t07, t10)
-  - [x] **3/3 tilesets** queued (stage_1 Hầm Mộ, stage_2 Sương Mù, stage_3 Lò Đúc Linh Hồn)
-  - [x] **Bugfix**: Double-dispose StageMapScreen → CombatScreen crash fixed (commit `1ae5e44`)
-
-### Sprint 9+ Round 1 — Combat Polish trilogy (PR #3, 2026-05-11)
-
-- [x] **B3 — Combat animations** (commit `82316a3`, `bugfix/combat-animations`):
-      attacker now plays attack anim + dying combatants play dead anim. Before
-      fix only `hurt` was firing. +5 unit tests.
-- [x] **B1 — Combat reward system** (commit `f257070`, `feature/combat-reward-system`):
-      fixes boss-kill-grants-zero-gold bug (boss_node.rewards_on_kill was raw
-      JsonNode), adds per-combat auto-drop (gold scaling by variant + item via
-      CSV dropChance + -3 stress relief), wires reward node drops. +12 tests.
-- [x] **B2 — Skill tooltip** (commit `9777fc8`, `feature/skill-description-tooltip`):
-      hover skill button in combat → floating panel shows description, dmg
-      multiplier, target type, cooldown, stress damage, effect. i18n VN/EN.
-      +7 tests.
-
-### Sprint 9+ Round 2 — Post-review hardening trilogy (PR #4/#5/#6, 2026-05-11)
-
-A `/engineering:code-review` pass on Round 1 HEAD surfaced a build-blocker,
-two gameplay-broken systems, and unhardened save data. User chose 3 sequential
-branches, plan-mode with `AskUserQuestion` for ambiguous decisions.
-
-- [x] **PR #4 — `hotfix/build-arraylist-import`** (commit `eedbe30`):
-      missing `import java.util.ArrayList;` in `ProjectShadowGame.java` —
-      `gradlew core:compileJava` was failing. Round 1's commit-message claim of
-      "tests pass" was unverifiable until this landed.
-- [x] **PR #5 — `fix/combat-correctness`** (commit `4a512e1`):
-  - **Effect tick hybrid** — AoE skills were N-ticking DoTs because
-    `resolveAction` looped per-target and end-of-round also re-ticked. Now:
-    per-actor tick at action start, deduped via `tickedThisRound` set,
-    cleared at `endRoundReset()`. New `EffectInstance.appliedRound` lets
-    just-applied effects skip their first tick.
-  - **Stress system rework** — `STRESS_MAX=200` was previously dormant. Now:
-    crossing 100 latches `pendingAfflictionRoll` → new `AfflictionResolver`
-    rolls 70% Affliction / 30% Virtue and picks a trait from
-    `diseases_traits.csv`. Crossing 200 → instant heart-attack death
-    (`setCurrentHp(0)`). Combat log + i18n popups for both events.
-  - **Reward RNG seeding** — was `new Random()` (unseeded). Now derived
-    from `runSession.state().stageSeed() ^ nodeLabel.hashCode()`.
-    `StageGenerator.parseBossReward` uses sub-RNG so layout stays stable.
-  - **Correctness nits**: `refreshDuration` uses `Math.max`,
-    `applyImmediate` re-runs on refresh, `dropChance` clamped `[0,1]`,
-    `item_random` resolves category→real item ID (was leaking
-    `"trinket_common"` to inventory), tooltip exit listener on parent
-    skill table, skill-tooltip parens gating.
-  - **+4 new affliction traits** in `diseases_traits.csv` (Paranoid,
-    Selfish, Fearful, Hopeless) + new `Resolution` column tags existing
-    8 traits as Affliction/Virtue.
-  - **+26 tests** across 7 new files.
-- [x] **PR #6 — `chore/save-hardening`** (commit `882fdca`):
-  - **Save schema versioning**: `saveVersion` field on `RunState` +
-    `MetaState`. New `SaveMigration` utility refuses to load saves whose
-    version exceeds the build (no silent data loss on downgrade). Legacy
-    saves (no field) load as v1 transparently.
-  - **Atomic write**: `.tmp` sibling + `Files.move(ATOMIC_MOVE,
-REPLACE_EXISTING)` in both `SaveManager` and `MetaStateManager`.
-    Falls back to plain `REPLACE_EXISTING` on filesystems without
-    `ATOMIC_MOVE`. A crash mid-write can no longer corrupt the final file.
-  - **Path-traversal guard**: `runId` must match `[A-Za-z0-9_-]+`.
-  - **i18n on HamletService errors** (was hard-coded VN). EN-locale
-    players now see English exceptions.
-  - **`RunState.withGoldDelta` throws on overdraw** (was silent floor-to-0).
-  - **i18n polish**: `Locale.of(...)` over deprecated `new Locale(...)`;
-    `volatile` on mutable static `bundle`/`current`.
-  - **+28 tests** across 5 new files.
-
-Test count: **247 → 271 (Round 1) → 325 (Round 2)**. Zero failures throughout.
-
-### Sprint 9+ Round 3 — UI asset pack (PR #16/#20, 2026-05-11)
-
-First batch of UI visual assets cho game — buttons, panels, icons generated qua
-PixelLab AI, mỗi component 1 asset riêng, **4 button states share chung
-template + viền + rivets** (1 base + 3 `vary_object`). Tích hợp non-breaking
-vào libGDX skin pipeline qua `SkinLoader` mới.
-
-- [x] **PR #16 — `claude/gallant-meninsky-1e146f`** (commit `193bf2f`):
-  - **15 PixelLab assets** generated + packed thành
-    `assets/ui/components.atlas` (512×256):
-    - **4 button states** (`ui_btn_up/down/over/disabled`) 96×96 stone slab,
-      4 iron rivets ở góc. NinePatch margin 16 → 1 source scale tới Hamlet
-      280×120, CTA 600×80, lang toggle 120×50.
-    - **3 NinePatch panels** (`ui_panel_main`, `ui_panel_tooltip`,
-      `ui_popup_bg`) — ornate manuscript, gold tooltip, gothic rose-thorn
-      popup.
-    - **8 static icons** (stagecoach, guild, survivalist, caretaker, gold,
-      heirloom, settings, close) — 32-48px TextureRegionDrawables.
-  - **`SkinLoader` utility** (`core/src/main/.../ui/SkinLoader.java`) —
-    overlay components atlas lên uiskin, đăng ký NinePatchDrawables +
-    `"primary"` ImageTextButtonStyle + `"panel"/"popup"` WindowStyle +
-    `"panel"` TextTooltipStyle. Graceful fallback nếu atlas chưa pack.
-  - **11 screens migrate** `new Skin(...)` → `SkinLoader.load()` — đồng
-    nhất loading, zero behavior change ngoài Hamlet.
-  - **HamletScreen 4 building buttons** → ImageTextButton có icon prefix
-    - stone-slab background.
-  - **New Gradle task** `packUIComponents` pack `assets/ui/raw` →
-    `components.atlas` (riêng khỏi `combatants.atlas`, rebuild độc lập).
-  - **New script** `scripts/process_pixellab_ui.sh` — download object PNGs
-    từ PixelLab MCP endpoint (auto-detect ZIP vs raw PNG).
-  - **Tracking file** `assets/ui/.pixellab-ui-ids.json` — 15 UUIDs cho
-    regenerate / vary tương lai.
-
-- [x] **PR #20 — `fix/ui-skin-loader-drawable-and-font`** (commits
-      `58c46b7`, `69501f4`) — 2 bug visual phát hiện sau khi merge PR #16:
-  - **Bug 1 — `Skin.has()` exact-type match**: `HamletScreen.buildingButton()`
-    check `skin.has(iconDrawable, Drawable.class)` luôn false vì
-    `SkinLoader` register icons dưới `TextureRegionDrawable.class`. libGDX
-    `Skin.has()` không tự fallback theo superclass → 4 button fallback về
-    plain TextButton (default dark-rect, không icon).
-    **Fix:** SkinLoader register mỗi drawable dưới **cả** type cụ thể
-    (`NinePatchDrawable` / `TextureRegionDrawable`) **và** `Drawable.class`.
-  - **Bug 2 — Stale font reference**: `SkinLoader.load()` chạy trước
-    `fontFactory.create(24)`, copy font từ default style — đó là
-    `font.fnt` (ASCII-only). HamletScreen set VN font CHỈ cho default
-    style → `"primary"` style giữ font ASCII cũ → ký tự VN missing
-    (box / glyph sai).
-    **Fix:** thêm `SkinLoader.overrideFont(skin, font)` utility. HamletScreen
-    gọi nó sau khi VN bodyFont sẵn sàng.
-
-PixelLab API workflow note: 1 lần generate `ui_btn_up` timeout server →
-queue đầu thất bại, retry 2 lần (10 jobs concurrent limit). 4 button states
-giữ template nhất quán bằng cách generate 1 base rồi `vary_object` cho 3
-state — KHÔNG generate 4 lần độc lập (sẽ khác border style).
-
-UI mới CHỈ wire ở HamletScreen ở 2 PR này. Atlas + SkinLoader sẵn sàng;
-các screen khác (Stagecoach/Guild/CombatScreen/...) opt-in sau bằng
-`skin.get("primary", ...)`.
-
-Test count: 325 (Round 2) → **~451 (Round 3 baseline)** sau khi rebase lên
-main mới nhất (PR #7-18 đã thêm test). Round 3 không thêm test (visual UI
-work). 1 pre-existing flake (`EnemyHitRateTest.bossB01...`) trên main từ
-trước, không liên quan.
-
-### Sprint 9+ Round 4 — UI asset pack Phase 2 (PR #24, 2026-05-12)
-
-Continuation của Round 3 — thêm 12 components mới cho gameplay UI elements
-chưa có asset (node icons, combat HUD, decorative frames). **Atlas grows
-15 → 27 regions** (512×256 → 1024×256). Chưa wire vào screen ở PR này;
-SkinLoader expose constants sẵn cho future opt-in.
-
-- [x] **PR #24 — `feat/ui-asset-pack-round2`** (commit `dae344c`):
-  - **7 stage map node icons** (48×48, 1-1 mapping với `NodeType`):
-    - `ui_node_combat` — crossed swords + target dial
-    - `ui_node_elite` — crowned sword + golden star
-    - `ui_node_miniboss` — cracked horned skull
-    - `ui_node_boss` — fanged demonic skull, curved horns
-    - `ui_node_event` — open scroll with `?`
-    - `ui_node_rest` — campfire + firewood
-    - `ui_node_reward` — wooden chest + spilled coins
-  - **3 combat HUD status icons** (32×32):
-    - `ui_icon_hp` — anatomical red heart
-    - `ui_icon_stress` — cracked skull + purple psychic aura
-    - `ui_icon_shield` — heater shield + iron rivets
-  - **2 NinePatch decorative frames** (stretchable):
-    - `ui_frame_portrait` (96×96, margin 16) — hero portrait frame
-    - `ui_banner_title` (128×128, margin 20) — screen title banner
-  - **SkinLoader** thêm 12 public constant (`NODE_*`, `ICON_HP/STRESS/SHIELD`,
-    `FRAME_PORTRAIT`, `BANNER_TITLE`). Status + node icons là
-    `TextureRegionDrawable`, frames là `NinePatchDrawable`. Mọi drawable
-    register dưới cả type cụ thể + `Drawable.class` (consistent với PR #20).
-  - **Process script** (`scripts/process_pixellab_ui.sh`) — jq parser
-    handle JSON sections mới (`node_icons` / `status_icons` / `frames`).
-    `ASSETS` array expand đầy đủ 27 components.
-  - **Wave generation**: 8 jobs + 4 jobs (rate limit 8 concurrent), tổng
-    ~3 phút. Không có job nào fail timeout lần này (Round 3 có 1).
-
-**Wiring vẫn pending** (deferred to future sprint, mỗi cái là PR riêng):
-
-- A. StageMapScreen `buildNodeButtons()` — đính `NODE_*` icon vào node
-  button thay vì chỉ TextButton + color tint
-- B. `CombatRenderer.drawHpBar()` / `drawStressBar()` — đính HP/Stress
-  icon đầu mỗi bar
-- C. HamletScreen title — wrap "HAMLET" label bằng `ui_banner_title`
-- D. EmbarkSelectionScreen + GuildScreen hero list — wrap portrait/icon
-  bằng `ui_frame_portrait`
-
-Test count: 451 (Round 3 baseline) → **488 (Round 4 baseline)** sau khi
-rebase lên main (PRs upstream giữa Round 3 và Round 4 thêm test). Round 4
-không thêm test — visual-only. Pre-existing `EnemyHitRateTest` flake
-hết flake (RNG seed thay đổi do upstream commit).
-
-### Sprint 9+ Round 5 — AI Agent ecosystem (PR #27, 2026-05-12)
-
-Bổ sung 3 AI agents vào dev workflow để automate CI, balance analysis, và audio sourcing.
-
-- [x] **CI/CD — `.github/workflows/ci.yml`**:
-  - GitHub Actions auto-run `./gradlew core:test --no-daemon` mỗi push + PR → main
-  - Gradle cache (`~/.gradle/caches` + `~/.gradle/wrapper`) → build nhanh hơn lần 2+
-  - Test report HTML upload as artifact, accessible trên GitHub Actions tab
-  - Bảo vệ 488 tests khỏi regression khi merge PR
-- [x] **Game Balance Analyzer — `.claude/commands/game-balance.md`**:
-  - Slash command `/game-balance` → Claude đọc tất cả CSV (heroes/enemies/skills/effects)
-  - Compute: DPS score, survivability, stress output, enemy threat score
-  - Outlier detection: flag bất kỳ metric > mean ± 1.5 SD trong nhóm cùng role/variant
-  - Output: markdown report với 5 sections + suggested adjustments cụ thể
-- [x] **Freesound Audio Agent — `scripts/fetch_sfx.sh` + `assets/audio/.sfx-manifest.json`**:
-  - 15 SFX entries định nghĩa trong manifest (attack/hurt/death/stress/affliction/ui/reward)
-  - Script search Freesound.org API v2 (CC0 + Attribution, sort by rating), download OGG preview
-  - Skip existing files (idempotent), tracking IDs tại `assets/audio/.freesound-ids.json`
-  - Cần `FREESOUND_API_KEY` (free tier, đăng ký tại freesound.org/apiv2/apply/)
-  - Wiring vào AudioManager deferred (SFX files cần có trước)
-
-Test count: **488** (unchanged — no Java changes this round).
-
-### Sprint 10 — UI + wiring (PR #8 / #9 / #10, 2026-05-11)
-
-3-branch sequential trilogy. Plan-mode với `AskUserQuestion` cho ambiguous
-decisions. Tất cả 11 backlog items shipped. Mỗi branch base off main, FF-only
-merge tuần tự.
-
-- [x] **PR #8 — `feat/sprint10-foundation`** (commit `9cf5dbe`):
-  - **MetaState v2** — thêm 3 fields: `int heirloom`,
-    `Map<String,Integer> buildingLevels`, `int cureSlotsUsedThisVisit`.
-    Compact constructor back-fills defaults cho legacy v1 saves.
-  - **SaveMigration v1→v2** — bumped `CURRENT_META_VERSION = 2`. Legacy
-    saves auto-migrate qua JSON tree bump trước `treeToValue`.
-  - **Boss balance buff** — `enemies.csv`: b01 HP 80→100, b02 110→130,
-    b03 150→170; all dmg +5. Per post-playtest design lock.
-  - **Random run seed** — `DEFAULT_SEED = 42L` hardcode → bỏ. `generateRunSeed()`
-    dùng `new Random().nextLong()`. Env var `SHADOW_FIXED_SEED` pins for dev/test.
-  - **Stagecoach refresh 50g** — was free. `HamletService.payStagecoachRefresh`
-    deducts, throws via I18n. Closes save-scum loophole.
-  - **Roster cap soft-20 + auto-cull** — `MetaState.SOFT_ROSTER_CAP = 20`.
-    HamletScreen warns when over cap. `HamletService.autoCullRosterToCap`
-    drops random excess on embark; picked party protected.
-  - **+19 tests** (MetaStateBuildingLevels, SaveMigrationV1ToV2,
-    StagecoachRefreshCost, RosterAutoCull).
-
-- [x] **PR #9 — `feat/hamlet-upgrade-ui`** (commit `e41ba3d`):
-  - **4 building upgrade methods** trong HamletService —
-    `upgradeStagecoach/Guild/Survivalist/Caretaker`. Internal
-    `upgradeBuilding()` validates gold + heirloom, deducts, bumps level.
-  - **Caretaker cure slot tracking** — `cureDisease()` enforces
-    `CARETAKER_CURE_SLOTS_BY_LEVEL[level]` (1/2/4). Cost scales 30g→25g→20g.
-    Slot reset trong `applyRunOutcome` (end-of-run, anti-cheese).
-  - **Supplies tax wire** — `paySuppliesTax(meta, stageAct)` deducted
-    trong `startNewRun`. 100/200/400g Stage 1/2/3, non-refundable.
-  - **Heirloom drop from boss** — `handleCombatWin` checks BossNode,
-    grants 1/2/4 via `heirloomFromBoss(stageAct)` → `meta.withHeirloomDelta`.
-    Sprint 8.5 followup finally landed.
-  - **4 Hamlet screens UI** — mỗi screen gain Lv N/3 display +
-    Upgrade button (disabled khi không afford). CaretakerScreen also
-    shows "Slot chữa: {used}/{limit}".
-  - **EmbarkSelectionScreen** — tax preview row + Embark disabled khi
-    không afford tax.
-  - **+24 tests** (HamletUpgrade, CaretakerSlotTracking, SuppliesTax,
-    HeirloomDrop).
-
-- [x] **PR #10 — `feat/pathway-and-reward-ui`** (commit `668956e`):
-  - **Event choice mechanics** — `EventData.choices()` parses 2-3 choices
-    from CSV. NEW records `EventChoice`, `EventOutcome`. `parseOutcomes()`
-    parses DSL `"type=gold|value=300|chance=0.5; type=damage|target=
-random_hero|value=8-15|chance=0.3"`.
-  - **EventOutcomeApplier** — applies parsed outcomes: gold / stress /
-    damage / skill_cd_reset / trait_apply / disease / item / none.
-    Mystery mode per design lock (no preview).
-  - **RestOptionApplier** — 5 effect types: heal, reduce_stress, buff
-    (Sprint 11 placeholder), `remove_disease` (NEW), `skill_swap`
-    (NEW, flagged for nested UI).
-  - **NodeInfoScreen rewrite** — was Sprint 7 "Continue only" placeholder.
-    Now renders interactive choice/option buttons + feedback line. i18n:
-    removed "Sprint 8 sẽ thêm..." placeholder strings.
-  - **Boss-alt-path** — `stage_1.json` `pre_boss_alt_layer` block + 1 elite
-    PB.A node parallel to layer_3 → boss. Player picks safer resource
-    path vs tougher fight for bonus loot. `PRE_BOSS_ALT_RNG_SALT`
-    preserves seed→layout stability.
-  - **CombatRewardPopup** — end-of-combat reward feedback. 3s auto-dismiss
-    - manual Continue. Wired via `CombatScreen.setRewardProvider`.
-  - **+31 tests** (EventDataParse, EventOutcomeApplier, RestOptionApplier,
-    StageGeneratorBossAltPath).
-
-- [x] **Hotfix `03e9972`** (post-merge crash fix):
-      CombatRewardPopup ném `GdxRuntimeException: No Drawable... "default-pane"`
-      trên mỗi combat win. Fix: fallback chain
-      `resolveFirstAvailableDrawable(skin, "tooltip", "window", "list")`. Plus
-      regression test `CombatRewardPopupSkinTest` (3 cases).
-
-Test count: 325 (post-Round 2) → 344 (B1) → 368 (B2) → **399 (B3)**.
-+74 tests. Zero failures throughout. (Round 3/4 UI work happened in
-parallel — Round 3 actually rebased to 451 baseline from PRs #7-18.)
-
-### Sprint 11 — playtest fixes + conditions MVP + boss polish (PR #12 / #13 / #15, 2026-05-11)
-
-Sau Sprint 10, playtest pass reveal 6 friction points. Sprint 11 = 3-branch
-fixes pass + start runtime trait effects (ConditionResolver MVP) + boss
-fights finally have phases.
-
-- [x] **PR #12 — `feat/sprint11-playtest-fixes`** (commit `c267298`):
-  - **DEBT MODEL** — gold negative allowed on survival paths (hire,
-    refresh, supplies tax). Reward pay down debt. Strict-throw retained
-    for upgrade / cure / craft (non-survival). UI buttons stay enabled,
-    turn salmon when unaffordable.
-  - **Enemy hit rate buff** — normal enemies all accuracy 80 (Skeleton
-    variants 75→80); bosses 90 (was 78/82/85); minibosses 85.
-  - **Skill tooltip — actual damage range** — `formattedDescription(actorDmgMin,
-actorDmgMax)` overload renders `"Dmg X..Y"` instead of multiplier.
-    Non-offensive skills suppress Dmg line. i18n: `skill.tooltip.damageRange`.
-  - **Combat action pacing** — `CombatController.setPacingDelaySec(0.7s)`.
-    UI gate enemy turn after delay, player input blocked during window.
-    `SHADOW_ACTION_DELAY` env var override.
-  - **sk_mk2 multi-hit fix** — skills with `eff_multi_hit` primary effect
-    loop hitCount times. sk_ar6 Bắn Kép → 2 hits. sk_mk2 Liên Hoàn Quyền →
-    3 hits.
-  - **+18 tests** (MetaStateDebt, MultiHitSkill, SkillDataActualDamage,
-    EnemyHitRateBoost). 5 existing tests updated to assert debt outcomes.
-
-- [x] **PR #13 — `feat/condition-resolver-mvp`** (commit `a38beb2`):
-  - **Bloodthirsty (trait_07) reclassified Virtue → Affliction** —
-    forced-attack spec per Sprint 11 design lock. Pool: 7 Affliction /
-    5 Virtue (70/30 outer roll unchanged).
-  - **Hero state additions** — `skipNextAction` (Cowardly), `bloodthirstyStacks`
-    (0..5, +5% dmg per stack), `effectiveDmgMin/Max` override.
-  - **ConditionResolver class** — data-driven dispatch:
-    `onTurnStart` (Cowardly trigger), `onSelfDamage` (Masochist),
-    `onKill` (Bloodthirsty stack), `onCombatStart` (resets),
-    `hasForcedAttack` / `pickForcedAttackSkill` for Bloodthirsty hero AI override.
-    `isImplemented()` registry tracks Sprint 12+ scope.
-  - **CombatController integration** — start() → onCombatStart;
-    advanceTurn() → applyOnTurnStartCondition; executePlayerSkill()
-    consumes skipNextAction + routes forced-attack; resolveAction()
-    detects kill → onKill.
-  - **`Listener.onCowardlySkip(hero)`** — UI hook for stagger anim/toast.
-  - **+15 tests** (Cowardly, Masochist, Bloodthirsty).
-
-- [x] **PR #15 — `feat/boss-phase-and-polish`** (commit `b4db60d`):
-  - **Boss phase logic** — `CombatController.pickEnemySkillId(enemy)`:
-    HP<30% + specialSkill unused → specialSkill (one-shot tracked via
-    `usedBossSkillsThisCombat`); HP<60% + skill2 → 50/50 skill1 vs skill2;
-    else → skill1. Normal enemies unchanged. Resets at start().
-  - **HeroData.baseDodge + levelUpDodge** — new record fields, CSV
-    backward-compatible (default Front=0 / Back=2 by Position). Hero.dodge()
-    now reads data fields (was hardcoded 0).
-  - **Cursed disease wire (dis_06 → -30 dodge)** — `Hero.effectiveDodge()`
-    subtracts 30 if hero has dis_06. Floored at 0.
-  - **Boss death listener + epic zoom** — `Listener.onBossDeath`. Fires
-    once on boss HP→0. CombatScreen logs `"*** BOSS X HAS FALLEN! ***"`.
-    `CombatantView.triggerEpicDeath()` — 1.5s scale-up bell curve peaking
-    at 1.3× (renderer integration in Sprint 12 B3).
-  - **+14 tests** (BossPhaseLogic, BossDeathListener, HeroBaseDodge,
-    CursedDiseaseEffect).
-
-Test count: 399 → 420 (B1) → 435 (B2) → **449 (B3)**. +50 tests.
-
-### Sprint 12 — conditions expansion + progression + item use + main menu (PR #17 / #19 / #22 / #25, 2026-05-11)
-
-Sprint 12 closes ra ngoài backlog: trait/disease runtime hoàn thiện
-(7 conditions added on top of Sprint 11's 3), XP progression, item use
-in combat, main menu/settings. 4-branch trilogy + B4.
-
-- [x] **PR #17 — Sprint 12 B1 conditions expansion** (commit `067d4d3`):
-  - **4 trait effects (afflictions)**:
-    - Paranoid (trait_a01) — on turn start, all alive allies +1 stress
-    - Selfish (trait_a02) — `Hero.heal()` no-op if has trait
-    - Fearful (trait_a03) — `DamageFormula` outgoing × 0.80
-    - Hopeless (trait_a04) — `effectiveAccuracy()` -10
-  - **5 disease effects**:
-    - Fever (dis_01) — `maxHp()` × 0.85, floored at 1
-    - Blindness (dis_02) — `effectiveAccuracy()` -20 (stacks Hopeless)
-    - Nightmare (dis_03) — onTurnStart +2 self stress
-    - Paranoia (dis_04) — 15% executePlayerSkill action-fail
-    - Plague (dis_05) — `maxHp()` × 0.75 + 10%/turn spread to
-      disease-free random alive ally. Fever + Plague multiplicative (×0.6375).
-    - Cursed (dis_06) — already shipped Sprint 11 B3
-  - **Stress event hooks** (Sprint 3 spec finally implemented):
-    - `STRESS_ON_CRIT = 5` — on crit hit, +5 stress to Hero target
-    - `STRESS_ON_ALLY_DEATH = 10` — on Hero death, +10 stress to all alive
-  - **ConditionResolver helpers** — `outgoingDamageMultiplier`,
-    `accuracyDebuff`, `maxHpMultiplier`, `rollParanoiaActionFail`.
-  - **Pre-existing test fix** — `EnemyHitRateTest.bossB01` updated bounds
-    for Sprint 11 acc 90 buff (was 78).
-  - **+19 tests** (Sprint12TraitsAndDiseases, StressEvents).
-
-- [x] **PR #19 — Sprint 12 B2 progression** (commit `3031608`):
-  - **Hybrid XP system** — `Hero.currentXp` accumulator. Per-kill XP:
-    killer = `KILL_XP_BASE × variantMult` (Boss 5×, Miniboss 2.5×,
-    Tank/Special/Assassin 1.2×). Surviving non-killer ally = 50% of that.
-    End-of-stage +50 XP per alive hero on boss kill.
-  - **Guild level-up** — now consumes BOTH gold AND
-    `xpRequiredForNextLevel[currentLevel]={100, 200, 350, 500, 750}`.
-    Throws new `error.notEnoughXp` (i18n VN+EN).
-  - **30% post-combat disease roll** — `HamletService.rollPostCombatDisease`
-    (non-boss combats only). Pool `dis_01..dis_05`. RNG seeded from
-    `stageSeed ^ nodeLabel.hashCode() ^ 0xDEADBEEF`.
-  - **Recruit 2 random Virtues** — `hireHero(meta, id, gd, rng)` picks
-    `TRAITS_AT_RECRUIT = 2` random Virtue traits. Never afflictions.
-  - **GuildScreen UX** — shows `XP X/Y` alongside level. Level-up button
-    needs BOTH gold + XP.
-  - **+19 tests** (HeroXp, KillXpGrant, HireHeroVirtues, PostCombatDiseaseRoll,
-    HamletService::levelUpHero_rejectsInsufficientXp).
-
-- [x] **PR #22 — Sprint 12 B3 item use + polish** (commit `fe33587`):
-  - **Item use in combat (Phase 1 — consumables)** — `ItemUseHandler.apply()`
-    wired effects: `eff_heal`, `eff_stress_reduce` (party-wide). Others
-    log "not yet supported" and still consume action turn (Sprint 13).
-    `CombatController.useItem(itemId, target)` validates inventory,
-    advances turn. `RunSession.setStateForItemUse` mid-combat mutator
-    (no auto-save).
-  - **CombatScreen Items tab** — "Vật phẩm (N)" button toggles to item
-    picker. Heal items enter target-pick; stress reducers fire immediately.
-  - **Bloodthirsty forced-attack UI** — current actor with trait_07: skill
-    buttons grayed, red "Bị Khát Máu — tự động tấn công" indicator.
-    Stage action schedules auto-attack after 0.5s.
-  - **Boss epic-zoom renderer** — `CombatRenderer.drawSprite` reads
-    `CombatantView.epicDeathZoom()` and scales sprite around center.
-    HP bars anchored fixed (Sprint 11 B3 follow-up).
-  - **Poison Vine enemy (Sprint 2 unresolved)** — `enemy_05` Poison Vine
-    (Base, HP 22, dmg 3-5, acc 80, drop item_c01 25%). Skill
-    `sk_e_poison_strike` (0.8× dmg, 50% chance eff_poison 4/turn × 3).
-    Added to stage_1.json combat pool. DataIntegrityTest 15→16 enemies,
-    23→24 enemy_skills.
-  - **+13 tests** (ItemUseHandler, CombatItemUse, PoisonVine).
-
-- [x] **PR #25 — Sprint 12 B4 main menu + turn order** (commit `47e3aee`):
-  - **Per-action turn-order re-sort** — `CombatEncounter.advanceTurn()`
-    re-sorts REMAINING tail by current `effectiveSpeed()` before next pick.
-    Speed buff mid-round takes effect on next pick. "One action per
-    actor per round" invariant preserved.
-  - **SplashScreen** — title, auto-advance after 2.5s or input.
-  - **MainMenuScreen** — New Game / Continue / Settings / Quit.
-  - **SettingsScreen** — music + SFX volume sliders, fullscreen toggle,
-    locale toggle (VN/EN). Live-applies to AudioManager + I18n.
-  - **SettingsManager** — persists `saves/settings.json` (atomic write,
-    same pattern as SaveManager). Defaults: music 0.6, sfx 0.8,
-    fullscreen false, locale vi.
-  - **ProjectShadowGame.create()** — boots into SplashScreen, loads/applies
-    settings before first render.
-  - **+8 tests** (TurnOrderPerActionResort, SettingsManager).
-
-Test count: 449 → 468 (B1) → 488 (B2) → 501 (B3) → **509 (B4)**. +60 tests.
-This closes the unshipped-features backlog from the post-Sprint-9 review pass.
-
-### Sprint mở rộng (deferred — documented for future sprint)
-
-- **Reward "combo 3" full feature**: streak bonus (compounding +10% gold,
-  capped at 1.5×, reset on rest) + Pick 1 of 3 reward cards (Slay-the-Spire
-  style) for elite/miniboss/boss nodes. Plan committed in
-  [docs/notes_and_considerations.html](docs/notes_and_considerations.html).
-- **descriptionEn CSV column**: skill tooltips fall back to VN description
-  in EN locale until skills.csv adds an English column.
-- **Stages 2/3 playable content** — JSON specs exist nhưng pools chưa đầy đủ.
-  Sprint 13+.
-- **Item use in combat Phase 2** — `eff_burn`, `eff_dmg_buff`, `eff_absorb`,
-  etc. còn log "not yet supported". Sprint 13+.
-- **UI Round 4 wiring** — atlas + SkinLoader entries có sẵn cho node icons,
-  status icons, frames; chưa wire vào StageMapScreen/CombatRenderer/HamletScreen
-  banner. Mỗi cái là PR riêng.
-- **Freesound SFX integration** — script + manifest có sẵn (Round 5);
-  cần `FREESOUND_API_KEY` + wire vào AudioManager.
-- [ ] Particle effects khi crit/affliction
-- [ ] Aseprite-style animation refinement (tween + 2-3 frame)
-
-### Out of scope MVP (đã quyết định cắt)
-
-- ❌ Multiplayer / co-op / PvP
-- ❌ Cinematic cutscenes + voice acting
-- ❌ Procedural skill generation
-- ❌ Mobile / console port
-- ❌ Achievement system in-game
-- ❌ Controller native support
-- ❌ Adaptive music
-- ❌ Dynamic lighting
-- ❌ Crafting / equipment forging
-
-### Đã chốt — design decisions (2026-05-11)
-
-- ✅ **Affliction/Virtue ratio 70/30** — giữ độ khó cao, skills/items đa dạng bổ trợ
-- ✅ **Boss HP scaling**: b01=100, b02=130, b03=170 (post Sprint 10 B1 +20 buff; original 80/110/150)
-- ✅ **Boss damage**: b01=13-19, b02=14-20, b03=15-23 (Sprint 10 B1 +5)
-- ✅ **Enemy hit-rate buff (Sprint 11 B1)**: normal enemies acc=80, bosses acc=90, minibosses acc=85
-- ✅ **Bloodthirsty trait reclassified Affliction** (Sprint 11 B2). Pool: 7 Affliction / 5 Virtue, 70/30 outer roll unchanged
-- ✅ **Heart-attack threshold**: stress=200 → hero chết tức thì (Sprint 9+ Round 2)
-- ✅ **Cure slot reset timing**: end-of-run (locked Sprint 10 B2)
-- ✅ **Stagecoach refresh cost**: 50g/lần (Sprint 10 B1)
-- ✅ **Roster cap soft-20 + auto-cull**: vượt cap → embark tự sa thải excess (Sprint 10 B1)
-- ✅ **Random run seed**: per-run nextLong(), env `SHADOW_FIXED_SEED` dev override (Sprint 10 B1)
-- ✅ **Debt model (Sprint 11 B1)**: survival paths (hire/refresh/supplies tax) cho phép gold âm; reward pay down. Strict-throw chỉ cho upgrade/cure/craft.
-- ✅ **Combat action pacing 0.7s**: enemy turn delayed, anti-spam. Env `SHADOW_ACTION_DELAY` override (Sprint 11 B1).
-- ✅ **Hybrid XP system (Sprint 12 B2)**: Hero.currentXp + per-kill grant + end-of-stage bonus. Guild level-up requires gold AND xp `{100,200,350,500,750}`.
-- ✅ **Recruit 2 random Virtues** (Sprint 12 B2): không bao giờ assign affliction lúc tuyển mộ.
-- ✅ **Per-action turn order re-sort** (Sprint 12 B4): tail re-sort theo effectiveSpeed mid-round, "1 action/actor/round" invariant giữ nguyên.
-- ✅ **Crit multiplier 1.5×**
-- ✅ **Disease chance 30%/hero/stage**
-- ✅ **Final game name: "Project Shadow"**
-- ✅ **Hire cost by rarity**: 50g Common / 80g Rare / 150g Legendary
-- ✅ **3-tier Hamlet upgrade system**: Stagecoach/Guild/Survivalist/Caretaker × 3 levels. Costs gold + Heirloom (boss drop). Full upgrade = 3,280g + 14 Heirloom (~4-5 boss kills). Xem [project_plan.html § 5](docs/project_plan.html)
-- ✅ **Caretaker cure slots**: Lv1=1, Lv2=2, Lv3=4 heroes/visit. Cost 30g→25g→20g. Cursed NOT cured
-- ✅ **Heirloom currency #2**: boss drop 1/2/4 (Stage 1/2/3), chỉ dùng upgrade
-- ✅ **Gold persistence Option C — Supplies Tax**: 100g/200g/400g up-front, non-refundable
-- ✅ **Boss gold rewards**: 200g/400g/1000g (Stage 1/2/3)
-- ✅ **No gold cap**
-
-### Còn cần quyết định
-
-- ❓ Random damage variance ±5% vs ±10%
-- ❓ Stress max uniform 100 vs differentiated by rarity
+- **Affliction/Virtue 70/30** — Pool 7 Affliction / 5 Virtue (Bloodthirsty đã reclass Affliction Sprint 11 B2)
+- **Boss HP**: b01=100, b02=130, b03=170 · **Boss dmg**: b01=13-19, b02=14-20, b03=15-23
+- **Hit-rate**: normal acc=80, miniboss=85, boss=90
+- **Heart-attack**: stress=200 → hero chết tức thì
+- **Cure slot reset**: end-of-run (Caretaker Lv1/2/3 = 1/2/4 slots, cost 30/25/20g; Cursed không chữa được)
+- **Stagecoach refresh**: 50g/lần
+- **Roster cap**: soft-20, vượt → embark auto-cull random (party protected)
+- **Run seed**: per-run `nextLong()`, env `SHADOW_FIXED_SEED` cho dev
+- **Debt model**: gold âm cho phép trên survival paths (hire/refresh/supplies tax); reward pay down. Strict-throw chỉ cho upgrade/cure/craft.
+- **Action pacing**: 0.7s enemy turn delay, env `SHADOW_ACTION_DELAY` override
+- **Hybrid XP**: per-kill grant + end-of-stage bonus. Guild level-up = gold AND xp `{100,200,350,500,750}`
+- **Recruit**: 2 random Virtues mỗi hire (never afflictions)
+- **Turn order**: per-action re-sort tail theo `effectiveSpeed`, 1 action/actor/round invariant giữ
+- **Crit**: 1.5×
+- **Disease chance**: 30%/hero/stage
+- **Hire cost**: 50g Common / 80g Rare / 150g Legendary
+- **Hamlet upgrade 3 tiers**: cost gold + Heirloom, full = 3,280g + 14 Heirloom (~4-5 boss kills)
+- **Heirloom**: boss drop 1/2/4 (Stage 1/2/3), chỉ dùng upgrade
+- **Supplies Tax**: 100/200/400g up-front, non-refundable
+- **Boss gold reward**: 200/400/1000g (Stage 1/2/3) · **No gold cap**
 
 ---
 
-## 📂 Files đã thay đổi trong session này
+## ❌ Out of scope MVP
 
-| File                                       | Change                                                                       |
-| ------------------------------------------ | ---------------------------------------------------------------------------- |
-| `assets/data/enemies.csv`                  | +4 rows: enemy_b02, enemy_b03, enemy_mb01, enemy_mb02                        |
-| `assets/data/enemy_skills.csv`             | +14 rows: skills cho 4 boss/miniboss mới                                     |
-| `core/src/test/.../DataIntegrityTest.java` | Update expected counts (11→15 enemies, 9→23 skills)                          |
-| `core/src/main/.../DataLoaderDemo.java`    | Update KNOWN_TODO_REFS (remove b02/b03/mb01/mb02 sau khi chính thức có data) |
-| `.pixellab-ids.json`                       | Đầy đủ UUIDs cho 14 heroes + 15 enemies + 5 items + 3 tilesets               |
-| `docs/style.css`                           | Shared CSS cho 6 HTML docs                                                   |
-| `docs/design_overview.html`                | NEW                                                                          |
-| `docs/game_systems.html`                   | NEW                                                                          |
-| `docs/technical_data.html`                 | NEW                                                                          |
-| `docs/pathway_stage1.html`                 | NEW                                                                          |
-| `docs/project_plan.html`                   | NEW                                                                          |
-| `docs/notes_and_considerations.html`       | NEW                                                                          |
-| `claude.md` (file này)                     | NEW                                                                          |
+- Multiplayer / co-op / PvP
+- Cinematic cutscenes + voice acting
+- Procedural skill generation
+- Mobile / console port
+- Achievement system in-game
+- Controller native support
+- Adaptive music
+- Dynamic lighting
+- Crafting / equipment forging
 
 ---
 
-_Last update: 2026-05-12 · Tests: **509 passing** ✅ · PixelLab assets: 33 chars/enemies/tiles + 27 UI components (Round 3+4) + 1 Poison Vine enemy_05 · Sprints 10/11/12 complete via PR #8/#9/#10/#12/#13/#15/#17/#19/#22/#25 · Round 5 dev workflow PR #27 · Sprint 9 balance report PR #28_
+## 📋 Deferred (post-MVP / Sprint 13+)
+
+- **Reward "combo 3"**: streak bonus (+10% gold compounding, cap 1.5×, reset on rest) + Slay-the-Spire-style 1-of-3 reward cards cho elite/miniboss/boss. Plan trong [notes_and_considerations.html](docs/notes_and_considerations.html).
+- **descriptionEn CSV column**: skill tooltips fall back VN trong EN locale until skills.csv thêm cột EN.
+- **Stages 2/3 playable content**: JSON specs exist nhưng pools chưa đầy đủ.
+- **Item use Phase 2**: `eff_burn`, `eff_dmg_buff`, `eff_absorb`, etc. còn log "not yet supported".
+- **UI Round 4 wiring**: atlas + SkinLoader có sẵn cho node icons / status icons / frames; chưa wire vào StageMapScreen / CombatRenderer / HamletScreen banner. Mỗi cái là PR riêng.
+- **Freesound SFX integration**: script + manifest ready (Round 5); cần API key + wire vào AudioManager.
+- Particle effects khi crit/affliction
+- Aseprite-style anim refinement (tween + 2-3 frame)
+
+---
+
+## ❓ Còn cần quyết định
+
+- Random damage variance ±5% vs ±10%
+- Stress max uniform 100 vs differentiated by rarity
