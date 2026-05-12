@@ -1,0 +1,19 @@
+{
+  "sfx": {
+    "sfx_attack_slash":  { "query": "sword slash metal hit",           "min_duration": 0.2, "max_duration": 1.5 },
+    "sfx_attack_blunt":  { "query": "blunt impact thud hit",           "min_duration": 0.1, "max_duration": 1.0 },
+    "sfx_attack_magic":  { "query": "magic spell cast whoosh",         "min_duration": 0.3, "max_duration": 2.0 },
+    "sfx_hurt_hero":     { "query": "human grunt pain hit",            "min_duration": 0.2, "max_duration": 0.8 },
+    "sfx_hurt_enemy":    { "query": "monster growl hurt",              "min_duration": 0.2, "max_duration": 1.0 },
+    "sfx_death_hero":    { "query": "death collapse body fall",        "min_duration": 0.5, "max_duration": 2.0 },
+    "sfx_death_enemy":   { "query": "monster death scream",            "min_duration": 0.3, "max_duration": 2.0 },
+    "sfx_stress_tick":   { "query": "heartbeat pulse stress",          "min_duration": 0.3, "max_duration": 1.0 },
+    "sfx_affliction":    { "query": "dark psychic sting horror",       "min_duration": 0.5, "max_duration": 2.5 },
+    "sfx_virtue":        { "query": "choir heaven resolve positive",   "min_duration": 0.5, "max_duration": 2.5 },
+    "sfx_item_use":      { "query": "item pick up use short",          "min_duration": 0.2, "max_duration": 0.8 },
+    "sfx_ui_click":      { "query": "ui button click wood",            "min_duration": 0.05, "max_duration": 0.3 },
+    "sfx_ui_hover":      { "query": "ui hover soft tick",              "min_duration": 0.05, "max_duration": 0.2 },
+    "sfx_level_enter":   { "query": "dungeon ambiance door open",      "min_duration": 1.0, "max_duration": 3.0 },
+    "sfx_reward_gold":   { "query": "coins gold drop collect",         "min_duration": 0.3, "max_duration": 1.5 }
+  }
+}
