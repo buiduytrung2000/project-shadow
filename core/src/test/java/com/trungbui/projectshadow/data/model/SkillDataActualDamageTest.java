@@ -21,7 +21,7 @@ class SkillDataActualDamageTest {
         return new SkillData(
                 "sk_test", "Thử", "Test", "Warrior", "Warrior",
                 true, "Front Enemy", damageMult, 0, 0,
-                null, null, null, null, 0, "Common", "Đòn thử.");
+                null, null, null, null, 0, "Common", "Đòn thử.", null);
     }
 
     @Test
@@ -47,7 +47,7 @@ class SkillDataActualDamageTest {
         SkillData heal = new SkillData(
                 "sk_heal", "Heal", "Heal", "Cleric", "Cleric",
                 false, "Single Ally", 0d, 0, 1,
-                "eff_heal", "10", "instant", null, 0, "Common", "Heal.");
+                "eff_heal", "10", "instant", null, 0, "Common", "Heal.", null);
         String out = heal.formattedDescription(5, 10);
         // Non-offensive with mult 0 → no Dmg line at all
         assertThat(out).doesNotContain("Dmg ");
@@ -59,7 +59,7 @@ class SkillDataActualDamageTest {
         SkillData utility = new SkillData(
                 "sk_debuff", "Debuff", "Debuff", "Assassin", "Assassin",
                 true, "All Enemies", 0d, 0, 2,
-                "eff_acc_debuff", "-25", "2 turns", null, 0, "Uncommon", "Debuff acc.");
+                "eff_acc_debuff", "-25", "2 turns", null, 0, "Uncommon", "Debuff acc.", null);
         String out = utility.formattedDescription(5, 10);
         assertThat(out).doesNotContain("Dmg ");
     }

@@ -37,7 +37,15 @@ public final class DamageFormula {
             finalDmg *= ConditionResolver.outgoingDamageMultiplier(h);
         }
 
+        // Sprint 13 B1 — absorb shield subtracts from HP damage before it reaches HP.
+        // Shield absorbs as much as possible; remainder is actual HP damage.
         int hpDamage = (int) Math.round(finalDmg);
+        int shield = target.shieldHp();
+        if (shield > 0) {
+            int absorbed = Math.min(shield, hpDamage);
+            target.setShieldHp(shield - absorbed);
+            hpDamage -= absorbed;
+        }
         return new AttackResult(true, crit, hpDamage, skill.stressDamage());
     }
 

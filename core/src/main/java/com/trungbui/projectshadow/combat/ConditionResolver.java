@@ -73,6 +73,18 @@ public final class ConditionResolver {
     public static final int STRESS_ON_CRIT = 5;
     public static final int STRESS_ON_ALLY_DEATH = 10;
 
+    // Sprint 13 B3 — stage environmental modifiers. Set at combat start via
+    // onCombatStart(encounter, stageId); cleared (0) between combats.
+    public static int stageAccuracyMod = 0;
+    public static int stageStressPerTurn = 0;
+
+    /** Stage 2 applies a global -5 accuracy penalty to ALL combatants. */
+    public static final String STAGE_2_ID = "stage_2";
+    /** Stage 3 applies +1 stress/turn to all heroes. */
+    public static final String STAGE_3_ID = "stage_3";
+    public static final int STAGE_2_ACCURACY_MOD = -5;
+    public static final int STAGE_3_STRESS_PER_TURN = 1;
+
     private ConditionResolver() {
     }
 
@@ -124,6 +136,11 @@ public final class ConditionResolver {
                 infected.addDisease(DISEASE_PLAGUE);
             }
         }
+
+        // Sprint 13 B3 — Stage 3 env modifier: +1 stress/turn to all heroes.
+        if (stageStressPerTurn > 0) {
+            hero.takeStressDamage(stageStressPerTurn);
+        }
     }
 
     /**
@@ -157,13 +174,52 @@ public final class ConditionResolver {
 
     /**
      * Called at the start of each combat — resets per-combat counters
-     * (Bloodthirsty stacks, Cowardly flag if stale).
+     * (Bloodthirsty stacks, Cowardly flag, shields) and applies stage
+     * environmental modifiers.
+     *
+     * @param encounter the combat encounter
      */
     public static void onCombatStart(CombatEncounter encounter) {
+        onCombatStart(encounter, null);
+    }
+
+    /**
+     * Sprint 13 B1/B3 — overload that also applies stage environmental modifiers.
+     * Stage 2: -5 accuracy (global, all combatants). Stage 3: +1 stress/turn to heroes.
+     * Null stageId → no env modifier applied (e.g. test combats without a stage).
+     */
+    public static void onCombatStart(CombatEncounter encounter, String stageId) {
         if (encounter == null) return;
         for (Hero h : encounter.heroes()) {
             h.resetBloodthirstyStacks();
             h.setSkipNextAction(false);
+            // Sprint 13 B1: reset absorb shield at combat start.
+            h.setShieldHp(0);
+        }
+        for (com.trungbui.projectshadow.domain.Enemy e : encounter.enemies()) {
+            // Sprint 13 B1: reset enemy shields too.
+            e.setShieldHp(0);
+        }
+        // Sprint 13 B3 — apply stage env modifier accuracy debuff.
+        applyStageEnvModifier(encounter, stageId);
+    }
+
+    /**
+     * Sprint 13 B3 — apply stage environmental modifiers for the given stageId.
+     * Currently two stages are handled:
+     * <ul>
+     *   <li>stage_2: global -5 accuracy via {@link #stageAccuracyMod}</li>
+     *   <li>stage_3: +1 stress/turn to heroes via {@link #stageStressPerTurn}</li>
+     * </ul>
+     * Calling with null or an unrecognized stageId resets both mods to 0.
+     */
+    static void applyStageEnvModifier(CombatEncounter encounter, String stageId) {
+        stageAccuracyMod = 0;
+        stageStressPerTurn = 0;
+        if (STAGE_2_ID.equals(stageId)) {
+            stageAccuracyMod = STAGE_2_ACCURACY_MOD;
+        } else if (STAGE_3_ID.equals(stageId)) {
+            stageStressPerTurn = STAGE_3_STRESS_PER_TURN;
         }
     }
 

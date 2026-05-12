@@ -87,9 +87,10 @@ class ItemUseHandlerTest {
 
     @Test
     void apply_unsupportedEffect_returnsNotApplied() {
-        // item_c06 = eff_dmg_buff, not yet supported in Phase 1.
+        // item_c04 = eff_remove (disease cure). Not supported in Phase 2 either.
+        // eff_burn / eff_dmg_buff / eff_absorb were wired in Sprint 13 B1.
         Hero h = freshHero();
-        ItemUseHandler.AppliedSummary s = ItemUseHandler.apply("item_c06", h, h, null, gd);
+        ItemUseHandler.AppliedSummary s = ItemUseHandler.apply("item_c04", h, h, null, gd);
         assertThat(s.applied()).isFalse();
         assertThat(s.notes()).contains("not yet supported");
     }

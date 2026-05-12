@@ -56,7 +56,9 @@ public interface Combatant {
     }
 
     default int effectiveAccuracy() {
-        return accuracy() + activeEffects().sumFlatModifier(StatType.ACCURACY);
+        // Sprint 13 B3: stage_2 env mod applies global accuracy penalty.
+        return accuracy() + activeEffects().sumFlatModifier(StatType.ACCURACY)
+                + com.trungbui.projectshadow.combat.ConditionResolver.stageAccuracyMod;
     }
 
     default int effectiveDodge() {
@@ -85,5 +87,29 @@ public interface Combatant {
 
     default double damageReceivedMultiplier() {
         return 1d + activeEffects().sumPercentModifier(StatType.DAMAGE_RECEIVED);
+    }
+
+    // ── Sprint 13 B1: absorb shield ──────────────────────────────────────────
+
+    /** Current shield HP. Absorbs incoming damage before HP is reduced. */
+    default int shieldHp() { return 0; }
+
+    /** Set the shield HP. Implementations that support shields override this. */
+    default void setShieldHp(int shield) {}
+
+    /**
+     * Take damage, consuming shield before HP. Returns the actual HP damage dealt
+     * after shield absorption (may be 0 if shield fully absorbed).
+     */
+    default int takeDamageWithShield(int amount) {
+        if (amount <= 0) return 0;
+        int shield = shieldHp();
+        if (shield > 0) {
+            int absorbed = Math.min(shield, amount);
+            setShieldHp(shield - absorbed);
+            amount -= absorbed;
+        }
+        if (amount > 0) takeHpDamage(amount);
+        return amount;
     }
 }

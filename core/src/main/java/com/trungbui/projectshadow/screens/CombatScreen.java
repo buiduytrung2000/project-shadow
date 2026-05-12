@@ -197,7 +197,8 @@ public class CombatScreen implements Screen {
         });
 
         layoutCombatants();
-        controller.start();
+        // Sprint 13 B3: controller.start() moved to show() so setStageId/setRunSession
+        // callers (ProjectShadowGame) can configure the controller before first tick.
     }
 
     private void buildUi() {
@@ -514,6 +515,15 @@ public class CombatScreen implements Screen {
         refreshSkillButtons(); // redraw to show Items tab if available
     }
 
+    /** Sprint 13 B3 — pass the active stage ID to the controller so environmental
+     *  modifiers (stage_2: -5 acc, stage_3: +1 stress/turn) are applied. Must be
+     *  called before {@link CombatController#start()}, i.e. before the screen
+     *  constructor finishes. Use the setter pattern (like setRunSession) so callers
+     *  that don't have a stage can simply omit the call. */
+    public void setStageId(String stageId) {
+        controller.setStageId(stageId);
+    }
+
     private void showContinueButton(CombatEncounter.Side winner) {
         if (onWin == null && onLose == null) return; // standalone mode — no callback wiring
         skillTable.clear();
@@ -718,6 +728,8 @@ public class CombatScreen implements Screen {
         mux.addProcessor(new CombatInputAdapter());
         Gdx.input.setInputProcessor(mux);
         if (audio != null) audio.playMusic("combat_theme", true);
+        // Sprint 13 B3: start controller here (after setStageId/setRunSession are called).
+        controller.start();
     }
 
     @Override

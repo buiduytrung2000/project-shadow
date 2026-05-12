@@ -70,7 +70,7 @@ class EnemyHitRateTest {
                 skillData.isOffensive(), skillData.targetType(),
                 skillData.damageMultiplier(), skillData.accuracyModifier(), skillData.cooldown(),
                 skillData.effectId(), skillData.effectValue(), null, null,
-                skillData.stressDamage(), "Common", skillData.descriptionVn()
+                skillData.stressDamage(), "Common", skillData.descriptionVn(), null
         );
 
         int trials = 1000;
@@ -93,7 +93,7 @@ class EnemyHitRateTest {
                 es.isOffensive(), es.targetType(),
                 es.damageMultiplier(), es.accuracyModifier(), es.cooldown(),
                 es.effectId(), es.effectValue(), null, null,
-                es.stressDamage(), "Common", es.descriptionVn()
+                es.stressDamage(), "Common", es.descriptionVn(), null
         );
     }
 }

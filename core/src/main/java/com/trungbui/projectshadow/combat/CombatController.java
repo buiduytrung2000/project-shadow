@@ -65,6 +65,9 @@ public class CombatController {
     private final List<String> log = new ArrayList<>();
     private Listener listener = new Listener() {
     };
+    /** Sprint 13 B3 — stage ID for environmental modifier dispatch.
+     *  Null = no env mod (stage 1 default, or tests). */
+    private String stageId = null;
     /** Sprint 12 B3 — optional run session reference. Set by the UI screen
      *  before combat starts so {@link #useItem(String, Combatant)} can
      *  consume from the run inventory. Tests that don't use items leave it
@@ -105,6 +108,13 @@ public class CombatController {
         this.runSession = runSession;
     }
 
+    /** Sprint 13 B3 — set the active stage ID so environmental modifiers
+     *  (stage_2: -5 acc, stage_3: +1 stress/turn) are applied on combat start.
+     *  Call before {@link #start()}. Pass {@code null} to disable env mods. */
+    public void setStageId(String stageId) {
+        this.stageId = stageId;
+    }
+
     /**
      * Sprint 12 B3 — use a consumable item from the run inventory on
      * {@code target}. Returns {@code true} if the item was used (and the turn
@@ -141,8 +151,8 @@ public class CombatController {
     }
 
     public void start() {
-        // Sprint 11 B2 — reset per-combat condition counters (Bloodthirsty stacks etc).
-        ConditionResolver.onCombatStart(encounter);
+        // Sprint 11 B2 — reset per-combat condition counters; Sprint 13 B3 — env mod.
+        ConditionResolver.onCombatStart(encounter, stageId);
         // Sprint 11 B3 — reset boss one-shot tracker.
         usedBossSkillsThisCombat.clear();
         encounter.startRound();
@@ -603,7 +613,7 @@ public class CombatController {
                 es.isOffensive(), es.targetType(),
                 es.damageMultiplier(), es.accuracyModifier(), es.cooldown(),
                 es.effectId(), es.effectValue(), null, null,
-                es.stressDamage(), "Common", es.descriptionVn()
+                es.stressDamage(), "Common", es.descriptionVn(), null
         );
     }
 

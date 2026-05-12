@@ -19,11 +19,24 @@ public record SkillData(
         String effectNotes,
         int stressDamage,
         String rarity,
-        String descriptionVn
+        String descriptionVn,
+        String descriptionEn
 ) {
     /** Returns the locale-appropriate name (EN if {@link I18n#isEnglish()}, else VN). */
     public String displayName() {
         return I18n.isEnglish() && nameEn != null && !nameEn.isBlank() ? nameEn : nameVn;
+    }
+
+    /**
+     * Sprint 13 B2 — Returns the locale-appropriate description. Falls back to
+     * {@code descriptionVn} when the EN description is absent or empty, so skills
+     * with untranslated EN text still show something rather than blank tooltip.
+     */
+    public String displayDescription() {
+        if (I18n.isEnglish() && descriptionEn != null && !descriptionEn.isBlank()) {
+            return descriptionEn;
+        }
+        return descriptionVn != null ? descriptionVn : "";
     }
 
     /** Sentinel for "no actor context" in {@link #formattedDescription(int, int)}. */
@@ -50,8 +63,9 @@ public record SkillData(
      */
     public String formattedDescription(int actorDmgMin, int actorDmgMax) {
         StringBuilder sb = new StringBuilder();
-        if (descriptionVn != null && !descriptionVn.isBlank()) {
-            sb.append(descriptionVn).append("\n\n");
+        String desc = displayDescription();
+        if (!desc.isBlank()) {
+            sb.append(desc).append("\n\n");
         }
         // Sprint 11 B1: prefer actual damage range when context is provided AND
         // skill is offensive with positive multiplier. Otherwise show the

@@ -18,6 +18,8 @@ public class Enemy implements Combatant {
     private final Map<String, Integer> skillCooldowns;
     private final boolean boss;
     private final ActiveEffects activeEffects;
+    /** Sprint 13 B1 — absorb shield HP. */
+    private int shieldHp = 0;
 
     public Enemy(EnemyData data, Position position) {
         this(data, position, Collections.emptyMap());
@@ -126,5 +128,17 @@ public class Enemy implements Combatant {
 
     public EnemyData data() {
         return data;
+    }
+
+    // ───── Sprint 13 B1 — Absorb shield ─────
+
+    @Override
+    public int shieldHp() {
+        return shieldHp;
+    }
+
+    @Override
+    public void setShieldHp(int shield) {
+        this.shieldHp = Math.max(0, shield);
     }
 }
