@@ -28,7 +28,9 @@ jobs:
           restore-keys: gradle-
 
       - name: Run tests
-        run: ./gradlew core:test --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew core:test --no-daemon
 
       - name: Upload test results
         if: always()
