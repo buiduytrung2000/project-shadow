@@ -35,6 +35,7 @@ import com.trungbui.projectshadow.domain.Enemy;
 import com.trungbui.projectshadow.domain.Hero;
 import com.trungbui.projectshadow.render.CombatRenderer;
 import com.trungbui.projectshadow.render.CombatantView;
+import com.trungbui.projectshadow.render.FloatingTextManager;
 import com.trungbui.projectshadow.render.ParticleSystem;
 
 import java.util.ArrayList;
@@ -63,6 +64,15 @@ public class CombatScreen implements Screen {
     private final CombatRenderer renderer;
     private final CombatController controller;
     private final ParticleSystem particles = new ParticleSystem();
+    /** Sprint 13 B4 — floating combat text (damage numbers, heal, miss). */
+    private final FloatingTextManager floatingTexts = new FloatingTextManager();
+    /** Sprint 13 B4 — screen shake timer (seconds remaining). */
+    private float shakeTimer = 0f;
+    /** Sprint 13 B4 — screen shake magnitude in world units. */
+    private float shakeMagnitude = 0f;
+    /** Sprint 13 B4 — camera rest position (restored when shake ends). */
+    private float originalCamX = 0f;
+    private float originalCamY = 0f;
     private final Runnable onWin;
     private final Runnable onLose;
     /** Sprint 10 B3 — supplies the reward to show in CombatRewardPopup at end of
@@ -79,6 +89,8 @@ public class CombatScreen implements Screen {
     private List<CombatantView> heroViews = List.of();
     private List<CombatantView> enemyViews = List.of();
 
+    /** Sprint 13 B4 — font for floating combat text. Set in constructor, same as UI font. */
+    private BitmapFont combatFont;
     private final Table skillTable;
     private final Label statusLabel;
     private final Label logLabel;
@@ -131,6 +143,7 @@ public class CombatScreen implements Screen {
         this.batch = new SpriteBatch();
         this.fontFactory = new FontFactory(Gdx.files.internal("fonts/BeVietnamPro-Regular.ttf"));
         BitmapFont vnFont = fontFactory.create(FONT_SIZE_PX);
+        this.combatFont = vnFont;
         this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = vnFont;
         skin.get(TextButton.TextButtonStyle.class).font = vnFont;
@@ -158,8 +171,11 @@ public class CombatScreen implements Screen {
                 triggerAttackView(attacker);
                 triggerHitView(target);
                 pushLog(formatActionLog(attacker, target, skill, result));
-                playActionSfx(skill, result);
+                playActionSfx(skill, result, target);
                 emitActionParticles(target, skill, result);
+                spawnFloatingText(target, skill, result);
+                // Sprint 13 B4 — screen shake on crit.
+                if (result.hit() && result.crit()) shake(0.15f, 4f);
             }
 
             @Override
@@ -198,6 +214,8 @@ public class CombatScreen implements Screen {
             @Override
             public void onHeroHeartAttack(Hero hero) {
                 pushLog(I18n.t("combat.log.heartAttack", hero.data().displayName()));
+                // Sprint 13 B4 — dramatic shake on hero heart attack.
+                shake(0.4f, 10f);
             }
 
             @Override
@@ -208,6 +226,8 @@ public class CombatScreen implements Screen {
                 // we just amplify the visual moment here.
                 pushLog(I18n.t("combat.log.bossDeath", boss.id()));
                 triggerBossDeathZoom(boss);
+                // Sprint 13 B4 — heavy shake on boss death.
+                shake(0.5f, 12f);
             }
         });
 
@@ -334,6 +354,7 @@ public class CombatScreen implements Screen {
                 @Override
                 public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                     if (btn.isDisabled()) return;
+                    if (audio != null) audio.playSfx("sfx_ui_click");
                     onSkillButtonClicked(index);
                 }
             });
@@ -451,6 +472,7 @@ public class CombatScreen implements Screen {
             btn.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                    if (audio != null) audio.playSfx("sfx_ui_click");
                     onItemButtonClicked(itemId);
                 }
             });
@@ -677,6 +699,25 @@ public class CombatScreen implements Screen {
      *  if the view isn't a stage actor (current pure-renderer design), we just
      *  flag it for the renderer (no-op stub for now; CombatRenderer can pick up
      *  a "zoom factor" field per view in a follow-up). */
+    /**
+     * Sprint 13 B4 — triggers a camera shake.
+     *
+     * <p>Original camera position is only captured when starting a fresh shake
+     * (shakeTimer was 0). Overlapping shakes keep the first resting position so
+     * the camera never drifts from the true rest origin.</p>
+     *
+     * @param duration  how long (seconds) the shake lasts
+     * @param magnitude peak offset in world units
+     */
+    void shake(float duration, float magnitude) {
+        if (shakeTimer <= 0f) {
+            originalCamX = camera.position.x;
+            originalCamY = camera.position.y;
+        }
+        shakeTimer = Math.max(shakeTimer, duration);
+        shakeMagnitude = magnitude;
+    }
+
     private void triggerBossDeathZoom(Combatant boss) {
         if (boss == null) return;
         for (CombatantView v : enemyViews) {
@@ -701,16 +742,63 @@ public class CombatScreen implements Screen {
         logLabel.setText(String.join("\n", logBuffer));
     }
 
-    private void playActionSfx(SkillData skill, AttackResult r) {
+    /**
+     * Sprint 13 B4 — plays SFX for a resolved action using manifest keys.
+     * Files may be missing (lazy-load tolerant); AudioManager handles that gracefully.
+     *
+     * @param skill  the skill that was used
+     * @param r      the attack result
+     * @param target the combatant that was targeted
+     */
+    private void playActionSfx(SkillData skill, AttackResult r, Combatant target) {
         if (audio == null) return;
         if (!skill.isOffensive()) {
-            audio.playSfx("heal");
+            // Heal / support skill.
+            audio.playSfx("sfx_item_use");
         } else if (!r.hit()) {
-            audio.playSfx("miss");
-        } else if (r.crit()) {
-            audio.playSfx("crit");
+            // Miss.
+            audio.playSfx("sfx_attack_slash");
         } else {
-            audio.playSfx("hit");
+            // Hit (crit or normal) — play attack sound first.
+            audio.playSfx("sfx_attack_slash");
+            // Then play hurt / death sound on the target.
+            if (target instanceof Hero) {
+                if (!target.isAlive()) {
+                    audio.playSfx("sfx_death_hero");
+                } else {
+                    audio.playSfx("sfx_hurt_hero");
+                }
+            } else {
+                if (!target.isAlive()) {
+                    audio.playSfx("sfx_death_enemy");
+                } else {
+                    audio.playSfx("sfx_hurt_enemy");
+                }
+            }
+        }
+    }
+
+    /**
+     * Sprint 13 B4 — spawns a floating text entry above the target combatant.
+     * Uses the view's position to derive world coordinates.
+     */
+    private void spawnFloatingText(Combatant target, SkillData skill, AttackResult result) {
+        CombatantView v = findView(target);
+        if (v == null) return;
+        float cx = v.x() + v.width() / 2f;
+        float cy = v.y() + v.height() + 30f; // above the combatant sprite
+
+        if (!skill.isOffensive()) {
+            // Heal / support: show healed HP if damage is positive (used as heal magnitude here).
+            if (result.hpDamage() > 0) {
+                floatingTexts.spawn(cx, cy, "+" + result.hpDamage(), Color.GREEN, false);
+            }
+        } else if (!result.hit()) {
+            floatingTexts.spawn(cx, cy, "MISS", Color.GRAY, false);
+        } else if (result.crit()) {
+            floatingTexts.spawn(cx, cy, "-" + result.hpDamage() + "!", Color.YELLOW, true);
+        } else {
+            floatingTexts.spawn(cx, cy, "-" + result.hpDamage(), Color.WHITE, false);
         }
     }
 
@@ -776,9 +864,28 @@ public class CombatScreen implements Screen {
         for (CombatantView v : heroViews) v.update(delta);
         for (CombatantView v : enemyViews) v.update(delta);
         particles.update(delta);
+        floatingTexts.update(delta);
 
         renderer.renderBackground();
-        camera.update();
+
+        // Sprint 13 B4 — screen shake: offset camera while shakeTimer > 0.
+        if (shakeTimer > 0f) {
+            com.badlogic.gdx.math.MathUtils.random.setSeed(System.nanoTime()); // entropy
+            float ox = com.badlogic.gdx.math.MathUtils.random(-shakeMagnitude, shakeMagnitude);
+            float oy = com.badlogic.gdx.math.MathUtils.random(-shakeMagnitude, shakeMagnitude);
+            camera.position.x = originalCamX + ox;
+            camera.position.y = originalCamY + oy;
+            camera.update();
+            shakeTimer -= delta;
+            if (shakeTimer <= 0f) {
+                shakeTimer = 0f;
+                camera.position.x = originalCamX;
+                camera.position.y = originalCamY;
+                camera.update();
+            }
+        } else {
+            camera.update();
+        }
 
         renderer.renderCombatants(camera, heroViews, enemyViews,
                 controller.currentActor().orElse(null), highlightedTargets);
@@ -786,6 +893,9 @@ public class CombatScreen implements Screen {
         // Particles drawn on top of combatants but under UI
         renderer.shapes().setProjectionMatrix(camera.combined);
         particles.render(renderer.shapes());
+
+        // Sprint 13 B4 — floating text rendered after particles, before UI.
+        renderer.renderFloatingTexts(camera, floatingTexts, combatFont);
 
         uiStage.act(delta);
         uiStage.draw();

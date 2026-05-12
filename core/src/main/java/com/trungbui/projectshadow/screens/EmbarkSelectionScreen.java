@@ -128,7 +128,10 @@ public class EmbarkSelectionScreen implements Screen {
         embark.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
-                if (selected.size() == PARTY_SIZE) game.startNewRun(List.copyOf(selected));
+                if (selected.size() == PARTY_SIZE) {
+                    if (game.audio() != null) game.audio().playSfx("sfx_ui_click");
+                    game.startNewRun(List.copyOf(selected));
+                }
             }
         });
 

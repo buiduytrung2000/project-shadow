@@ -2,6 +2,7 @@ package com.trungbui.projectshadow.render;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -252,6 +253,25 @@ public class CombatRenderer implements Disposable {
                 // No drawable available — skip icon in this context (tests / headless).
             }
         }
+    }
+
+    /**
+     * Sprint 13 B4 — renders all live floating text entries using the given font.
+     * Opens a new spriteBatch pass (begin/end). No-op if manager is null or empty.
+     *
+     * @param manager the floating text manager (may be null)
+     * @param camera  projection matrix source
+     * @param font    font to draw with
+     */
+    public void renderFloatingTexts(
+            com.badlogic.gdx.graphics.OrthographicCamera camera,
+            FloatingTextManager manager,
+            BitmapFont font) {
+        if (manager == null || font == null || manager.activeCount() == 0) return;
+        spriteBatch.setProjectionMatrix(camera.combined);
+        spriteBatch.begin();
+        manager.render(spriteBatch, font);
+        spriteBatch.end();
     }
 
     /** Draws a named icon drawable at the given position. Skips if not in skin. */

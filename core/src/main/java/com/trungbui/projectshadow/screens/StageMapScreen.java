@@ -204,6 +204,13 @@ public class StageMapScreen implements Screen {
                 btn.addListener(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                        // Sprint 13 B4 — SFX: boss/elite nodes → level_enter, others → ui_click.
+                        if (game.audio() != null) {
+                            boolean isImportant = node.type() == NodeType.BOSS
+                                    || node.type() == NodeType.ELITE
+                                    || node.type() == NodeType.MINIBOSS;
+                            game.audio().playSfx(isImportant ? "sfx_level_enter" : "sfx_ui_click");
+                        }
                         game.enterNode(node);
                     }
                 });

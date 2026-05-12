@@ -1,6 +1,7 @@
 .gitkeep
 audio/.sfx-manifest.json
 audio/README.md
+audio/sfx/.gitkeep
 data/diseases_traits.csv
 data/effects.csv
 data/enemies.csv
