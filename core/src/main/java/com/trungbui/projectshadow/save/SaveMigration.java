@@ -27,8 +27,9 @@ public final class SaveMigration {
 
     /** Current schema version for {@link RunState}.
      *  v1 → v2 (Sprint 13 B2): added {@code consecutiveNodesCleared},
-     *  {@code enemiesKilled}, {@code heirloomEarned}. */
-    public static final int CURRENT_RUN_VERSION = 2;
+     *  {@code enemiesKilled}, {@code heirloomEarned}.
+     *  v2 → v3 (post-Sprint-13 Fix E): added {@code heroDamageDealt} map. */
+    public static final int CURRENT_RUN_VERSION = 3;
 
     /** Current schema version for {@link MetaState}. Bumped 1→2 in Sprint 10 B1
      *  when {@code heirloom} + {@code buildingLevels} + {@code cureSlotsUsedThisVisit}
@@ -56,9 +57,9 @@ public final class SaveMigration {
                             + " is newer than supported (" + CURRENT_RUN_VERSION + ")"
                             + ". This save was created by a newer build of the game.");
         }
-        // Sprint 13 B2 — v1→v2 migration: back-fill new fields with defaults (0).
-        // Jackson will default missing ints to 0; we just bump the version field so
-        // the loaded record reports v2.
+        // Migrate old saves to current version. Jackson will default missing fields
+        // (ints → 0, Map → null, which the compact constructor normalises to empty).
+        // We just bump the version field so the loaded record reports the current version.
         if (version < CURRENT_RUN_VERSION && root.isObject()) {
             ((com.fasterxml.jackson.databind.node.ObjectNode) root)
                     .put("saveVersion", CURRENT_RUN_VERSION);

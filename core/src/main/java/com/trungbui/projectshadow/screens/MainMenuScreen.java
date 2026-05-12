@@ -63,7 +63,7 @@ public class MainMenuScreen implements Screen {
         newGame.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
-                game.returnToHamlet();
+                game.startFreshGame();
             }
         });
 

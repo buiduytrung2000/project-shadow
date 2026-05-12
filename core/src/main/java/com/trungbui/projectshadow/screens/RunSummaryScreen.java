@@ -22,6 +22,7 @@ import com.trungbui.projectshadow.ui.SkinLoader;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Sprint 13 B2 — run summary screen shown after party-wipe or stage boss kill.
@@ -59,6 +60,7 @@ public class RunSummaryScreen implements Screen {
         this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = bodyFont;
         skin.get(TextButton.TextButtonStyle.class).font = bodyFont;
+        SkinLoader.overrideFont(skin, bodyFont);
         this.uiStage = new Stage(viewport);
 
         Table root = new Table();
@@ -74,11 +76,13 @@ public class RunSummaryScreen implements Screen {
         addStatRow(root, skin, I18n.t("run_summary.heirloom", state.heirloomEarned()));
         addStatRow(root, skin, I18n.t("run_summary.enemies_killed", state.enemiesKilled()));
 
-        // MVP hero
-        Hero mvp = findMvp(party);
+        // MVP hero — prefer persisted RunState damage map; fall back to Hero.currentRunDamage
+        // for runs created before Fix E (legacy compat).
+        Hero mvp = findMvp(state.heroDamageDealt(), party);
         if (mvp != null) {
+            int mvpDmg = state.heroDamageDealt().getOrDefault(mvp.id(), mvp.currentRunDamage());
             addStatRow(root, skin, I18n.t("run_summary.mvp",
-                    mvp.data().displayName(), mvp.currentRunDamage()));
+                    mvp.data().displayName(), mvpDmg));
         }
 
         TextButton hamletBtn = new TextButton(I18n.t("run_summary.return_to_hamlet"), skin);
@@ -100,14 +104,30 @@ public class RunSummaryScreen implements Screen {
         root.add(lbl).pad(12).row();
     }
 
-    /** Find the hero with the highest {@link Hero#currentRunDamage()} in {@code party}.
-     *  Returns null if party is empty or all heroes dealt 0 damage. */
-    static Hero findMvp(List<Hero> party) {
+    /**
+     * Find the MVP hero using the persisted {@code heroDamageDealt} map from RunState.
+     * Falls back to {@link Hero#currentRunDamage()} for legacy runs without the map.
+     * Returns null if party is empty or all heroes dealt 0 damage.
+     */
+    static Hero findMvp(Map<String, Integer> heroDamageDealt, List<Hero> party) {
         if (party == null || party.isEmpty()) return null;
+        if (heroDamageDealt != null && !heroDamageDealt.isEmpty()) {
+            return party.stream()
+                    .filter(h -> heroDamageDealt.getOrDefault(h.id(), 0) > 0)
+                    .max(Comparator.comparingInt(h -> heroDamageDealt.getOrDefault(h.id(), 0)))
+                    .orElse(null);
+        }
+        // Legacy fallback: use Hero.currentRunDamage (transient, not persisted).
         Hero mvp = party.stream()
                 .max(Comparator.comparingInt(Hero::currentRunDamage))
                 .orElse(null);
         return (mvp != null && mvp.currentRunDamage() > 0) ? mvp : null;
+    }
+
+    /** @deprecated Use {@link #findMvp(Map, List)} instead. Kept for test compat. */
+    @Deprecated
+    static Hero findMvp(List<Hero> party) {
+        return findMvp(Map.of(), party);
     }
 
     @Override

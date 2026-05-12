@@ -57,6 +57,7 @@ public class EmbarkSelectionScreen implements Screen {
         this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = bodyFont;
         skin.get(TextButton.TextButtonStyle.class).font = bodyFont;
+        SkinLoader.overrideFont(skin, bodyFont);
         this.uiStage = new Stage(viewport);
 
         this.root = new Table();
@@ -111,6 +112,7 @@ public class EmbarkSelectionScreen implements Screen {
             if (SkinLoader.hasComponents(skin) && skin.has(SkinLoader.FRAME_PORTRAIT, Drawable.class)) {
                 Container<Label> framed = new Container<>(heroLabel);
                 framed.background(skin.getDrawable(SkinLoader.FRAME_PORTRAIT));
+                framed.setColor(1f, 1f, 1f, 0.7f);
                 framed.pad(8f);
                 root.add(framed).pad(8).left();
             } else {

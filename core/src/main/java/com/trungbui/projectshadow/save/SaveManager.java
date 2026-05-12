@@ -130,6 +130,23 @@ public class SaveManager {
         return Files.deleteIfExists(filePathFor(runId, true));
     }
 
+    /**
+     * Archive every currently-active save file (move all {@code run_*.json} from
+     * {@code baseDir} to {@code archive/}). Called by {@code ProjectShadowGame.startFreshGame()}
+     * to honour the permadeath contract — saves are never deleted, only archived — while
+     * clearing the active-run list so the next Hamlet session starts clean.
+     *
+     * @return number of saves archived
+     */
+    public int archiveActiveRun() throws IOException {
+        List<String> active = listActiveSaves();
+        int count = 0;
+        for (String runId : active) {
+            if (archive(runId)) count++;
+        }
+        return count;
+    }
+
     public boolean exists(String runId) {
         return Files.exists(filePathFor(runId, false))
                 || Files.exists(filePathFor(runId, true));

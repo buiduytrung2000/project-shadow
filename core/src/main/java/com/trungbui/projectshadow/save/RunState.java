@@ -5,7 +5,9 @@ import com.trungbui.projectshadow.domain.Hero;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public record RunState(
@@ -32,7 +34,11 @@ public record RunState(
         /** Sprint 13 B2 — total enemies killed this run (for Run Summary Screen). */
         int enemiesKilled,
         /** Sprint 13 B2 — total heirloom earned this run (for Run Summary Screen). */
-        int heirloomEarned
+        int heirloomEarned,
+        /** Fix E (post-Sprint-13) — total HP damage dealt per hero this run.
+         *  heroId → cumulative damage. Persisted so MVP survives save/resume.
+         *  Replaces the transient {@code Hero.currentRunDamage} field. */
+        Map<String, Integer> heroDamageDealt
 ) {
     public RunState {
         if (saveVersion < 1) saveVersion = 1; // Backward-compat: pre-B3 saves had no version field.
@@ -42,6 +48,7 @@ public record RunState(
         if (consecutiveNodesCleared < 0) consecutiveNodesCleared = 0;
         if (enemiesKilled < 0) enemiesKilled = 0;
         if (heirloomEarned < 0) heirloomEarned = 0;
+        heroDamageDealt = heroDamageDealt == null ? Map.of() : Map.copyOf(heroDamageDealt);
     }
 
     public static RunState newRun(String stageId, long stageSeed, List<Hero> heroes) {
@@ -62,7 +69,8 @@ public record RunState(
                 false,
                 0,
                 0,
-                0
+                0,
+                Map.of()
         );
     }
 
@@ -75,7 +83,7 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, nodeLabel,
                 newVisited, party, gold, inventory,
                 createdAt, Instant.now(), archived,
-                consecutiveNodesCleared, enemiesKilled, heirloomEarned
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned, heroDamageDealt
         );
     }
 
@@ -85,7 +93,7 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, newParty, gold, inventory,
                 createdAt, Instant.now(), archived,
-                consecutiveNodesCleared, enemiesKilled, heirloomEarned
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned, heroDamageDealt
         );
     }
 
@@ -94,7 +102,7 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, newGold, inventory,
                 createdAt, Instant.now(), archived,
-                consecutiveNodesCleared, enemiesKilled, heirloomEarned
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned, heroDamageDealt
         );
     }
 
@@ -103,7 +111,7 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, newInventory,
                 createdAt, Instant.now(), archived,
-                consecutiveNodesCleared, enemiesKilled, heirloomEarned
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned, heroDamageDealt
         );
     }
 
@@ -113,7 +121,7 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, inventory,
                 createdAt, Instant.now(), archived,
-                consecutiveNodesCleared + 1, enemiesKilled, heirloomEarned
+                consecutiveNodesCleared + 1, enemiesKilled, heirloomEarned, heroDamageDealt
         );
     }
 
@@ -123,7 +131,7 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, inventory,
                 createdAt, Instant.now(), archived,
-                0, enemiesKilled, heirloomEarned
+                0, enemiesKilled, heirloomEarned, heroDamageDealt
         );
     }
 
@@ -133,7 +141,8 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, inventory,
                 createdAt, Instant.now(), archived,
-                consecutiveNodesCleared, enemiesKilled + Math.max(0, delta), heirloomEarned
+                consecutiveNodesCleared, enemiesKilled + Math.max(0, delta), heirloomEarned,
+                heroDamageDealt
         );
     }
 
@@ -143,7 +152,24 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, inventory,
                 createdAt, Instant.now(), archived,
-                consecutiveNodesCleared, enemiesKilled, heirloomEarned + Math.max(0, delta)
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned + Math.max(0, delta),
+                heroDamageDealt
+        );
+    }
+
+    /**
+     * Add {@code delta} damage to the running total for {@code heroId}.
+     * Negative or zero values are ignored.
+     */
+    public RunState withHeroDamageDealt(String heroId, int delta) {
+        if (heroId == null || delta <= 0) return this;
+        Map<String, Integer> updated = new HashMap<>(heroDamageDealt);
+        updated.merge(heroId, delta, Integer::sum);
+        return new RunState(
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
+                visitedNodes, party, gold, inventory,
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned, updated
         );
     }
 
@@ -176,7 +202,7 @@ public record RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, inventory,
                 createdAt, Instant.now(), true,
-                consecutiveNodesCleared, enemiesKilled, heirloomEarned
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned, heroDamageDealt
         );
     }
 

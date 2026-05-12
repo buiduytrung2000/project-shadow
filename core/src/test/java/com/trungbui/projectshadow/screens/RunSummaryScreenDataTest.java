@@ -22,7 +22,7 @@ class RunSummaryScreenDataTest {
                 SaveMigration.CURRENT_RUN_VERSION, "run-test", "stage_1", 42L,
                 null, List.of(), List.of(), gold, List.of(),
                 Instant.now(), Instant.now(), false,
-                0, enemiesKilled, heirloomEarned
+                0, enemiesKilled, heirloomEarned, java.util.Map.of()
         );
     }
 
