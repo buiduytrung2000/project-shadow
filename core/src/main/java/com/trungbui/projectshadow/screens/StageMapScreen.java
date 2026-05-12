@@ -7,11 +7,14 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.trungbui.projectshadow.ProjectShadowGame;
@@ -183,7 +186,7 @@ public class StageMapScreen implements Screen {
             StageNode node = tree.getNode(label).orElseThrow();
 
             String text = label + "\n" + describeNode(node);
-            TextButton btn = new TextButton(text, skin);
+            Actor btn = buildNodeButton(text, node.type());
             btn.setBounds(c.x - NODE_WIDTH / 2f, c.y - NODE_HEIGHT / 2f, NODE_WIDTH, NODE_HEIGHT);
 
             boolean isCurrent = label.equals(currentLabel);
@@ -192,10 +195,10 @@ public class StageMapScreen implements Screen {
 
             if (isCurrent) {
                 btn.setColor(Color.YELLOW);
-                btn.setDisabled(true);
+                if (btn instanceof TextButton tb) tb.setDisabled(true);
             } else if (isVisited) {
                 btn.setColor(Color.DARK_GRAY);
-                btn.setDisabled(true);
+                if (btn instanceof TextButton tb) tb.setDisabled(true);
             } else if (isReachable) {
                 btn.setColor(Color.CYAN);
                 btn.addListener(new ChangeListener() {
@@ -206,10 +209,44 @@ public class StageMapScreen implements Screen {
                 });
             } else {
                 btn.setColor(Color.GRAY);
-                btn.setDisabled(true);
+                if (btn instanceof TextButton tb) tb.setDisabled(true);
             }
             uiStage.addActor(btn);
         }
+    }
+
+    /**
+     * Builds an ImageTextButton with a node-type icon if the components atlas is loaded,
+     * falling back to a plain TextButton otherwise (same pattern as HamletScreen.buildingButton).
+     */
+    private Actor buildNodeButton(String text, NodeType type) {
+        String iconKey = drawableForNodeType(type);
+        if (SkinLoader.hasComponents(skin) && skin.has(iconKey, Drawable.class)) {
+            ImageTextButton.ImageTextButtonStyle base =
+                    skin.has(SkinLoader.STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class)
+                    ? skin.get(SkinLoader.STYLE_PRIMARY_IMAGE_BUTTON, ImageTextButton.ImageTextButtonStyle.class)
+                    : new ImageTextButton.ImageTextButtonStyle(
+                            null, null, null, skin.get(TextButton.TextButtonStyle.class).font);
+            ImageTextButton.ImageTextButtonStyle style = new ImageTextButton.ImageTextButtonStyle(base);
+            style.imageUp = skin.getDrawable(iconKey);
+            ImageTextButton btn = new ImageTextButton(text, style);
+            btn.getImageCell().size(24f).padRight(6f);
+            return btn;
+        }
+        return new TextButton(text, skin);
+    }
+
+    /** Maps a NodeType to the SkinLoader drawable constant name for its icon. */
+    static String drawableForNodeType(NodeType type) {
+        return switch (type) {
+            case COMBAT -> SkinLoader.NODE_COMBAT;
+            case ELITE -> SkinLoader.NODE_ELITE;
+            case MINIBOSS -> SkinLoader.NODE_MINIBOSS;
+            case BOSS -> SkinLoader.NODE_BOSS;
+            case EVENT -> SkinLoader.NODE_EVENT;
+            case REST -> SkinLoader.NODE_REST;
+            case REWARD -> SkinLoader.NODE_REWARD;
+        };
     }
 
     private static String describeType(NodeType t) {

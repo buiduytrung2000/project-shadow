@@ -27,6 +27,7 @@ public final class SettingsManager {
     public static final float DEFAULT_SFX_VOLUME = 0.8f;
     public static final boolean DEFAULT_FULLSCREEN = false;
     public static final String DEFAULT_LOCALE = "vi";
+    public static final boolean DEFAULT_COMBAT_SPEED_2X = false;
 
     private final Path settingsFile;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -35,6 +36,7 @@ public final class SettingsManager {
     private float sfxVolume = DEFAULT_SFX_VOLUME;
     private boolean fullscreen = DEFAULT_FULLSCREEN;
     private String locale = DEFAULT_LOCALE;
+    private boolean combatSpeed2x = DEFAULT_COMBAT_SPEED_2X;
 
     public SettingsManager(Path savesDir) {
         this.settingsFile = savesDir.resolve(FILE_NAME);
@@ -50,6 +52,7 @@ public final class SettingsManager {
             if (root.has("sfxVolume")) sfxVolume = clamp01(root.get("sfxVolume").floatValue());
             if (root.has("fullscreen")) fullscreen = root.get("fullscreen").asBoolean(DEFAULT_FULLSCREEN);
             if (root.has("locale")) locale = root.get("locale").asText(DEFAULT_LOCALE);
+            if (root.has("combatSpeed2x")) combatSpeed2x = root.get("combatSpeed2x").asBoolean(DEFAULT_COMBAT_SPEED_2X);
         } catch (IOException ignored) {
             // Corrupted file — silently keep defaults. UI will offer a "Reset" button.
         }
@@ -63,6 +66,7 @@ public final class SettingsManager {
         root.put("sfxVolume", sfxVolume);
         root.put("fullscreen", fullscreen);
         root.put("locale", locale);
+        root.put("combatSpeed2x", combatSpeed2x);
         Path tmp = settingsFile.resolveSibling(FILE_NAME + ".tmp");
         mapper.writerWithDefaultPrettyPrinter().writeValue(tmp.toFile(), root);
         try {
@@ -77,6 +81,7 @@ public final class SettingsManager {
     public float sfxVolume() { return sfxVolume; }
     public boolean fullscreen() { return fullscreen; }
     public String locale() { return locale; }
+    public boolean combatSpeed2x() { return combatSpeed2x; }
 
     public void setMusicVolume(float v) { musicVolume = clamp01(v); }
     public void setSfxVolume(float v) { sfxVolume = clamp01(v); }
@@ -84,6 +89,7 @@ public final class SettingsManager {
     public void setLocale(String l) {
         if (l != null && !l.isBlank()) locale = l;
     }
+    public void setCombatSpeed2x(boolean v) { combatSpeed2x = v; }
 
     public Path settingsFile() { return settingsFile; }
 

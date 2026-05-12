@@ -5,9 +5,13 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Disposable;
 import com.trungbui.projectshadow.domain.Combatant;
 import com.trungbui.projectshadow.domain.Hero;
+import com.trungbui.projectshadow.effect.EffectInstance;
+import com.trungbui.projectshadow.ui.SkinLoader;
 
 import java.util.List;
 import java.util.Set;
@@ -27,9 +31,21 @@ public class CombatRenderer implements Disposable {
     private static final float HP_BAR_HEIGHT = 18f;
     private static final float STRESS_BAR_HEIGHT = 12f;
 
+    private static final float ICON_SIZE = 16f;
+    private static final float EFFECT_ICON_SIZE = 16f;
+
     private final ShapeRenderer shapes = new ShapeRenderer();
     private final SpriteBatch spriteBatch = new SpriteBatch();
     private final SpriteAtlas spriteAtlas = new SpriteAtlas("sprites/combatants.atlas");
+
+    /** Optional skin for drawing UI icons (HP/Stress bar prefix icons, effect icons).
+     *  Null in headless / test contexts — renderer falls back to plain bars. */
+    private Skin skin;
+
+    /** Sets the skin for icon rendering. Must be called before renderCombatants(). */
+    public void setSkin(Skin skin) {
+        this.skin = skin;
+    }
 
     public ShapeRenderer shapes() {
         return shapes;
@@ -78,14 +94,21 @@ public class CombatRenderer implements Disposable {
         for (CombatantView v : enemies) drawCombatant(v, currentActor, highlightedTargets);
         shapes.end();
 
-        // Sprite layer (drawn on top of fallback rectangles when atlas is loaded)
+        // Sprite layer (drawn on top of fallback rectangles when atlas is loaded),
+        // plus UI icon overlays (HP/Stress bar icons, effect icons).
+        spriteBatch.setProjectionMatrix(camera.combined);
+        spriteBatch.begin();
         if (spriteAtlas.isLoaded()) {
-            spriteBatch.setProjectionMatrix(camera.combined);
-            spriteBatch.begin();
             for (CombatantView v : heroes) drawSprite(v);
             for (CombatantView v : enemies) drawSprite(v);
-            spriteBatch.end();
         }
+        if (skin != null) {
+            for (CombatantView v : heroes) drawBarIcons(v);
+            for (CombatantView v : enemies) drawBarIcons(v);
+            for (CombatantView v : heroes) drawEffectIcons(v);
+            for (CombatantView v : enemies) drawEffectIcons(v);
+        }
+        spriteBatch.end();
     }
 
     private void drawSprite(CombatantView v) {
@@ -157,6 +180,85 @@ public class CombatRenderer implements Disposable {
 
         shapes.setColor(0.62f, 0.30f, 0.85f, 1f);
         shapes.rect(v.x(), y, BAR_WIDTH * ratio, STRESS_BAR_HEIGHT);
+    }
+
+    /**
+     * Draws HP and Stress bar prefix icons (16×16) in the spriteBatch pass.
+     * Must be called inside spriteBatch.begin/end. Skips if skin is null or icons missing.
+     */
+    private void drawBarIcons(CombatantView v) {
+        if (skin == null) return;
+        float hpBarY = v.y() + v.height() + 12f;
+        drawIcon(SkinLoader.ICON_HP, v.x() - ICON_SIZE - 2f, hpBarY, ICON_SIZE, HP_BAR_HEIGHT);
+
+        Combatant c = v.combatant();
+        if (c instanceof Hero) {
+            float stressBarY = v.y() + v.height() + 12f + HP_BAR_HEIGHT + 4f;
+            drawIcon(SkinLoader.ICON_STRESS, v.x() - ICON_SIZE - 2f, stressBarY, ICON_SIZE, STRESS_BAR_HEIGHT);
+        }
+    }
+
+    /**
+     * Draws small colored effect icon boxes (16×16 each) below the combatant sprite.
+     * V1: uses category color boxes (no atlas icon assets required).
+     * Must be called inside spriteBatch.begin/end.
+     */
+    void drawEffectIcons(CombatantView v) {
+        List<EffectInstance> effects = v.combatant().activeEffects().instances();
+        if (effects.isEmpty()) return;
+        float startX = v.x();
+        float iconY = v.y() - EFFECT_ICON_SIZE - 4f;
+        for (int i = 0; i < effects.size(); i++) {
+            EffectInstance ei = effects.get(i);
+            Color box = categoryColor(ei);
+            spriteBatch.setColor(box);
+            // Draw a small colored rectangle as a fallback icon (no atlas needed).
+            // Uses a 1×1 white pixel from the sprite atlas if available; otherwise a
+            // plain color box drawn via spriteBatch (SpriteBatch can draw with a Skin
+            // white-pixel texture when available — here we use the Skin white-pixel).
+            drawColorBox(startX + i * (EFFECT_ICON_SIZE + 2f), iconY, EFFECT_ICON_SIZE, EFFECT_ICON_SIZE);
+            spriteBatch.setColor(Color.WHITE);
+        }
+    }
+
+    /** Returns the category color for an effect instance (red=debuff, blue=buff, purple=disease). */
+    private static Color categoryColor(EffectInstance ei) {
+        String cat = ei.effectId();
+        // Use the effect category field from the EffectData if available via catalog.
+        // Fallback heuristic based on known ID prefixes.
+        if (cat.startsWith("eff_poison") || cat.startsWith("eff_bleed") || cat.startsWith("eff_burn")) {
+            return new Color(0.85f, 0.20f, 0.20f, 0.9f); // red — DoT debuff
+        }
+        if (cat.startsWith("eff_dmg_buff") || cat.startsWith("eff_absorb") || cat.startsWith("eff_heal")) {
+            return new Color(0.20f, 0.70f, 0.30f, 0.9f); // green — buff
+        }
+        // Default purple for disease/other
+        return new Color(0.55f, 0.20f, 0.75f, 0.9f);
+    }
+
+    /** Draws a solid color box using spriteBatch. Requires spriteBatch color to already be set. */
+    private void drawColorBox(float x, float y, float w, float h) {
+        // Use the skin's white-pixel drawable if it has one for a proper filled rect.
+        // If skin is null or missing, fall back to a transparent draw (no-op).
+        if (skin != null && skin.has("white", com.badlogic.gdx.scenes.scene2d.utils.BaseDrawable.class)) {
+            Drawable white = skin.getDrawable("white");
+            white.draw(spriteBatch, x, y, w, h);
+        } else if (skin != null) {
+            // Try the default background as a solid fill fallback.
+            try {
+                Drawable d = skin.getDrawable("default-rect");
+                d.draw(spriteBatch, x, y, w, h);
+            } catch (Exception ignored) {
+                // No drawable available — skip icon in this context (tests / headless).
+            }
+        }
+    }
+
+    /** Draws a named icon drawable at the given position. Skips if not in skin. */
+    private void drawIcon(String iconKey, float x, float y, float w, float h) {
+        if (skin == null || !skin.has(iconKey, Drawable.class)) return;
+        Drawable icon = skin.getDrawable(iconKey);
+        icon.draw(spriteBatch, x, y, w, h);
     }
 
     @Override
