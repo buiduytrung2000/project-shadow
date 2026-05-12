@@ -12,6 +12,7 @@ import com.trungbui.projectshadow.domain.CombatEncounter;
 import com.trungbui.projectshadow.meta.HamletService;
 import com.trungbui.projectshadow.meta.MetaState;
 import com.trungbui.projectshadow.meta.MetaStateManager;
+import com.trungbui.projectshadow.meta.SettingsManager;
 import com.trungbui.projectshadow.run.RunSession;
 import com.trungbui.projectshadow.save.HeroState;
 import com.trungbui.projectshadow.save.SaveManager;
@@ -21,7 +22,10 @@ import com.trungbui.projectshadow.screens.EmbarkSelectionScreen;
 import com.trungbui.projectshadow.screens.GameOverScreen;
 import com.trungbui.projectshadow.screens.GuildScreen;
 import com.trungbui.projectshadow.screens.HamletScreen;
+import com.trungbui.projectshadow.screens.MainMenuScreen;
 import com.trungbui.projectshadow.screens.NodeInfoScreen;
+import com.trungbui.projectshadow.screens.SettingsScreen;
+import com.trungbui.projectshadow.screens.SplashScreen;
 import com.trungbui.projectshadow.screens.StagecoachScreen;
 import com.trungbui.projectshadow.screens.StageMapScreen;
 import com.trungbui.projectshadow.screens.SurvivalistScreen;
@@ -79,6 +83,8 @@ public class ProjectShadowGame extends Game {
     private MetaState meta;
     private RunSession runSession;
     private AudioManager audio;
+    /** Sprint 12 B4 — persistent user settings (audio volume, fullscreen, locale). */
+    private SettingsManager settings;
 
     @Override
     public void create() {
@@ -87,13 +93,37 @@ public class ProjectShadowGame extends Game {
         saveManager = new SaveManager(savesDir);
         metaManager = new MetaStateManager(savesDir);
         audio = new AudioManager();
+        // Sprint 12 B4 — load settings + apply audio volumes + locale.
+        settings = new SettingsManager(savesDir);
+        settings.load();
+        audio.setMusicVolume(settings.musicVolume());
+        audio.setSfxVolume(settings.sfxVolume());
+        com.trungbui.projectshadow.i18n.I18n.setLocale(
+                java.util.Locale.of(settings.locale()));
         try {
             meta = metaManager.loadOrInit(gameData, DEFAULT_ROSTER);
             metaManager.save(meta);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load/save meta state", e);
         }
-        setScreen(new HamletScreen(this));
+        // Sprint 12 B4 — boot into SplashScreen → MainMenu → HamletScreen.
+        setScreen(new SplashScreen(this));
+    }
+
+    public SettingsManager settings() {
+        return settings;
+    }
+
+    public void openMainMenu() {
+        Screen prev = getScreen();
+        setScreen(new MainMenuScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
+    public void openSettings() {
+        Screen prev = getScreen();
+        setScreen(new SettingsScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
     }
 
     @Override
