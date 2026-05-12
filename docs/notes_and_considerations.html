@@ -127,15 +127,24 @@
 <table>
 <thead><tr><th>Tham số</th><th>Giá trị</th><th>Trạng thái</th></tr></thead>
 <tbody>
-<tr><td>Affliction/Virtue ratio</td><td><strong>70/30</strong></td><td><span class="badge done">✅ CHỐT</span> Cần độ khó cao, hệ skills/items đa dạng bổ trợ run dài</td></tr>
-<tr><td>Disease chance after stage</td><td><strong>30%/hero/stage</strong></td><td><span class="badge done">✅ CHỐT</span></td></tr>
-<tr><td>Stress max trước Affliction</td><td>100 (uniform)</td><td><span class="badge maybe">❓ chưa quyết</span> Có nên 100 Common / 80 Rare / 120 Legend? Default 100 cho tất cả.</td></tr>
-<tr><td>Boss HP scaling</td><td><strong>b01=80, b02=110, b03=150</strong></td><td><span class="badge done">✅ CHỐT</span> CSV updated 2026-05-11</td></tr>
-<tr><td>Gold reward per stage</td><td>200/400/1000g per boss + 30-70 per reward node + supplies tax 100/200/400g</td><td><span class="badge done">✅ CHỐT</span> Option C — supplies tax up-front per stage</td></tr>
-<tr><td>Hamlet 3-tier upgrades</td><td>4 buildings × 3 levels — gold + Heirloom</td><td><span class="badge done">✅ CHỐT</span> Full plan locked 2026-05-11 — xem Decision Log</td></tr>
-<tr><td>Hire cost by rarity</td><td>50g Common / 80g Rare / 150g Legend</td><td><span class="badge done">✅ CHỐT</span> Already implemented</td></tr>
+<tr><td>Affliction/Virtue ratio</td><td><strong>70/30</strong></td><td><span class="badge done">✅ CHỐT</span> Bloodthirsty đã reclassified → 7A/5V pool, outer roll giữ nguyên</td></tr>
+<tr><td>Disease chance after stage</td><td><strong>30%/hero/non-boss combat</strong></td><td><span class="badge done">✅ SHIPPED</span> Sprint 12 B2 (PR #19) — <code>HamletService.rollPostCombatDisease</code></td></tr>
+<tr><td>Stress max</td><td>200 (with heart-attack at 200)</td><td><span class="badge done">✅ CHỐT</span> Sprint 9+ Round 2 — AFFLICTION_THRESHOLD=100 + HEART_ATTACK_THRESHOLD=200 instant death</td></tr>
+<tr><td>Boss HP scaling (post Sprint 10 B1 buff)</td><td><strong>b01=100, b02=130, b03=170</strong></td><td><span class="badge done">✅ CHỐT</span> +20HP buff applied per playtest feedback. dmg also +5 each (13-19, 14-20, 15-23).</td></tr>
+<tr><td>Enemy accuracy (post Sprint 11 B1 buff)</td><td>normal=80, miniboss=85, boss=90</td><td><span class="badge done">✅ CHỐT</span> Playtest "enemies miss too much" → uniform buff</td></tr>
+<tr><td>Gold reward per stage</td><td>200/400/1000g per boss + 30-70 per reward node + supplies tax 100/200/400g (debt model from Sprint 11)</td><td><span class="badge done">✅ SHIPPED</span> Supplies tax Sprint 10 B2 (PR #9). Debt model Sprint 11 B1 (PR #12) — gold âm trên hire/refresh/supplies tax paths.</td></tr>
+<tr><td>Hamlet 3-tier upgrades</td><td>4 buildings × 3 levels — gold + Heirloom</td><td><span class="badge done">✅ SHIPPED</span> Sprint 10 B2 (PR #9) — full UI + HamletService methods</td></tr>
+<tr><td>Hire cost by rarity</td><td>50g Common / 80g Rare / 150g Legend</td><td><span class="badge done">✅ CHỐT</span></td></tr>
 <tr><td>Crit multiplier</td><td><strong>1.5×</strong></td><td><span class="badge done">✅ CHỐT</span></td></tr>
-<tr><td>Random variance damage</td><td>±5% (0.95..1.05)</td><td><span class="badge maybe">❓ chưa quyết</span> ±10% tạo risk hơn? Default ±5%.</td></tr>
+<tr><td>Random variance damage</td><td>±5% (0.95..1.05)</td><td><span class="badge done">✅ CHỐT</span> Locked 2026-05-11</td></tr>
+<tr><td>XP system</td><td>Hybrid: per-kill + end-of-stage bonus. Guild level-up needs <code>{100, 200, 350, 500, 750}</code> XP + gold.</td><td><span class="badge done">✅ SHIPPED</span> Sprint 12 B2 (PR #19)</td></tr>
+<tr><td>Stress event hooks</td><td>STRESS_ON_CRIT=5, STRESS_ON_ALLY_DEATH=10</td><td><span class="badge done">✅ SHIPPED</span> Sprint 12 B1 (PR #17) — Sprint 3 spec finally landed</td></tr>
+<tr><td>Recruit traits</td><td>2 random Virtue at recruit (never Affliction)</td><td><span class="badge done">✅ SHIPPED</span> Sprint 12 B2 (PR #19)</td></tr>
+<tr><td>Combat action pacing</td><td>0.7s delay on enemy turn, env <code>SHADOW_ACTION_DELAY</code> override</td><td><span class="badge done">✅ SHIPPED</span> Sprint 11 B1 (PR #12)</td></tr>
+<tr><td>Per-action turn order</td><td>Tail re-sort by effectiveSpeed mid-round; speed buff applies next pick</td><td><span class="badge done">✅ SHIPPED</span> Sprint 12 B4 (PR #25)</td></tr>
+<tr><td>Roster cap</td><td>Soft 20, embark auto-cull excess (picked party protected)</td><td><span class="badge done">✅ SHIPPED</span> Sprint 10 B1 (PR #8)</td></tr>
+<tr><td>Stagecoach refresh cost</td><td>50g/lần (closes save-scum loophole)</td><td><span class="badge done">✅ SHIPPED</span> Sprint 10 B1</td></tr>
+<tr><td>Random run seed</td><td>per-run <code>nextLong()</code>, env <code>SHADOW_FIXED_SEED</code> for dev</td><td><span class="badge done">✅ SHIPPED</span> Sprint 10 B1</td></tr>
 </tbody>
 </table>
 
@@ -201,10 +210,20 @@
 <tr><td><strong>Disease cure: slot system theo Caretaker level</strong></td><td>Lv1=1 hero/visit, Lv2=2, Lv3=4. Cost giảm 30g→25g→20g. Cursed disease KHÔNG cure được (chỉ Paladin Tẩy Trần in combat).</td><td>2026-05-11</td></tr>
 <tr><td><strong>Gold persistence: Option C (supplies tax)</strong></td><td>Tax up-front 100/200/400g cho Stage 1/2/3. Non-refundable. Tạo "investment" feel mỗi run. Boss reward 200/400/1000g tự trang trải tax.</td><td>2026-05-11</td></tr>
 <tr><td><strong>Heirloom currency #2 introduced</strong></td><td>Drop 1/2/4 từ boss Stage 1/2/3. Chỉ dùng cho Hamlet building upgrades. Tạo long-term goal.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Boss HP +20 buff (post-playtest)</strong></td><td>Stage 1 boss chết quá nhanh trong playtest. Buff +20HP / +5dmg cho cả 3 boss → b01=100/130/170. Sprint 10 B1.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Heart-attack stress=200 instant death</strong></td><td>STRESS_MAX=200 với heart-attack instant death tại 200 (extends DD-style). Cross 100 lần đầu vẫn roll affliction/virtue 70/30 (cosmetic add nếu đã chết). Sprint 9+ Round 2.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Bloodthirsty → Affliction (reclassified)</strong></td><td>Trait_07 đổi Resolution Virtue→Affliction. Forced-attack mỗi turn + +5%/kill stack (cap 5). Pool 7A/5V, outer roll unchanged. Sprint 11 B2.</td><td>2026-05-11</td></tr>
+<tr><td><strong>ConditionResolver runtime (data-driven)</strong></td><td>Single resolver class dispatches by Trigger column. 9 conditions runtime (3 trait Sprint 11 B2 + 4 trait + 5 disease Sprint 12 B1 + Cursed Sprint 11 B3).</td><td>2026-05-11</td></tr>
+<tr><td><strong>Debt model (gold âm cho survival paths)</strong></td><td>Hire, refresh, supplies tax không throw nữa nếu thiếu. Player tích "supplies debt", combat reward pay down. Strict throw chỉ cho upgrade/cure/craft. Sprint 11 B1.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Combat action pacing 0.7s</strong></td><td>Enemy turn delayed, player input blocked during window. Anti-spam. Env <code>SHADOW_ACTION_DELAY</code> override. Sprint 11 B1.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Per-action turn-order re-sort</strong></td><td>Tail re-sort by effectiveSpeed before each pick — speed buff mid-round takes effect on next pick. "One action per actor per round" invariant. Sprint 12 B4.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Hybrid XP system</strong></td><td>Per-kill XP (Boss 5×, Miniboss 2.5×, variant 1.2×) + end-of-stage +50 alive hero. Guild level-up requires BOTH gold AND xp {100,200,350,500,750}. Sprint 12 B2.</td><td>2026-05-11</td></tr>
+<tr><td><strong>Recruit 2 random Virtues at Stagecoach</strong></td><td>Sprint 12 B2. Tuyển hero → tự động pick 2 random Virtue. KHÔNG assign Affliction lúc tuyển (chỉ qua stress crossing).</td><td>2026-05-11</td></tr>
+<tr><td><strong>Splash + Main Menu + Settings shipped</strong></td><td>Sprint 12 B4 (PR #25). SettingsManager persists saves/settings.json atomic. Defaults: music 0.6, sfx 0.8, fullscreen false, locale vi.</td><td>2026-05-12</td></tr>
 </tbody>
 </table>
 
-<footer>Project Shadow Notes &middot; cập nhật 2026-05-11</footer>
+<footer>Project Shadow Notes &middot; cập nhật 2026-05-12 (Sprints 1-12 complete, 509 tests passing)</footer>
 </div>
 </body>
 </html>

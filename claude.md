@@ -3,7 +3,7 @@
 > **Tên game:** **Project Shadow** (final, không phải codename)
 > **Genre:** Turn-based dungeon crawl roguelite (lấy cảm hứng Darkest Dungeon)
 > **Engine:** libGDX + JDK 21 · **Target platforms:** Windows, macOS, Linux desktop
-> **Solo dev project** · **Status:** Sprint 9 / 9 (Polish) đang chạy
+> **Solo dev project** · **Status:** Sprints 1-12 complete (MVP feature-complete); Sprint 13+ post-MVP polish / Stages 2-3 content
 
 ---
 
@@ -47,10 +47,10 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
 - `assets/data/skills.csv` — 140 skills
 - `assets/data/effects.csv` — 134 effects (data-driven)
 - `assets/data/items.csv` — 50 items
-- `assets/data/enemies.csv` — 15 enemies (incl. 3 boss + 2 miniboss)
-- `assets/data/enemy_skills.csv` — 23 enemy skills
+- `assets/data/enemies.csv` — 16 enemies (incl. 3 boss + 2 miniboss + Poison Vine, post-Sprint-12 B3)
+- `assets/data/enemy_skills.csv` — 24 enemy skills (post-Sprint-12 B3 +sk_e_poison_strike)
 - `assets/data/events.csv` — 11 events
-- `assets/data/diseases_traits.csv` — 14 traits (6 disease + 8 personality)
+- `assets/data/diseases_traits.csv` — 18 rows (6 disease + 12 trait incl. 6 Affliction + 6 Virtue, post-Sprint-9+ Round 2 + reclassifications)
 - `assets/data/stages/stage_1.json` — Stage 1 (layered_tree, fully implemented)
 - `assets/data/stages/stage_2.json` — Stage 2 spec (boss enemy_b02)
 - `assets/data/stages/stage_3.json` — Stage 3 spec (miniboss layer + final boss enemy_b03)
@@ -378,26 +378,250 @@ Bổ sung 3 AI agents vào dev workflow để automate CI, balance analysis, và
 
 Test count: **488** (unchanged — no Java changes this round).
 
+### Sprint 10 — UI + wiring (PR #8 / #9 / #10, 2026-05-11)
+
+3-branch sequential trilogy. Plan-mode với `AskUserQuestion` cho ambiguous
+decisions. Tất cả 11 backlog items shipped. Mỗi branch base off main, FF-only
+merge tuần tự.
+
+- [x] **PR #8 — `feat/sprint10-foundation`** (commit `9cf5dbe`):
+  - **MetaState v2** — thêm 3 fields: `int heirloom`,
+    `Map<String,Integer> buildingLevels`, `int cureSlotsUsedThisVisit`.
+    Compact constructor back-fills defaults cho legacy v1 saves.
+  - **SaveMigration v1→v2** — bumped `CURRENT_META_VERSION = 2`. Legacy
+    saves auto-migrate qua JSON tree bump trước `treeToValue`.
+  - **Boss balance buff** — `enemies.csv`: b01 HP 80→100, b02 110→130,
+    b03 150→170; all dmg +5. Per post-playtest design lock.
+  - **Random run seed** — `DEFAULT_SEED = 42L` hardcode → bỏ. `generateRunSeed()`
+    dùng `new Random().nextLong()`. Env var `SHADOW_FIXED_SEED` pins for dev/test.
+  - **Stagecoach refresh 50g** — was free. `HamletService.payStagecoachRefresh`
+    deducts, throws via I18n. Closes save-scum loophole.
+  - **Roster cap soft-20 + auto-cull** — `MetaState.SOFT_ROSTER_CAP = 20`.
+    HamletScreen warns when over cap. `HamletService.autoCullRosterToCap`
+    drops random excess on embark; picked party protected.
+  - **+19 tests** (MetaStateBuildingLevels, SaveMigrationV1ToV2,
+    StagecoachRefreshCost, RosterAutoCull).
+
+- [x] **PR #9 — `feat/hamlet-upgrade-ui`** (commit `e41ba3d`):
+  - **4 building upgrade methods** trong HamletService —
+    `upgradeStagecoach/Guild/Survivalist/Caretaker`. Internal
+    `upgradeBuilding()` validates gold + heirloom, deducts, bumps level.
+  - **Caretaker cure slot tracking** — `cureDisease()` enforces
+    `CARETAKER_CURE_SLOTS_BY_LEVEL[level]` (1/2/4). Cost scales 30g→25g→20g.
+    Slot reset trong `applyRunOutcome` (end-of-run, anti-cheese).
+  - **Supplies tax wire** — `paySuppliesTax(meta, stageAct)` deducted
+    trong `startNewRun`. 100/200/400g Stage 1/2/3, non-refundable.
+  - **Heirloom drop from boss** — `handleCombatWin` checks BossNode,
+    grants 1/2/4 via `heirloomFromBoss(stageAct)` → `meta.withHeirloomDelta`.
+    Sprint 8.5 followup finally landed.
+  - **4 Hamlet screens UI** — mỗi screen gain Lv N/3 display +
+    Upgrade button (disabled khi không afford). CaretakerScreen also
+    shows "Slot chữa: {used}/{limit}".
+  - **EmbarkSelectionScreen** — tax preview row + Embark disabled khi
+    không afford tax.
+  - **+24 tests** (HamletUpgrade, CaretakerSlotTracking, SuppliesTax,
+    HeirloomDrop).
+
+- [x] **PR #10 — `feat/pathway-and-reward-ui`** (commit `668956e`):
+  - **Event choice mechanics** — `EventData.choices()` parses 2-3 choices
+    from CSV. NEW records `EventChoice`, `EventOutcome`. `parseOutcomes()`
+    parses DSL `"type=gold|value=300|chance=0.5; type=damage|target=
+    random_hero|value=8-15|chance=0.3"`.
+  - **EventOutcomeApplier** — applies parsed outcomes: gold / stress /
+    damage / skill_cd_reset / trait_apply / disease / item / none.
+    Mystery mode per design lock (no preview).
+  - **RestOptionApplier** — 5 effect types: heal, reduce_stress, buff
+    (Sprint 11 placeholder), `remove_disease` (NEW), `skill_swap`
+    (NEW, flagged for nested UI).
+  - **NodeInfoScreen rewrite** — was Sprint 7 "Continue only" placeholder.
+    Now renders interactive choice/option buttons + feedback line. i18n:
+    removed "Sprint 8 sẽ thêm..." placeholder strings.
+  - **Boss-alt-path** — `stage_1.json` `pre_boss_alt_layer` block + 1 elite
+    PB.A node parallel to layer_3 → boss. Player picks safer resource
+    path vs tougher fight for bonus loot. `PRE_BOSS_ALT_RNG_SALT`
+    preserves seed→layout stability.
+  - **CombatRewardPopup** — end-of-combat reward feedback. 3s auto-dismiss
+    + manual Continue. Wired via `CombatScreen.setRewardProvider`.
+  - **+31 tests** (EventDataParse, EventOutcomeApplier, RestOptionApplier,
+    StageGeneratorBossAltPath).
+
+- [x] **Hotfix `03e9972`** (post-merge crash fix):
+  CombatRewardPopup ném `GdxRuntimeException: No Drawable... "default-pane"`
+  trên mỗi combat win. Fix: fallback chain
+  `resolveFirstAvailableDrawable(skin, "tooltip", "window", "list")`. Plus
+  regression test `CombatRewardPopupSkinTest` (3 cases).
+
+Test count: 325 (post-Round 2) → 344 (B1) → 368 (B2) → **399 (B3)**.
++74 tests. Zero failures throughout. (Round 3/4 UI work happened in
+parallel — Round 3 actually rebased to 451 baseline from PRs #7-18.)
+
+### Sprint 11 — playtest fixes + conditions MVP + boss polish (PR #12 / #13 / #15, 2026-05-11)
+
+Sau Sprint 10, playtest pass reveal 6 friction points. Sprint 11 = 3-branch
+fixes pass + start runtime trait effects (ConditionResolver MVP) + boss
+fights finally have phases.
+
+- [x] **PR #12 — `feat/sprint11-playtest-fixes`** (commit `c267298`):
+  - **DEBT MODEL** — gold negative allowed on survival paths (hire,
+    refresh, supplies tax). Reward pay down debt. Strict-throw retained
+    for upgrade / cure / craft (non-survival). UI buttons stay enabled,
+    turn salmon when unaffordable.
+  - **Enemy hit rate buff** — normal enemies all accuracy 80 (Skeleton
+    variants 75→80); bosses 90 (was 78/82/85); minibosses 85.
+  - **Skill tooltip — actual damage range** — `formattedDescription(actorDmgMin,
+    actorDmgMax)` overload renders `"Dmg X..Y"` instead of multiplier.
+    Non-offensive skills suppress Dmg line. i18n: `skill.tooltip.damageRange`.
+  - **Combat action pacing** — `CombatController.setPacingDelaySec(0.7s)`.
+    UI gate enemy turn after delay, player input blocked during window.
+    `SHADOW_ACTION_DELAY` env var override.
+  - **sk_mk2 multi-hit fix** — skills with `eff_multi_hit` primary effect
+    loop hitCount times. sk_ar6 Bắn Kép → 2 hits. sk_mk2 Liên Hoàn Quyền →
+    3 hits.
+  - **+18 tests** (MetaStateDebt, MultiHitSkill, SkillDataActualDamage,
+    EnemyHitRateBoost). 5 existing tests updated to assert debt outcomes.
+
+- [x] **PR #13 — `feat/condition-resolver-mvp`** (commit `a38beb2`):
+  - **Bloodthirsty (trait_07) reclassified Virtue → Affliction** —
+    forced-attack spec per Sprint 11 design lock. Pool: 7 Affliction /
+    5 Virtue (70/30 outer roll unchanged).
+  - **Hero state additions** — `skipNextAction` (Cowardly), `bloodthirstyStacks`
+    (0..5, +5% dmg per stack), `effectiveDmgMin/Max` override.
+  - **ConditionResolver class** — data-driven dispatch:
+    `onTurnStart` (Cowardly trigger), `onSelfDamage` (Masochist),
+    `onKill` (Bloodthirsty stack), `onCombatStart` (resets),
+    `hasForcedAttack` / `pickForcedAttackSkill` for Bloodthirsty hero AI override.
+    `isImplemented()` registry tracks Sprint 12+ scope.
+  - **CombatController integration** — start() → onCombatStart;
+    advanceTurn() → applyOnTurnStartCondition; executePlayerSkill()
+    consumes skipNextAction + routes forced-attack; resolveAction()
+    detects kill → onKill.
+  - **`Listener.onCowardlySkip(hero)`** — UI hook for stagger anim/toast.
+  - **+15 tests** (Cowardly, Masochist, Bloodthirsty).
+
+- [x] **PR #15 — `feat/boss-phase-and-polish`** (commit `b4db60d`):
+  - **Boss phase logic** — `CombatController.pickEnemySkillId(enemy)`:
+    HP<30% + specialSkill unused → specialSkill (one-shot tracked via
+    `usedBossSkillsThisCombat`); HP<60% + skill2 → 50/50 skill1 vs skill2;
+    else → skill1. Normal enemies unchanged. Resets at start().
+  - **HeroData.baseDodge + levelUpDodge** — new record fields, CSV
+    backward-compatible (default Front=0 / Back=2 by Position). Hero.dodge()
+    now reads data fields (was hardcoded 0).
+  - **Cursed disease wire (dis_06 → -30 dodge)** — `Hero.effectiveDodge()`
+    subtracts 30 if hero has dis_06. Floored at 0.
+  - **Boss death listener + epic zoom** — `Listener.onBossDeath`. Fires
+    once on boss HP→0. CombatScreen logs `"*** BOSS X HAS FALLEN! ***"`.
+    `CombatantView.triggerEpicDeath()` — 1.5s scale-up bell curve peaking
+    at 1.3× (renderer integration in Sprint 12 B3).
+  - **+14 tests** (BossPhaseLogic, BossDeathListener, HeroBaseDodge,
+    CursedDiseaseEffect).
+
+Test count: 399 → 420 (B1) → 435 (B2) → **449 (B3)**. +50 tests.
+
+### Sprint 12 — conditions expansion + progression + item use + main menu (PR #17 / #19 / #22 / #25, 2026-05-11)
+
+Sprint 12 closes ra ngoài backlog: trait/disease runtime hoàn thiện
+(7 conditions added on top of Sprint 11's 3), XP progression, item use
+in combat, main menu/settings. 4-branch trilogy + B4.
+
+- [x] **PR #17 — Sprint 12 B1 conditions expansion** (commit `067d4d3`):
+  - **4 trait effects (afflictions)**:
+    - Paranoid (trait_a01) — on turn start, all alive allies +1 stress
+    - Selfish (trait_a02) — `Hero.heal()` no-op if has trait
+    - Fearful (trait_a03) — `DamageFormula` outgoing × 0.80
+    - Hopeless (trait_a04) — `effectiveAccuracy()` -10
+  - **5 disease effects**:
+    - Fever (dis_01) — `maxHp()` × 0.85, floored at 1
+    - Blindness (dis_02) — `effectiveAccuracy()` -20 (stacks Hopeless)
+    - Nightmare (dis_03) — onTurnStart +2 self stress
+    - Paranoia (dis_04) — 15% executePlayerSkill action-fail
+    - Plague (dis_05) — `maxHp()` × 0.75 + 10%/turn spread to
+      disease-free random alive ally. Fever + Plague multiplicative (×0.6375).
+    - Cursed (dis_06) — already shipped Sprint 11 B3
+  - **Stress event hooks** (Sprint 3 spec finally implemented):
+    - `STRESS_ON_CRIT = 5` — on crit hit, +5 stress to Hero target
+    - `STRESS_ON_ALLY_DEATH = 10` — on Hero death, +10 stress to all alive
+  - **ConditionResolver helpers** — `outgoingDamageMultiplier`,
+    `accuracyDebuff`, `maxHpMultiplier`, `rollParanoiaActionFail`.
+  - **Pre-existing test fix** — `EnemyHitRateTest.bossB01` updated bounds
+    for Sprint 11 acc 90 buff (was 78).
+  - **+19 tests** (Sprint12TraitsAndDiseases, StressEvents).
+
+- [x] **PR #19 — Sprint 12 B2 progression** (commit `3031608`):
+  - **Hybrid XP system** — `Hero.currentXp` accumulator. Per-kill XP:
+    killer = `KILL_XP_BASE × variantMult` (Boss 5×, Miniboss 2.5×,
+    Tank/Special/Assassin 1.2×). Surviving non-killer ally = 50% of that.
+    End-of-stage +50 XP per alive hero on boss kill.
+  - **Guild level-up** — now consumes BOTH gold AND
+    `xpRequiredForNextLevel[currentLevel]={100, 200, 350, 500, 750}`.
+    Throws new `error.notEnoughXp` (i18n VN+EN).
+  - **30% post-combat disease roll** — `HamletService.rollPostCombatDisease`
+    (non-boss combats only). Pool `dis_01..dis_05`. RNG seeded from
+    `stageSeed ^ nodeLabel.hashCode() ^ 0xDEADBEEF`.
+  - **Recruit 2 random Virtues** — `hireHero(meta, id, gd, rng)` picks
+    `TRAITS_AT_RECRUIT = 2` random Virtue traits. Never afflictions.
+  - **GuildScreen UX** — shows `XP X/Y` alongside level. Level-up button
+    needs BOTH gold + XP.
+  - **+19 tests** (HeroXp, KillXpGrant, HireHeroVirtues, PostCombatDiseaseRoll,
+    HamletService::levelUpHero_rejectsInsufficientXp).
+
+- [x] **PR #22 — Sprint 12 B3 item use + polish** (commit `fe33587`):
+  - **Item use in combat (Phase 1 — consumables)** — `ItemUseHandler.apply()`
+    wired effects: `eff_heal`, `eff_stress_reduce` (party-wide). Others
+    log "not yet supported" and still consume action turn (Sprint 13).
+    `CombatController.useItem(itemId, target)` validates inventory,
+    advances turn. `RunSession.setStateForItemUse` mid-combat mutator
+    (no auto-save).
+  - **CombatScreen Items tab** — "Vật phẩm (N)" button toggles to item
+    picker. Heal items enter target-pick; stress reducers fire immediately.
+  - **Bloodthirsty forced-attack UI** — current actor with trait_07: skill
+    buttons grayed, red "Bị Khát Máu — tự động tấn công" indicator.
+    Stage action schedules auto-attack after 0.5s.
+  - **Boss epic-zoom renderer** — `CombatRenderer.drawSprite` reads
+    `CombatantView.epicDeathZoom()` and scales sprite around center.
+    HP bars anchored fixed (Sprint 11 B3 follow-up).
+  - **Poison Vine enemy (Sprint 2 unresolved)** — `enemy_05` Poison Vine
+    (Base, HP 22, dmg 3-5, acc 80, drop item_c01 25%). Skill
+    `sk_e_poison_strike` (0.8× dmg, 50% chance eff_poison 4/turn × 3).
+    Added to stage_1.json combat pool. DataIntegrityTest 15→16 enemies,
+    23→24 enemy_skills.
+  - **+13 tests** (ItemUseHandler, CombatItemUse, PoisonVine).
+
+- [x] **PR #25 — Sprint 12 B4 main menu + turn order** (commit `47e3aee`):
+  - **Per-action turn-order re-sort** — `CombatEncounter.advanceTurn()`
+    re-sorts REMAINING tail by current `effectiveSpeed()` before next pick.
+    Speed buff mid-round takes effect on next pick. "One action per
+    actor per round" invariant preserved.
+  - **SplashScreen** — title, auto-advance after 2.5s or input.
+  - **MainMenuScreen** — New Game / Continue / Settings / Quit.
+  - **SettingsScreen** — music + SFX volume sliders, fullscreen toggle,
+    locale toggle (VN/EN). Live-applies to AudioManager + I18n.
+  - **SettingsManager** — persists `saves/settings.json` (atomic write,
+    same pattern as SaveManager). Defaults: music 0.6, sfx 0.8,
+    fullscreen false, locale vi.
+  - **ProjectShadowGame.create()** — boots into SplashScreen, loads/applies
+    settings before first render.
+  - **+8 tests** (TurnOrderPerActionResort, SettingsManager).
+
+Test count: 449 → 468 (B1) → 488 (B2) → 501 (B3) → **509 (B4)**. +60 tests.
+This closes the unshipped-features backlog from the post-Sprint-9 review pass.
+
 ### Sprint mở rộng (deferred — documented for future sprint)
 - **Reward "combo 3" full feature**: streak bonus (compounding +10% gold,
   capped at 1.5×, reset on rest) + Pick 1 of 3 reward cards (Slay-the-Spire
   style) for elite/miniboss/boss nodes. Plan committed in
   [docs/notes_and_considerations.html](docs/notes_and_considerations.html).
-- **CombatRewardPopup UI**: reward currently applied silently — popup with
-  2-3s display + "Continue" button planned for Sprint 10.
 - **descriptionEn CSV column**: skill tooltips fall back to VN description
   in EN locale until skills.csv adds an English column.
-- **Trait stat effects runtime resolver**: Sprint 9+ Round 2 wired
-  Affliction/Virtue *rolls* + UI display, but the trait effects themselves
-  (Cowardly skip-turn, Masochist stress-to-all, Paranoid stress aura, etc.)
-  are still data-only — `Trigger` column in `diseases_traits.csv` is not
-  consumed at runtime yet. Needs a `TraitEffectResolver` akin to the
-  existing data-driven `ActiveEffects`. Sprint 10.
-- **Supplies Tax + Caretaker cure slots wiring**: constants exist in
-  `HamletService` (`SUPPLIES_TAX_STAGE_*`, `CARETAKER_CURE_SLOTS_BY_LEVEL`)
-  but are never consumed. Wire in Sprint 10 alongside Hamlet upgrade UI.
+- **Stages 2/3 playable content** — JSON specs exist nhưng pools chưa đầy đủ.
+  Sprint 13+.
+- **Item use in combat Phase 2** — `eff_burn`, `eff_dmg_buff`, `eff_absorb`,
+  etc. còn log "not yet supported". Sprint 13+.
+- **UI Round 4 wiring** — atlas + SkinLoader entries có sẵn cho node icons,
+  status icons, frames; chưa wire vào StageMapScreen/CombatRenderer/HamletScreen
+  banner. Mỗi cái là PR riêng.
+- **Freesound SFX integration** — script + manifest có sẵn (Round 5);
+  cần `FREESOUND_API_KEY` + wire vào AudioManager.
 - [ ] Particle effects khi crit/affliction
-- [ ] Splash screen, main menu, settings UI
 - [ ] Aseprite-style animation refinement (tween + 2-3 frame)
 
 ### Out of scope MVP (đã quyết định cắt)
@@ -413,7 +637,20 @@ Test count: **488** (unchanged — no Java changes this round).
 
 ### Đã chốt — design decisions (2026-05-11)
 - ✅ **Affliction/Virtue ratio 70/30** — giữ độ khó cao, skills/items đa dạng bổ trợ
-- ✅ **Boss HP scaling**: b01=80, b02=110, b03=150 (+30 HP/stage)
+- ✅ **Boss HP scaling**: b01=100, b02=130, b03=170 (post Sprint 10 B1 +20 buff; original 80/110/150)
+- ✅ **Boss damage**: b01=13-19, b02=14-20, b03=15-23 (Sprint 10 B1 +5)
+- ✅ **Enemy hit-rate buff (Sprint 11 B1)**: normal enemies acc=80, bosses acc=90, minibosses acc=85
+- ✅ **Bloodthirsty trait reclassified Affliction** (Sprint 11 B2). Pool: 7 Affliction / 5 Virtue, 70/30 outer roll unchanged
+- ✅ **Heart-attack threshold**: stress=200 → hero chết tức thì (Sprint 9+ Round 2)
+- ✅ **Cure slot reset timing**: end-of-run (locked Sprint 10 B2)
+- ✅ **Stagecoach refresh cost**: 50g/lần (Sprint 10 B1)
+- ✅ **Roster cap soft-20 + auto-cull**: vượt cap → embark tự sa thải excess (Sprint 10 B1)
+- ✅ **Random run seed**: per-run nextLong(), env `SHADOW_FIXED_SEED` dev override (Sprint 10 B1)
+- ✅ **Debt model (Sprint 11 B1)**: survival paths (hire/refresh/supplies tax) cho phép gold âm; reward pay down. Strict-throw chỉ cho upgrade/cure/craft.
+- ✅ **Combat action pacing 0.7s**: enemy turn delayed, anti-spam. Env `SHADOW_ACTION_DELAY` override (Sprint 11 B1).
+- ✅ **Hybrid XP system (Sprint 12 B2)**: Hero.currentXp + per-kill grant + end-of-stage bonus. Guild level-up requires gold AND xp `{100,200,350,500,750}`.
+- ✅ **Recruit 2 random Virtues** (Sprint 12 B2): không bao giờ assign affliction lúc tuyển mộ.
+- ✅ **Per-action turn order re-sort** (Sprint 12 B4): tail re-sort theo effectiveSpeed mid-round, "1 action/actor/round" invariant giữ nguyên.
 - ✅ **Crit multiplier 1.5×**
 - ✅ **Disease chance 30%/hero/stage**
 - ✅ **Final game name: "Project Shadow"**
@@ -451,4 +688,4 @@ Test count: **488** (unchanged — no Java changes this round).
 
 ---
 
-*Last update: 2026-05-12 · Tests: **488 passing** ✅ · PixelLab assets: 33 chars/enemies/tiles + **27 UI components** (Round 3+4) · Sprint 9+ Round 4 (UI asset pack Phase 2) merged via PR #24*
+*Last update: 2026-05-12 · Tests: **509 passing** ✅ · PixelLab assets: 33 chars/enemies/tiles + 27 UI components (Round 3+4) + 1 Poison Vine enemy_05 · Sprints 10/11/12 complete via PR #8/#9/#10/#12/#13/#15/#17/#19/#22/#25 · Round 5 dev workflow PR #27 · Sprint 9 balance report PR #28*

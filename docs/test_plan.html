@@ -376,24 +376,27 @@
 
 <h1>Extras — Design Lock 2026-05-11</h1>
 
-<h2>Hamlet economy (3-tier upgrade plan)</h2>
-<p>Constants đã add vào <code>HamletService.java</code>. UI screens + wire-up logic = Sprint 8.5 followup.</p>
-
+<h2>Hamlet economy (3-tier upgrade — SHIPPED Sprint 10 B2)</h2>
 <ul class="checklist">
-  <li>Verify constants visible via test: <code>STAGECOACH_UPGRADE_LV2_GOLD == 300</code>, <code>HEIRLOOM_BOSS_STAGE_3 == 4</code>, ...</li>
-  <li><strong>TODO Sprint 8.5:</strong> MetaState fields cho <code>heirloom</code> + 4 building levels</li>
-  <li><strong>TODO Sprint 8.5:</strong> UI upgrade screens cho 4 building</li>
-  <li><strong>TODO Sprint 8.5:</strong> Apply supplies tax 100/200/400g khi embark stage</li>
-  <li><strong>TODO Sprint 8.5:</strong> Cure slot tracking per Hamlet visit (1/2/4 heroes by lvl)</li>
-  <li><strong>TODO Sprint 8.5:</strong> Boss drop heirloom 1/2/4 trong <code>applyRunOutcome</code></li>
+  <li>✅ Verify constants visible via test: <code>STAGECOACH_UPGRADE_LV2_GOLD == 300</code>, <code>HEIRLOOM_BOSS_STAGE_3 == 4</code>, ... (HamletUpgradeTest)</li>
+  <li>✅ MetaState fields cho <code>heirloom</code> + <code>buildingLevels</code> map — Sprint 10 B1 (MetaState v2)</li>
+  <li>✅ UI upgrade screens cho 4 building — Sprint 10 B2 (Stagecoach/Guild/Survivalist/Caretaker screens)</li>
+  <li>✅ Apply supplies tax 100/200/400g khi embark — Sprint 10 B2 (<code>HamletService.paySuppliesTax</code> + EmbarkSelectionScreen preview)</li>
+  <li>✅ Cure slot tracking per Hamlet visit (Lv1=1, Lv2=2, Lv3=4) + reset end-of-run — Sprint 10 B2 (<code>CaretakerSlotTrackingTest</code>)</li>
+  <li>✅ Boss drop heirloom 1/2/4 — Sprint 10 B2 (<code>handleCombatWin</code> + <code>HeirloomDropTest</code>)</li>
+  <li>Manual: Hamlet → Stagecoach → upgrade Lv1→Lv2 (-300g, -1 heirloom) → button "Đã đạt cấp tối đa" sau Lv3</li>
+  <li>Manual: Caretaker Lv1 → cure 1 disease → slot 1/1 → cure thứ 2 từ chối với i18n error</li>
+  <li>Manual: Embark Stage 1 → preview "Phí tiếp tế Stage 1: 100g" → click Embark → gold -100</li>
+  <li>Manual: Kill stage 1 boss → meta.json shows <code>"heirloom": 1</code></li>
 </ul>
 
-<h2>Boss HP scaling</h2>
+<h2>Boss HP/dmg scaling (UPDATED Sprint 10 B1 + Sprint 11 B1)</h2>
 <ul class="checklist">
-  <li>enemy_b01 HP = 80 (CSV verified)</li>
-  <li>enemy_b02 HP = 110 (CSV verified, was 90)</li>
-  <li>enemy_b03 HP = 150 (CSV verified, was 130)</li>
-  <li>Manual: load Stage 3 boss fight → boss HP bar khởi đầu 150</li>
+  <li>enemy_b01 HP = <strong>100</strong> dmg <strong>13-19</strong> acc <strong>90</strong> (S10 B1 +20HP/+5dmg, S11 B1 acc 78→90)</li>
+  <li>enemy_b02 HP = <strong>130</strong> dmg <strong>14-20</strong> acc <strong>90</strong> (S10 B1 +20HP/+5dmg, S11 B1 acc 82→90)</li>
+  <li>enemy_b03 HP = <strong>170</strong> dmg <strong>15-23</strong> acc <strong>90</strong> (S10 B1 +20HP/+5dmg, S11 B1 acc 85→90)</li>
+  <li>Miniboss mb01/mb02 acc = <strong>85</strong> (S11 B1 80/78→85)</li>
+  <li>Manual: load Stage 1 boss fight → boss HP bar khởi đầu 100</li>
 </ul>
 
 <h2>Bugfix: StageMapScreen double-dispose</h2>
@@ -403,18 +406,130 @@
   <li>NodeInfoScreen path (event/rest/reward node) → no regression, dispose normal</li>
 </ul>
 
+<h2>Bugfix: CombatRewardPopup crash on missing skin drawable (Hotfix `03e9972`)</h2>
+<ul class="checklist">
+  <li>Reproduce: end any combat → expect popup hiển thị (was: <code>GdxRuntimeException: No Drawable... "default-pane"</code>)</li>
+  <li>Verify fallback chain: <code>CombatRewardPopupSkinTest</code> pins "tooltip"/"window"/"list" presence</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 10 — UI + wiring trilogy (PR #8/#9/#10)</h1>
+
+<h2>B1 — Foundation (PR #8)</h2>
+<ul class="checklist">
+  <li>Manual: launch game → start new run → seed log/save shows non-42; restart → different seed → different stage map</li>
+  <li>Manual: Stagecoach → "Refresh (50g)" button → -50g, new offers; thử khi &lt;50g (S11+ debt model: cho phép gold âm)</li>
+  <li>Manual: tuyển 25 hero → embark → tự sa thải 1 hero ngẫu nhiên (không trong party đã pick)</li>
+  <li>Auto: 344 tests (was 325, +19): SaveMigrationV1ToV2, MetaStateBuildingLevels, StagecoachRefreshCost, RosterAutoCull</li>
+</ul>
+
+<h2>B2 — Hamlet upgrade UI (PR #9)</h2>
+<ul class="checklist">
+  <li>Manual: Hamlet → 4 building screens → mỗi screen có "Cấp N/3" + Upgrade button</li>
+  <li>Manual: cure 4 disease với Caretaker Lv3 → slot 4/4 → cure thứ 5 từ chối</li>
+  <li>Manual: Embark Stage 1 với gold = 200 → tax 100 deducted → run state gold = 100</li>
+  <li>Auto: 368 tests (was 344, +24): HamletUpgrade, CaretakerSlotTracking, SuppliesTax, HeirloomDrop</li>
+</ul>
+
+<h2>B3 — Pathway + reward popup (PR #10)</h2>
+<ul class="checklist">
+  <li>Manual: enter event node → 2-3 choice buttons (no outcome preview — mystery mode) → pick → feedback line</li>
+  <li>Manual: enter rest node → 3-4 option buttons → pick "Heal" → HP restored</li>
+  <li>Manual: stage 1 map có visible "PB.A" elite node parallel to layer 3 → boss</li>
+  <li>Manual: win combat → CombatRewardPopup hiển thị "+15g, +1 Bình Máu Nhỏ" → 3s auto-dismiss hoặc Continue click</li>
+  <li>Auto: 399 tests (was 368, +31): EventDataParse, EventOutcomeApplier, RestOptionApplier, StageGeneratorBossAltPath</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 11 — playtest fixes + conditions MVP + boss polish (PR #12/#13/#15)</h1>
+
+<h2>B1 — Playtest fixes (PR #12)</h2>
+<ul class="checklist">
+  <li>Manual: gold = 0 → click Stagecoach hire → gold âm (debt model, KHÔNG throw)</li>
+  <li>Manual: upgrade Hamlet với gold &lt; cost → throw (strict path)</li>
+  <li>Manual: hover skill tooltip → "Dmg 5..8" (actor's actual range, not "×1.2")</li>
+  <li>Manual: enemy turn → 0.7s delay trước action fires, player input blocked</li>
+  <li>Manual: cast sk_mk2 Liên Hoàn Quyền → 3 hits roll independently (was 1 hit)</li>
+  <li>Auto: 420 tests (was 402, +18): MetaStateDebt, MultiHitSkill, SkillDataActualDamage, EnemyHitRateBoost</li>
+</ul>
+
+<h2>B2 — ConditionResolver MVP (PR #13)</h2>
+<ul class="checklist">
+  <li>Manual: stress hero qua 100 → roll Affliction 70% → có thể ra Bloodthirsty (reclassified)</li>
+  <li>Manual: hero với trait_07 Bloodthirsty → skill buttons grayed (forced-attack indicator, B3 chưa wire UI nên text-only)</li>
+  <li>Manual: hero với Cowardly (trait_02) + stress > 50 → 20% turn-start log "X bị Cowardly! Skip turn"</li>
+  <li>Auto: 435 tests (was 420, +15): ConditionResolverCowardly/Masochist/Bloodthirsty</li>
+</ul>
+
+<h2>B3 — Boss phase + baseDodge + Cursed (PR #15)</h2>
+<ul class="checklist">
+  <li>Manual: boss HP &lt; 60% → 50/50 dùng skill2 (putrid_breath / drain_stress) thay vì chỉ skill1</li>
+  <li>Manual: boss HP &lt; 30% → specialSkill (enrage / form_shift) fires ONCE, sau đó skill1</li>
+  <li>Manual: kill boss → log "*** BOSS X HAS FALLEN! ***" + epic-death zoom animation</li>
+  <li>Manual: hero Sát Thủ (high baseDodge) + Cursed → dodge stat giảm 30 (test trên combat)</li>
+  <li>Auto: 449 tests (was 435, +14): BossPhaseLogic, BossDeathListener, HeroBaseDodge, CursedDiseaseEffect</li>
+</ul>
+
+<hr>
+
+<h1>Sprint 12 — conditions expansion + progression + item use + main menu (PR #17/#19/#22/#25)</h1>
+
+<h2>B1 — Conditions expansion (PR #17)</h2>
+<ul class="checklist">
+  <li>Manual: hero với Fever → maxHp × 0.85 (e.g. 30 → 25 HP cap)</li>
+  <li>Manual: hero với Fever + Plague → maxHp × 0.6375 (stacking multiplicative)</li>
+  <li>Manual: hero với Paranoid → every turn-start ally +1 stress</li>
+  <li>Manual: heal cast lên hero Selfish → no-op (heal=0)</li>
+  <li>Manual: enemy crit hit hero → hero +5 stress (STRESS_ON_CRIT)</li>
+  <li>Manual: ally chết → tất cả hero alive +10 stress (STRESS_ON_ALLY_DEATH)</li>
+  <li>Auto: 468 tests (was 449, +19): Sprint12TraitsAndDiseases, StressEvents</li>
+</ul>
+
+<h2>B2 — XP system + 30% disease + 2-virtue recruit (PR #19)</h2>
+<ul class="checklist">
+  <li>Manual: kill enemy → killer earn XP, surviving allies earn 50%</li>
+  <li>Manual: kill boss → +50 XP per alive hero (end-of-stage bonus)</li>
+  <li>Manual: Guild level-up → cần BOTH gold AND xp ({100,200,350,500,750}); error nếu thiếu xp</li>
+  <li>Manual: win non-boss combat → 30% chance random hero mắc disease (visible trong roster screen sau)</li>
+  <li>Manual: tuyển hero tại Stagecoach → có 2 Virtue traits ngẫu nhiên</li>
+  <li>Auto: 488 tests (was 468, +19): HeroXp, KillXpGrant, HireHeroVirtues, PostCombatDiseaseRoll</li>
+</ul>
+
+<h2>B3 — Item use in combat + Poison Vine (PR #22)</h2>
+<ul class="checklist">
+  <li>Manual: combat → "Vật phẩm (N)" button bên cạnh skill row → toggle item picker</li>
+  <li>Manual: use Bình Máu Nhỏ trên hero → +15 HP, item removed, action turn consumed</li>
+  <li>Manual: use Hương Trầm trên party → -20 stress all alive heroes</li>
+  <li>Manual: stage_1 combat → có thể spawn enemy_05 Poison Vine</li>
+  <li>Manual: Poison Vine attack → 50% chance apply eff_poison (4 dmg/turn × 3 turn)</li>
+  <li>Manual: hero với Bloodthirsty current turn → red indicator "Bị Khát Máu — tự động tấn công" → auto-fire skill 1 sau 0.5s</li>
+  <li>Manual: boss death → epic zoom-in animation (renderer-side now visible, 1.3× peak)</li>
+  <li>Auto: 501 tests (was 488, +13): ItemUseHandler, CombatItemUse, PoisonVine</li>
+</ul>
+
+<h2>B4 — Main menu + settings + per-action turn order (PR #25)</h2>
+<ul class="checklist">
+  <li>Manual: launch game → SplashScreen 2.5s hoặc click → MainMenu</li>
+  <li>Manual: MainMenu → New Game / Continue / Settings / Quit buttons functional</li>
+  <li>Manual: Settings → music slider → live volume change. Fullscreen toggle → window switches. Locale toggle → text switches VN/EN immediately</li>
+  <li>Manual: combat → cast speed-buff trên hero giữa round → next turn pick thấy speed mới (per-action re-sort)</li>
+  <li>Manual: settings.json file tạo trong saves/ folder, atomic write (temp+rename)</li>
+  <li>Auto: 509 tests (was 501, +8): TurnOrderPerActionResort, SettingsManager</li>
+</ul>
+
 <hr>
 
 <h1>Known Issues (acceptable cho MVP)</h1>
 <table>
 <thead><tr><th>Issue</th><th>Impact</th><th>Workaround</th></tr></thead>
 <tbody>
-<tr><td>hero_02 thiếu dead animation</td><td>Visual: khi Pháp Sư chết, sprite không animate, chỉ static</td><td>Static frame fallback từ rotations/east.png</td></tr>
-<tr><td>Audio files chưa import</td><td>Không có nhạc/SFX khi chơi</td><td>Console log "Music missing" — sẽ wire khi có file</td></tr>
-<tr><td>3-tier Hamlet upgrade UI chưa có</td><td>Player chỉ dùng được Lv1 (default flat cost)</td><td>Sprint 8.5 followup</td></tr>
-<tr><td>Supplies tax chưa apply khi embark</td><td>Player không bị trừ gold up-front</td><td>Sprint 8.5 followup</td></tr>
-<tr><td>Heirloom currency chưa drop</td><td>Boss kill chỉ drop gold, chưa drop Heirloom token</td><td>Sprint 8.5 followup</td></tr>
-<tr><td>Particle effects một số skill chưa wire</td><td>Skill visual đơn giản</td><td>Sprint 10 polish task</td></tr>
+<tr><td>hero_02 thiếu dead animation</td><td>Visual: khi Pháp Sư chết, sprite không animate, chỉ static</td><td>Static frame fallback từ rotations/east.png. Sprint 13 re-queue PixelLab.</td></tr>
+<tr><td>UI Round 4 atlas chưa wire vào screens</td><td>Node icons, status icons, frames có sẵn nhưng StageMapScreen/CombatRenderer/HamletScreen chưa dùng</td><td>Sprint 13+ opt-in PRs riêng cho từng wiring.</td></tr>
+<tr><td>Item use Phase 2 effects chưa wire (eff_burn, eff_dmg_buff, eff_absorb)</td><td>Cast item với effect chưa support → log "not yet supported", consume turn nhưng không apply effect</td><td>Sprint 13 wires next batch.</td></tr>
+<tr><td>Stages 2-3 content chưa playable</td><td>JSON specs có, pools rỗng → run end after Stage 1 boss</td><td>Sprint 13+ kế hoạch riêng.</td></tr>
+<tr><td>Freesound audio chưa download</td><td>SFX/music chưa wire vào AudioManager</td><td>Script + manifest có sẵn (Round 5); cần FREESOUND_API_KEY.</td></tr>
 </tbody>
 </table>
 
@@ -425,25 +540,27 @@
 <div class="card warn">
 <p><strong>Quy trình:</strong></p>
 <ol>
-  <li><code>./gradlew core:test</code> → 247 tests phải PASS</li>
+  <li><code>./gradlew core:test</code> → <strong>509 tests</strong> phải PASS (post Sprint 12)</li>
   <li><code>./gradlew core:runDemo</code> → CLI verify FK valid</li>
   <li><code>./gradlew core:packAssets</code> → atlas regen không lỗi</li>
-  <li><code>./gradlew lwjgl3:run</code> → game launch không crash, đến HamletScreen</li>
-  <li>Embark stage 1 → playthrough trên 1 path → kill boss → about Hamlet → check meta.json đúng</li>
-  <li>Toggle VN/EN → verify text đổi</li>
+  <li><code>./gradlew lwjgl3:run</code> → game launch không crash, qua SplashScreen → MainMenu → HamletScreen (Sprint 12 B4)</li>
+  <li>Embark stage 1 → playthrough trên 1 path → kill boss → return Hamlet → check meta.json đúng (gold + heirloom)</li>
+  <li>Toggle VN/EN → verify text đổi (qua Settings screen or i18n toggle)</li>
   <li>Quit + relaunch → "Continue Run" hoặc fresh state OK</li>
+  <li>Settings persist: change music volume → quit → relaunch → volume preserved</li>
 </ol>
 </div>
 
-<h2>CI pipeline (TODO Sprint 10)</h2>
+<h2>CI pipeline — SHIPPED (Round 5, PR #27)</h2>
 <ul class="checklist">
-  <li>GitHub Actions: chạy <code>./gradlew core:test</code> trên push/PR</li>
-  <li>Auto build LWJGL jar artifact</li>
-  <li>Auto run packAssets + verify atlas size không tăng vượt 5 MB</li>
-  <li>Lint check: no debug println, no TODO blocking</li>
+  <li>✅ GitHub Actions: chạy <code>./gradlew core:test</code> trên push/PR (`.github/workflows/ci.yml`)</li>
+  <li>✅ Gradle cache (~/.gradle/caches + ~/.gradle/wrapper) → build nhanh hơn lần 2+</li>
+  <li>✅ Test report HTML artifact upload</li>
+  <li>(Future) Auto run packAssets + verify atlas size không tăng vượt 5 MB</li>
+  <li>(Future) Lint check: no debug println, no TODO blocking</li>
 </ul>
 
-<footer>Project Shadow Test Plan &middot; cập nhật 2026-05-11</footer>
+<footer>Project Shadow Test Plan &middot; cập nhật 2026-05-12 (Sprints 1-12 complete, 509 tests passing)</footer>
 </div>
 </body>
 </html>

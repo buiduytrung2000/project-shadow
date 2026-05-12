@@ -381,10 +381,143 @@ Player action?
 <tr><td>Enemy</td><td>dropItem</td><td>items.csv OR <code>KNOWN_TODO_REFS</code> (random_boss_pool, item_gold, random_uncommon_trinket)</td></tr>
 <tr><td>EnemySkill</td><td>effectId</td><td>effects.csv (nullable)</td></tr>
 <tr><td>Stage</td><td>enemiesUsed[], enemySkillsUsed[], eventsUsed[], itemsReferenced[]</td><td>tương ứng</td></tr>
+<tr><td>EventChoice (NEW Sprint 10 B3)</td><td>outcomes: List&lt;EventOutcome&gt; — type/target/value/chance</td><td>Parsed from Choice N Outcomes column DSL (e.g. <code>type=gold|value=300|chance=0.5; type=damage|target=random_hero|value=8-15</code>)</td></tr>
 </tbody>
 </table>
 
-<footer>Project Shadow GDD &middot; cập nhật 2026-05-11</footer>
+<hr>
+
+<h1>11. Save data schema</h1>
+<p>JSON-based save files in <code>saves/</code> directory. Schema versioning gates loads against incompatible-newer-build saves.</p>
+
+<h2>11.1 MetaState v2 (Sprint 10 B1)</h2>
+<pre><code>{
+  "saveVersion": 2,                         // ← bumped 1→2 Sprint 10 B1
+  "gold": 350,
+  "heirloom": 2,                            // ← NEW Sprint 10 B1
+  "roster": [HeroState, ...],
+  "trinketInventory": ["item_t02", ...],
+  "buildingLevels": {                       // ← NEW Sprint 10 B1
+    "stagecoach": 2,
+    "guild": 1,
+    "survivalist": 1,
+    "caretaker": 3
+  },
+  "cureSlotsUsedThisVisit": 1,              // ← NEW Sprint 10 B2; reset at end-of-run
+  "createdAt": "2026-05-11T...",
+  "lastSavedAt": "2026-05-12T..."
+}</code></pre>
+
+<h2>11.2 RunState (Sprint 6 baseline + Sprint 9+ B3 saveVersion + atomic write)</h2>
+<pre><code>{
+  "saveVersion": 1,
+  "runId": "uuid-...",
+  "stageId": "stage_1",
+  "stageSeed": -3294857394857,              // ← random per-run from Sprint 10 B1
+  "currentNodeLabel": "L2.A",
+  "visitedNodes": ["L1.A"],
+  "party": [HeroState (+ currentXp Sprint 12 B2), ...],
+  "gold": 150,                              // ← can be NEGATIVE post Sprint 11 B1 (debt model on survival paths)
+  "inventory": ["item_c01"],
+  "createdAt": "2026-05-12T...",
+  "lastSavedAt": "...",
+  "archived": false
+}</code></pre>
+
+<h2>11.3 SettingsManager (Sprint 12 B4)</h2>
+<pre><code>// saves/settings.json — atomic write (temp+rename)
+{
+  "musicVolume": 0.6,                       // default 0.6
+  "sfxVolume": 0.8,                         // default 0.8
+  "fullscreen": false,
+  "locale": "vi"                            // "vi" | "en"
+}</code></pre>
+
+<h2>11.4 SaveMigration utility (Sprint 9+ B3 + Sprint 10 B1)</h2>
+<ul>
+  <li><code>CURRENT_RUN_VERSION = 1</code></li>
+  <li><code>CURRENT_META_VERSION = 2</code> (Sprint 10 B1)</li>
+  <li><code>loadMeta()</code>: parses JSON tree, bumps <code>saveVersion</code> field to current if older. Compact constructor back-fills new fields (heirloom=0, buildingLevels=all-Lv1, cureSlots=0) for legacy v1 saves.</li>
+  <li><code>IncompatibleSaveException</code>: thrown when JSON <code>saveVersion</code> &gt; current build — prevents silent data loss on downgrade.</li>
+  <li>Atomic write: <code>.tmp</code> sibling + <code>Files.move(ATOMIC_MOVE, REPLACE_EXISTING)</code>. Falls back to <code>REPLACE_EXISTING</code> on filesystems without atomic move.</li>
+</ul>
+
+<h2>11.5 Path traversal guard</h2>
+<p><code>SaveManager.filePathFor(runId)</code> asserts <code>runId</code> matches regex <code>[A-Za-z0-9_-]+</code>. Rejects <code>..</code>, <code>/</code>, <code>\</code>, <code>./</code>, blank. Future-proofs against user-input runId pathways.</p>
+
+<hr>
+
+<h1>12. ConditionResolver runtime (Sprint 11 B2 + Sprint 12 B1)</h1>
+<p>Data-driven trait/disease effect dispatcher. Reads <code>Trigger</code> column from <code>diseases_traits.csv</code> to route handlers. 9 conditions runtime-implemented (3 traits Sprint 11 B2 + 4 traits + 5 diseases Sprint 12 B1 + Cursed Sprint 11 B3).</p>
+
+<pre><code>// Hook points
+ConditionResolver.onCombatStart(encounter)
+    → reset Bloodthirsty stacks, Cowardly flag
+ConditionResolver.onTurnStart(hero, encounter, rng)
+    → Cowardly trigger if stress > 50 (20% skip)
+    → Paranoid aura (+1 stress all allies)
+    → Nightmare (+2 stress self)
+ConditionResolver.onSelfDamage(self, encounter)
+    → Masochist propagates +5 stress to allies
+ConditionResolver.onKill(killer)
+    → Bloodthirsty stack +1 (cap 5)
+
+// Stat aggregators (called in DamageFormula / Hero override)
+outgoingDamageMultiplier(hero)   → Fearful × 0.80
+accuracyDebuff(hero)             → Hopeless -10 + Blindness -20
+maxHpMultiplier(hero)            → Fever × 0.85, Plague × 0.75 (multiplicative)
+rollParanoiaActionFail(hero, rng) → 15% chance fail
+hasForcedAttack(hero)            → Bloodthirsty true
+</code></pre>
+
+<h2>Sprint 3 stress event hooks (Sprint 12 B1 finally landed)</h2>
+<pre><code>STRESS_ON_CRIT = 5            // Enemy crits Hero target → +5 stress
+STRESS_ON_ALLY_DEATH = 10     // Hero dies → all alive heroes +10 stress
+</code></pre>
+
+<hr>
+
+<h1>13. XP system (Sprint 12 B2)</h1>
+<pre><code>// Hero.currentXp accumulator + xpRequiredForNextLevel
+xpRequiredForNextLevel = { 100, 200, 350, 500, 750 }  // Lv 0→1→2→3→4→5
+
+// Per-kill XP grant (CombatController.resolveAction)
+killerXp = KILL_XP_BASE × variantMultiplier
+  where variantMultiplier:
+    Boss → 5.0
+    Miniboss → 2.5
+    Tank / Special / Assassin → 1.2
+    Base → 1.0
+allyXp = killerXp × 0.5  // surviving non-killer allies
+
+// End-of-stage bonus (ProjectShadowGame.handleCombatWin BossNode branch)
++50 XP per alive hero on boss kill
+
+// Guild level-up (HamletService.levelUpHero)
+requires BOTH gold (existing) AND xp (new) — throws error.notEnoughXp if xp insufficient
+</code></pre>
+
+<hr>
+
+<h1>14. Event outcome DSL (Sprint 10 B3)</h1>
+<p>CSV <code>events.csv</code> Choice N Outcomes column uses pipe-separated key=value within semicolon-separated effect list.</p>
+
+<pre><code>// Format: "type=X|target=Y|value=Z|chance=0.5; type=...; ..."
+// Example from event_open_tomb:
+"type=gold|value=300|chance=0.5; type=damage|target=random_hero|value=8-15|chance=0.3; type=stress|target=party|value=10|chance=0.2"
+
+// Supported types (EventOutcomeApplier):
+//   gold              (value: int or "min-max")
+//   stress            (target: party | random_hero, value: int or range)
+//   damage            (target: party | random_hero, value: int or range)
+//   skill_cd_reset    (target: random_hero, value: "all")
+//   trait_apply       (target: random_hero, value: trait_id)
+//   disease           (target: random_hero, value: disease_id)
+//   item              (value: item_id)
+//   none              (no-op, used as fallback in chance distributions)
+</code></pre>
+
+<footer>Project Shadow GDD &middot; cập nhật 2026-05-12 (Sprint 12 complete)</footer>
 </div>
 </body>
 </html>
