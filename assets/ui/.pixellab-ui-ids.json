@@ -40,19 +40,19 @@
     "ui_banner_title": "31fa8c47-212f-4825-9177-60bafaaf901f"
   },
   "effect_status_icons": {
-    "_note": "B2 — 12 effect status icons. UUIDs pending PixelLab generation. Placeholders (16x16 solid-color PNGs) in assets/ui/raw/ for atlas packing.",
-    "status_heal": "PENDING",
-    "status_burn": "PENDING",
-    "status_taunt": "PENDING",
-    "status_buff_dmg": "PENDING",
-    "status_shield": "PENDING",
-    "status_meditate": "PENDING",
-    "status_bleed": "PENDING",
-    "status_poison": "PENDING",
-    "status_stun": "PENDING",
-    "status_slow": "PENDING",
-    "status_disease": "PENDING",
-    "status_affliction": "PENDING"
+    "_note": "B2 follow-up — 12 effect status icons. Generated via PixelLab MCP, 32x32 pixel art, transparent bg.",
+    "status_heal": "81ffb391-4515-4188-81dc-834f0ec1de2d",
+    "status_burn": "951ae8dc-c953-41b2-b06c-8ea5babadf41",
+    "status_taunt": "270da33f-a39d-4695-aba5-ec6d6bb7fd90",
+    "status_buff_dmg": "6aca84e9-1173-4527-9d39-37b1419a8370",
+    "status_shield": "6ea57070-9558-4447-94d7-6e2adba828ba",
+    "status_meditate": "31b24aa6-2c43-4da5-b696-d66cbcec3487",
+    "status_bleed": "3e6fc81e-17eb-43c0-923c-893c442a1483",
+    "status_poison": "ecb6560a-c7ee-48d0-829e-d967e9d54165",
+    "status_stun": "e7cc9a88-9dcf-4289-ae58-af4203a6fa3c",
+    "status_slow": "02962b1f-fad4-46c7-97fe-c1a4cec5c990",
+    "status_disease": "ea5477c7-c97b-4970-b32f-5491faabf253",
+    "status_affliction": "1f997426-d947-4d02-84fa-24b81fd4922b"
   },
   "_failed_retries": {
     "ui_btn_up_v1": "1e242e90-c9ea-4d7d-8ea6-efe667bbadc4 (server timeout)"

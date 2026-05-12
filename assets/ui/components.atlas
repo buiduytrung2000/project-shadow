@@ -4,191 +4,275 @@ size: 1024, 256
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
+status_affliction
+  rotate: false
+  xy: 346, 70
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_bleed
+  rotate: false
+  xy: 986, 200
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_buff_dmg
+  rotate: false
+  xy: 836, 150
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_burn
+  rotate: false
+  xy: 346, 36
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_disease
+  rotate: false
+  xy: 870, 150
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_heal
+  rotate: false
+  xy: 904, 150
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_meditate
+  rotate: false
+  xy: 938, 150
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_poison
+  rotate: false
+  xy: 392, 102
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_shield
+  rotate: false
+  xy: 426, 102
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_slow
+  rotate: false
+  xy: 460, 102
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_stun
+  rotate: false
+  xy: 494, 102
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+status_taunt
+  rotate: false
+  xy: 528, 102
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
 ui_banner_title
   rotate: false
-  xy: 2, 102
+  xy: 2, 104
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 ui_btn_disabled
   rotate: false
-  xy: 2, 4
+  xy: 2, 6
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_btn_down
   rotate: false
-  xy: 392, 134
+  xy: 392, 136
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_btn_over
   rotate: false
-  xy: 100, 4
+  xy: 100, 6
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_btn_up
   rotate: false
-  xy: 490, 134
+  xy: 490, 136
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_frame_portrait
   rotate: false
-  xy: 198, 4
+  xy: 198, 6
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_icon_caretaker
   rotate: false
-  xy: 296, 52
+  xy: 296, 54
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_icon_close
   rotate: false
-  xy: 346, 68
+  xy: 562, 102
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_gold
   rotate: false
-  xy: 986, 198
+  xy: 596, 102
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_guild
   rotate: false
-  xy: 686, 182
+  xy: 686, 184
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_icon_heirloom
   rotate: false
-  xy: 836, 148
+  xy: 630, 102
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_hp
   rotate: false
-  xy: 346, 34
+  xy: 346, 2
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_settings
   rotate: false
-  xy: 870, 148
+  xy: 380, 68
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_shield
   rotate: false
-  xy: 904, 148
+  xy: 380, 34
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_stagecoach
   rotate: false
-  xy: 736, 182
+  xy: 736, 184
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_icon_stress
   rotate: false
-  xy: 938, 148
+  xy: 414, 68
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_survivalist
   rotate: false
-  xy: 786, 182
+  xy: 786, 184
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_node_boss
   rotate: false
-  xy: 836, 182
+  xy: 836, 184
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_node_combat
   rotate: false
-  xy: 886, 182
+  xy: 886, 184
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_node_elite
   rotate: false
-  xy: 936, 182
+  xy: 936, 184
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_node_event
   rotate: false
-  xy: 296, 2
+  xy: 296, 4
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_node_miniboss
   rotate: false
-  xy: 686, 132
+  xy: 686, 134
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_node_rest
   rotate: false
-  xy: 736, 132
+  xy: 736, 134
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_node_reward
   rotate: false
-  xy: 786, 132
+  xy: 786, 134
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_panel_main
   rotate: false
-  xy: 132, 102
+  xy: 132, 104
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 ui_panel_tooltip
   rotate: false
-  xy: 588, 134
+  xy: 588, 136
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_popup_bg
   rotate: false
-  xy: 262, 102
+  xy: 262, 104
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
