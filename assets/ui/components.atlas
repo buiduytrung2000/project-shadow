@@ -1,110 +1,194 @@
 
 components.png
-size: 512, 256
+size: 1024, 256
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
+ui_banner_title
+  rotate: false
+  xy: 2, 102
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
 ui_btn_disabled
   rotate: false
-  xy: 2, 2
+  xy: 2, 4
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_btn_down
   rotate: false
-  xy: 262, 132
+  xy: 392, 134
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_btn_over
   rotate: false
-  xy: 100, 2
+  xy: 100, 4
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_btn_up
   rotate: false
-  xy: 360, 132
+  xy: 490, 134
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+ui_frame_portrait
+  rotate: false
+  xy: 198, 4
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_icon_caretaker
   rotate: false
-  xy: 458, 180
+  xy: 296, 52
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_icon_close
   rotate: false
-  xy: 346, 98
+  xy: 346, 68
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_gold
   rotate: false
-  xy: 346, 64
+  xy: 986, 198
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_guild
   rotate: false
-  xy: 458, 130
+  xy: 686, 182
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_icon_heirloom
   rotate: false
-  xy: 380, 98
+  xy: 836, 148
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+ui_icon_hp
+  rotate: false
+  xy: 346, 34
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_settings
   rotate: false
-  xy: 380, 64
+  xy: 870, 148
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+ui_icon_shield
+  rotate: false
+  xy: 904, 148
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 ui_icon_stagecoach
   rotate: false
-  xy: 296, 82
+  xy: 736, 182
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
+ui_icon_stress
+  rotate: false
+  xy: 938, 148
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
 ui_icon_survivalist
   rotate: false
-  xy: 296, 32
+  xy: 786, 182
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_node_boss
+  rotate: false
+  xy: 836, 182
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_node_combat
+  rotate: false
+  xy: 886, 182
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_node_elite
+  rotate: false
+  xy: 936, 182
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_node_event
+  rotate: false
+  xy: 296, 2
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_node_miniboss
+  rotate: false
+  xy: 686, 132
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_node_rest
+  rotate: false
+  xy: 736, 132
+  size: 48, 48
+  orig: 48, 48
+  offset: 0, 0
+  index: -1
+ui_node_reward
+  rotate: false
+  xy: 786, 132
   size: 48, 48
   orig: 48, 48
   offset: 0, 0
   index: -1
 ui_panel_main
   rotate: false
-  xy: 2, 100
+  xy: 132, 102
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 ui_panel_tooltip
   rotate: false
-  xy: 198, 2
+  xy: 588, 134
   size: 96, 96
   orig: 96, 96
   offset: 0, 0
   index: -1
 ui_popup_bg
   rotate: false
-  xy: 132, 100
+  xy: 262, 102
   size: 128, 128
   orig: 128, 128
   offset: 0, 0

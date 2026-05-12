@@ -30,7 +30,9 @@ parse_id() {
   local key="$1"
   if command -v jq >/dev/null 2>&1; then
     jq -r --arg k "$key" '
-      .buttons[$k] // .panels[$k] // .icons[$k] // empty
+      .buttons[$k] // .panels[$k] // .icons[$k]
+        // .node_icons[$k] // .status_icons[$k] // .frames[$k]
+        // empty
     ' "$IDS_FILE"
   else
     # Quick-and-dirty: grep "key": "value" — fine for flat string values.
@@ -89,10 +91,17 @@ download_object() {
 }
 
 ASSETS=(
+  # Round 1 — base UI pack
   ui_btn_up ui_btn_down ui_btn_over ui_btn_disabled
   ui_panel_main ui_panel_tooltip ui_popup_bg
   ui_icon_stagecoach ui_icon_guild ui_icon_survivalist ui_icon_caretaker
   ui_icon_gold ui_icon_heirloom ui_icon_settings ui_icon_close
+  # Round 2 — stage map node icons
+  ui_node_combat ui_node_elite ui_node_miniboss ui_node_boss
+  ui_node_event ui_node_rest ui_node_reward
+  # Round 2 — combat status icons + decorative frames
+  ui_icon_hp ui_icon_stress ui_icon_shield
+  ui_frame_portrait ui_banner_title
 )
 
 echo "=== PixelLab UI download ==="
