@@ -2,6 +2,7 @@ package com.trungbui.projectshadow.effect;
 
 import com.trungbui.projectshadow.data.model.EffectData;
 import com.trungbui.projectshadow.domain.Combatant;
+import com.trungbui.projectshadow.domain.Hero;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -220,6 +221,17 @@ public class ActiveEffects {
             String skillMagnitudeOverride
     ) {
         if (target == null) return;
+
+        // Fix I (post-Sprint-13 pack #2) — eff_stress_reset: set stress to 0 and
+        // heal 20% max HP. Uses setCurrentHp directly so Selfish trait (which blocks
+        // external heal()) does not interfere with this self-recovery skill.
+        if ("eff_stress_reset".equals(ei.effectId()) && target instanceof Hero h) {
+            h.setCurrentStress(0);
+            int healAmount = Math.round(h.maxHp() * 0.20f);
+            h.setCurrentHp(Math.min(h.maxHp(), h.currentHp() + healAmount));
+            return;
+        }
+
         String cat = data.category();
         String value = resolveValue(data.modifierValue(), skillMagnitudeOverride);
 

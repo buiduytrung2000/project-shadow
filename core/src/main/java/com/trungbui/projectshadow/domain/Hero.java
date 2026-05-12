@@ -326,6 +326,18 @@ public class Hero implements Combatant {
         return Map.copyOf(skillCooldowns);
     }
 
+    /** Fix H (post-Sprint-13 pack #2) — clear all active cooldowns. Called by
+     *  {@code CombatController.resetPartyCooldowns()} at combat start so cooldowns
+     *  from a previous encounter do not carry into the next one. */
+    public void clearCooldowns() {
+        skillCooldowns.clear();
+    }
+
+    /** Fix H — remaining turns on a cooldown. Returns 0 if the skill is not on cooldown. */
+    public int cooldownRemaining(String skillId) {
+        return skillCooldowns.getOrDefault(skillId, 0);
+    }
+
     public void setCurrentStress(int stress) {
         this.currentStress = Math.max(0, Math.min(STRESS_MAX, stress));
     }

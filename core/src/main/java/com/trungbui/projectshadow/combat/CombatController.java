@@ -151,6 +151,9 @@ public class CombatController {
     }
 
     public void start() {
+        // Fix H (post-Sprint-13 pack #2) — reset cooldowns so skills from a prior
+        // combat do not carry their cooldown state into the new encounter.
+        resetPartyCooldowns();
         // Sprint 11 B2 — reset per-combat condition counters; Sprint 13 B3 — env mod.
         ConditionResolver.onCombatStart(encounter, stageId);
         // Sprint 11 B3 — reset boss one-shot tracker.
@@ -641,5 +644,14 @@ public class CombatController {
 
     public Optional<Combatant> currentActor() {
         return Optional.ofNullable(encounter.currentActor());
+    }
+
+    /** Fix H (post-Sprint-13 pack #2) — clear skill cooldowns for every hero in the
+     *  party at combat start. Prevents cooldowns earned in combat N from blocking
+     *  skill use at the start of combat N+1. */
+    private void resetPartyCooldowns() {
+        for (Hero hero : encounter.heroes()) {
+            hero.clearCooldowns();
+        }
     }
 }

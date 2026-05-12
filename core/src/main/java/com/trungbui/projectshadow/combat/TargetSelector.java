@@ -44,6 +44,14 @@ public final class TargetSelector {
         List<Combatant> foes = filterAlive(foesOf(attacker, encounter));
         List<Combatant> allies = filterAlive(alliesOf(attacker, encounter));
 
+        // Fix J (post-Sprint-13 pack #2) — taunt override for single-target foe types.
+        // If any foe hero has eff_taunt active, single-target enemy attacks are forced
+        // to target the taunting hero. AoE types (ALL_FOE, FRONT_ROW_FOE, etc.) are
+        // intentionally excluded — AoE should still hit all targets.
+        // Multiple taunters: first found in encounter order.
+        List<Combatant> tauntTarget = resolveTauntOverride(foes, type);
+        if (tauntTarget != null) return tauntTarget;
+
         return switch (type) {
             case FRONT_FOE -> firstByPosition(foes, true, 1);
             case BACK_FOE -> firstByPosition(foes, false, 1);
@@ -85,6 +93,25 @@ public final class TargetSelector {
     private static List<? extends Combatant> alliesOf(Combatant attacker, CombatEncounter encounter) {
         if (attacker instanceof Hero) return encounter.heroes();
         return encounter.enemies();
+    }
+
+    /**
+     * Fix J — if the foe list contains a taunting hero and the attack type is a
+     * single-target foe type, return a single-element list with the taunter.
+     * Returns {@code null} if taunt does not apply (no taunter, or AoE type).
+     */
+    private static List<Combatant> resolveTauntOverride(List<Combatant> foes, TargetType type) {
+        boolean isSingleTarget = switch (type) {
+            case FRONT_FOE, BACK_FOE, ANY_FOE, LOWEST_HP_FOE, RANDOM_FOE -> true;
+            default -> false;
+        };
+        if (!isSingleTarget) return null;
+        for (Combatant c : foes) {
+            if (c instanceof Hero h && h.activeEffects().isTaunting()) {
+                return List.of(h);
+            }
+        }
+        return null;
     }
 
     private static List<Combatant> filterAlive(List<? extends Combatant> in) {

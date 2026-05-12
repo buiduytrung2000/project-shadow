@@ -39,6 +39,9 @@ public class HamletScreen implements Screen {
     private final FontFactory fontFactory;
     private final Skin skin;
     private final Stage uiStage;
+    /** Fix M (post-Sprint-13 pack #2) — promoted to field so {@link #refreshContinueButton()}
+     *  can update disabled state each time the screen becomes visible. */
+    private TextButton continueRun;
 
     public HamletScreen(ProjectShadowGame game) {
         this.game = game;
@@ -100,17 +103,16 @@ public class HamletScreen implements Screen {
         root.add(caretaker).pad(10).width(280).height(120);
         root.row();
 
-        // Continue Run button (Sprint 9) — enabled if an active save exists
-        TextButton continueRun = new TextButton(I18n.t("hamlet.button.continueRun"), skin);
-        boolean hasActive = game.hasActiveRun();
-        continueRun.setDisabled(!hasActive);
-        if (!hasActive) continueRun.setColor(Color.GRAY);
+        // Continue Run button (Sprint 9) — enabled if an active save exists.
+        // Fix M: use field so refreshContinueButton() can update state in show().
+        continueRun = new TextButton(I18n.t("hamlet.button.continueRun"), skin);
         continueRun.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
                 if (game.hasActiveRun()) game.resumeLatestRun();
             }
         });
+        refreshContinueButton();
         root.add(continueRun).colspan(4).pad(20).width(600).height(70);
         root.row();
 
@@ -150,6 +152,16 @@ public class HamletScreen implements Screen {
 
         uiStage.addActor(root);
         viewport.apply(true);
+    }
+
+    /** Fix M (post-Sprint-13 pack #2) — re-evaluate active-run state and update
+     *  the Continue Run button. Called from constructor and from {@link #show()}
+     *  so any FS delay after {@code archiveActiveRun()} resolves before the player
+     *  sees the button. */
+    private void refreshContinueButton() {
+        boolean hasActive = game.hasActiveRun();
+        continueRun.setDisabled(!hasActive);
+        continueRun.setColor(hasActive ? Color.WHITE : Color.GRAY);
     }
 
     private TextButton button(String text, Runnable onClick) {
@@ -226,6 +238,9 @@ public class HamletScreen implements Screen {
     public void show() {
         Gdx.input.setInputProcessor(uiStage);
         if (game.audio() != null) game.audio().playMusic("hamlet_theme", true);
+        // Fix M — refresh the Continue Run button state on every screen visit so
+        // any FS delay from archiveActiveRun() is resolved before the player sees it.
+        refreshContinueButton();
     }
 
     @Override
