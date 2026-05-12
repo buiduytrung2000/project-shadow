@@ -65,6 +65,7 @@ secrets/
 # Claude Code internals (worktrees + local settings)
 .claude/
 !.claude/commands/
+!.claude/commands/**
 # ─── PixelLab MCP working files (regeneratable from script + UUIDs) ───
 assets/sprites/pixellab_zips/
 assets/sprites/raw_pixellab/
