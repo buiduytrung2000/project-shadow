@@ -144,6 +144,14 @@ public class SaveManager {
         for (String runId : active) {
             if (archive(runId)) count++;
         }
+        // Fix M (post-Sprint-13 pack #2) — fail-loud if any save was not moved.
+        // Prevents a silent partial-archive from leaving stale active saves that
+        // would incorrectly enable the Continue Run button on the next Hamlet visit.
+        List<String> remaining = listActiveSaves();
+        if (!remaining.isEmpty()) {
+            throw new IOException(
+                    "Archive incomplete: " + remaining.size() + " save(s) still active after archiveActiveRun()");
+        }
         return count;
     }
 
