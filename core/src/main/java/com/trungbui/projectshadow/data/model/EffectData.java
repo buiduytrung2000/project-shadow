@@ -19,6 +19,7 @@ public record EffectData(
         String sourceExamples,
         String visualCue,
         String balanceNotes,
-        String descriptionVn
+        String descriptionVn,
+        String iconKey
 ) {
 }

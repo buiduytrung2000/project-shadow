@@ -32,6 +32,7 @@ parse_id() {
     jq -r --arg k "$key" '
       .buttons[$k] // .panels[$k] // .icons[$k]
         // .node_icons[$k] // .status_icons[$k] // .frames[$k]
+        // .effect_status_icons[$k]
         // empty
     ' "$IDS_FILE"
   else
@@ -102,6 +103,10 @@ ASSETS=(
   # Round 2 — combat status icons + decorative frames
   ui_icon_hp ui_icon_stress ui_icon_shield
   ui_frame_portrait ui_banner_title
+  # B2 — effect status icons (12 icons, PixelLab UUIDs pending)
+  status_heal status_burn status_taunt status_buff_dmg status_shield
+  status_meditate status_bleed status_poison status_stun status_slow
+  status_disease status_affliction
 )
 
 echo "=== PixelLab UI download ==="

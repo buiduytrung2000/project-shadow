@@ -24,7 +24,7 @@ class ActiveEffectsApplyImmediateOnRefreshTest {
                 id, "Test", "Test", "heal", true, null,
                 "instant", "", "hp", "flat", value,
                 false, null,
-                "on_use", null, null, null, null, ""
+                "on_use", null, null, null, null, "", null
         );
     }
 

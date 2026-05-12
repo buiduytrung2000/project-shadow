@@ -200,8 +200,9 @@ public class CombatRenderer implements Disposable {
     }
 
     /**
-     * Draws small colored effect icon boxes (16×16 each) below the combatant sprite.
-     * V1: uses category color boxes (no atlas icon assets required).
+     * Draws small effect icon boxes (16×16 each) below the combatant sprite.
+     * If an atlas icon is available for the effect's iconKey, draws the atlas region.
+     * Otherwise falls back to a category-colored box.
      * Must be called inside spriteBatch.begin/end.
      */
     void drawEffectIcons(CombatantView v) {
@@ -211,15 +212,46 @@ public class CombatRenderer implements Disposable {
         float iconY = v.y() - EFFECT_ICON_SIZE - 4f;
         for (int i = 0; i < effects.size(); i++) {
             EffectInstance ei = effects.get(i);
-            Color box = categoryColor(ei);
-            spriteBatch.setColor(box);
-            // Draw a small colored rectangle as a fallback icon (no atlas needed).
-            // Uses a 1×1 white pixel from the sprite atlas if available; otherwise a
-            // plain color box drawn via spriteBatch (SpriteBatch can draw with a Skin
-            // white-pixel texture when available — here we use the Skin white-pixel).
-            drawColorBox(startX + i * (EFFECT_ICON_SIZE + 2f), iconY, EFFECT_ICON_SIZE, EFFECT_ICON_SIZE);
-            spriteBatch.setColor(Color.WHITE);
+            float x = startX + i * (EFFECT_ICON_SIZE + 2f);
+            String drawableName = effectIconDrawable(ei.effectId());
+            if (drawableName != null && skin != null && skin.has(drawableName, Drawable.class)) {
+                // Use atlas icon.
+                spriteBatch.setColor(Color.WHITE);
+                skin.getDrawable(drawableName).draw(spriteBatch, x, iconY, EFFECT_ICON_SIZE, EFFECT_ICON_SIZE);
+            } else {
+                // Fallback: category color box.
+                Color box = categoryColor(ei);
+                spriteBatch.setColor(box);
+                drawColorBox(x, iconY, EFFECT_ICON_SIZE, EFFECT_ICON_SIZE);
+                spriteBatch.setColor(Color.WHITE);
+            }
         }
+    }
+
+    /**
+     * Maps a known effectId to its SkinLoader drawable name.
+     * Returns null for unknown effects (triggers color-box fallback).
+     */
+    static String effectIconDrawable(String effectId) {
+        return switch (effectId) {
+            case "eff_heal"         -> SkinLoader.STATUS_HEAL;
+            case "eff_burn"         -> SkinLoader.STATUS_BURN;
+            case "eff_taunt"        -> SkinLoader.STATUS_TAUNT;
+            case "eff_dmg_buff"     -> SkinLoader.STATUS_BUFF_DMG;
+            case "eff_absorb"       -> SkinLoader.STATUS_SHIELD;
+            case "eff_stress_reset" -> SkinLoader.STATUS_MEDITATE;
+            case "eff_bleed"        -> SkinLoader.STATUS_BLEED;
+            case "eff_poison"       -> SkinLoader.STATUS_POISON;
+            case "eff_stun"         -> SkinLoader.STATUS_STUN;
+            case "eff_slow"         -> SkinLoader.STATUS_SLOW;
+            default -> {
+                // Permanent debuffs (affliction-type effects) use the affliction icon.
+                if (effectId.startsWith("perm_debuff_") || effectId.startsWith("eff_curse_")) {
+                    yield SkinLoader.STATUS_AFFLICTION;
+                }
+                yield null;
+            }
+        };
     }
 
     /** Returns the category color for an effect instance (red=debuff, blue=buff, purple=disease). */

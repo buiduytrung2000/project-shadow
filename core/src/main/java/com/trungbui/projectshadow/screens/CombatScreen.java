@@ -10,11 +10,13 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextTooltip;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
@@ -118,6 +120,12 @@ public class CombatScreen implements Screen {
     private com.trungbui.projectshadow.meta.SettingsManager settingsManager;
     /** Sprint 13 B3 — whether combat speed x2 is active for this combat session. */
     private boolean speedMode2x = false;
+
+    /** B2 K.4 — invisible overlay actors for effect icon hover tooltips.
+     *  Rebuilt each frame via refreshEffectIconTooltips() when effect list changes. */
+    private final List<Actor> effectTooltipActors = new ArrayList<>();
+    /** B2 K.4 — tracks the last effect-list snapshot to detect changes. */
+    private String lastEffectSignature = "";
 
     /** Standalone combat (no run loop wiring). Used for the Sprint 5 demo. */
     public CombatScreen(GameData gameData) {
@@ -914,6 +922,9 @@ public class CombatScreen implements Screen {
         // Sprint 13 B4 — floating text rendered after particles, before UI.
         renderer.renderFloatingTexts(camera, floatingTexts, combatFont);
 
+        // B2 K.4 — update effect icon tooltip overlays when effects change.
+        refreshEffectIconTooltips();
+
         uiStage.act(delta);
         uiStage.draw();
     }
@@ -1009,5 +1020,63 @@ public class CombatScreen implements Screen {
     private static boolean within(CombatantView v, float x, float y) {
         return x >= v.x() && x <= v.x() + v.width()
                 && y >= v.y() && y <= v.y() + v.height();
+    }
+
+    /**
+     * B2 K.4 — Rebuilds invisible Actor overlays on uiStage for each effect icon so
+     * that hovering shows a TextTooltip with the effect's name and description.
+     * Called from render() — only rebuilds when the effect list signature changes
+     * to avoid rebuilding every frame.
+     */
+    private void refreshEffectIconTooltips() {
+        // Build a simple signature from effect IDs across all combatants.
+        StringBuilder sig = new StringBuilder();
+        for (CombatantView v : heroViews) {
+            for (var ei : v.combatant().activeEffects().instances()) sig.append(ei.effectId()).append(',');
+        }
+        for (CombatantView v : enemyViews) {
+            for (var ei : v.combatant().activeEffects().instances()) sig.append(ei.effectId()).append(',');
+        }
+        String current = sig.toString();
+        if (current.equals(lastEffectSignature)) return;
+        lastEffectSignature = current;
+
+        // Remove old overlay actors.
+        for (Actor a : effectTooltipActors) a.remove();
+        effectTooltipActors.clear();
+
+        TextTooltip.TextTooltipStyle tooltipStyle = skin.has(SkinLoader.STYLE_PANEL_TOOLTIP,
+                TextTooltip.TextTooltipStyle.class)
+                ? skin.get(SkinLoader.STYLE_PANEL_TOOLTIP, TextTooltip.TextTooltipStyle.class)
+                : skin.get(TextTooltip.TextTooltipStyle.class);
+
+        float iconSize = 16f;
+        float iconGap = 2f;
+        float iconOffsetY = -iconSize - 4f;
+
+        List<CombatantView> all = new ArrayList<>(heroViews);
+        all.addAll(enemyViews);
+        for (CombatantView v : all) {
+            var effects = v.combatant().activeEffects().instances();
+            for (int i = 0; i < effects.size(); i++) {
+                var ei = effects.get(i);
+                float iconX = v.x() + i * (iconSize + iconGap);
+                float iconY = v.y() + iconOffsetY;
+
+                // Look up display name + description from gameData.
+                var effectData = gameData.effects().get(ei.effectId());
+                String tipText = effectData != null
+                        ? effectData.nameVn() + "\n" + effectData.descriptionVn()
+                        : ei.effectId();
+
+                Actor overlay = new Actor();
+                overlay.setBounds(iconX, iconY, iconSize, iconSize);
+                TextTooltip tip = new TextTooltip(tipText, tooltipStyle);
+                tip.setInstant(false);
+                overlay.addListener(tip);
+                uiStage.addActor(overlay);
+                effectTooltipActors.add(overlay);
+            }
+        }
     }
 }

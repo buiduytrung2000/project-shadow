@@ -25,7 +25,7 @@ class CombatRendererEffectIconsTest {
         return new EffectData(
                 id, "Test", "Test", "dot", true, null,
                 "turns", "3", "hp", "flat_per_turn", "2",
-                false, null, "on_turn_start", null, null, null, null, ""
+                false, null, "on_turn_start", null, null, null, null, "", null
         );
     }
 

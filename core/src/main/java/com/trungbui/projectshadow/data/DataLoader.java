@@ -221,7 +221,8 @@ public final class DataLoader {
                         nullIfBlank(cell(row, h, "Source Examples")),
                         nullIfBlank(cell(row, h, "Visual Cue")),
                         nullIfBlank(cell(row, h, "Balance Notes")),
-                        cell(row, h, "Description (VN)")
+                        cell(row, h, "Description (VN)"),
+                        h.containsKey("Icon Key") ? nullIfBlank(cell(row, h, "Icon Key")) : null
                 ));
             }
             return List.copyOf(out);

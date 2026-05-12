@@ -72,6 +72,21 @@ public final class SkinLoader {
     public static final String FRAME_PORTRAIT = "ui-frame-portrait";
     public static final String BANNER_TITLE = "ui-banner-title";
 
+    // B2 — Effect status icons for CombatRenderer drawEffectIcons.
+    // Region names must match assets/ui/raw/status_*.png entries in components.atlas.
+    public static final String STATUS_HEAL = "status_heal";
+    public static final String STATUS_BURN = "status_burn";
+    public static final String STATUS_TAUNT = "status_taunt";
+    public static final String STATUS_BUFF_DMG = "status_buff_dmg";
+    public static final String STATUS_SHIELD = "status_shield";
+    public static final String STATUS_MEDITATE = "status_meditate";
+    public static final String STATUS_BLEED = "status_bleed";
+    public static final String STATUS_POISON = "status_poison";
+    public static final String STATUS_STUN = "status_stun";
+    public static final String STATUS_SLOW = "status_slow";
+    public static final String STATUS_DISEASE = "status_disease";
+    public static final String STATUS_AFFLICTION = "status_affliction";
+
     // NinePatch margins per source region. Tuned to the PixelLab outputs —
     // adjust if the generated borders feel too thick/thin.
     private static final int BTN_MARGIN = 16;
@@ -140,6 +155,20 @@ public final class SkinLoader {
         // Round 2 — decorative frames (NinePatch — stretchable).
         registerNinePatch(skin, FRAME_PORTRAIT, "ui_frame_portrait", FRAME_PORTRAIT_MARGIN);
         registerNinePatch(skin, BANNER_TITLE, "ui_banner_title", BANNER_TITLE_MARGIN);
+
+        // B2 — effect status icons (16×16 atlas regions).
+        registerIcon(skin, STATUS_HEAL, "status_heal");
+        registerIcon(skin, STATUS_BURN, "status_burn");
+        registerIcon(skin, STATUS_TAUNT, "status_taunt");
+        registerIcon(skin, STATUS_BUFF_DMG, "status_buff_dmg");
+        registerIcon(skin, STATUS_SHIELD, "status_shield");
+        registerIcon(skin, STATUS_MEDITATE, "status_meditate");
+        registerIcon(skin, STATUS_BLEED, "status_bleed");
+        registerIcon(skin, STATUS_POISON, "status_poison");
+        registerIcon(skin, STATUS_STUN, "status_stun");
+        registerIcon(skin, STATUS_SLOW, "status_slow");
+        registerIcon(skin, STATUS_DISEASE, "status_disease");
+        registerIcon(skin, STATUS_AFFLICTION, "status_affliction");
 
         if (skin.has(DRAWABLE_BTN_UP, NinePatchDrawable.class)) {
             registerButtonStyles(skin);

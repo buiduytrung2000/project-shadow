@@ -201,12 +201,122 @@ public final class StageGenerator {
             currentLayer.add(node);
         }
 
-        for (StageNode prev : prevLayer) {
-            for (StageNode cur : currentLayer) {
-                tree.addEdge(prev.label(), cur.label());
+        connectLayers(prevLayer, currentLayer, layer.edgeTopology(), tree, rng);
+        return currentLayer;
+    }
+
+    /**
+     * Connects nodes in prevLayer to nodes in currentLayer using the given topology.
+     *
+     * <p>Supported strategies:</p>
+     * <ul>
+     *   <li>{@code "fully_connected"} — every prev → every cur (existing behavior).</li>
+     *   <li>{@code "dag_branching"} — probabilistic branching (60% 1 edge, 30% 2 edges,
+     *       10% 3 edges per source), then a connectivity sweep ensures every target has
+     *       at least 1 incoming edge.</li>
+     * </ul>
+     */
+    private static void connectLayers(
+            List<StageNode> prevLayer,
+            List<StageNode> currentLayer,
+            String edgeTopology,
+            StageTree tree,
+            Random rng
+    ) {
+        if ("dag_branching".equals(edgeTopology)) {
+            connectDagBranching(prevLayer, currentLayer, tree, rng);
+        } else {
+            // Default: fully_connected
+            for (StageNode prev : prevLayer) {
+                for (StageNode cur : currentLayer) {
+                    tree.addEdge(prev.label(), cur.label());
+                }
             }
         }
-        return currentLayer;
+    }
+
+    /**
+     * DAG branching edge generation. Each source node fans out to 1-3 targets
+     * with probability 60/30/10. After all sources are processed, any target that
+     * has no incoming edges is assigned to the closest source (by list index) to
+     * satisfy the connectivity invariant.
+     */
+    private static void connectDagBranching(
+            List<StageNode> sources,
+            List<StageNode> targets,
+            StageTree tree,
+            Random rng
+    ) {
+        int tCount = targets.size();
+        if (tCount == 0) return;
+
+        // Track which targets have received at least one incoming edge.
+        boolean[] hasIncoming = new boolean[tCount];
+
+        for (int si = 0; si < sources.size(); si++) {
+            StageNode src = sources.get(si);
+            // Roll branching factor: 60% → 1, 30% → 2, 10% → 3 (clamped by target count).
+            int numEdges = rollBranchFactor(rng, tCount);
+
+            // Prefer "nearby" targets (Sugiyama-lite): bias toward indices near si * scale.
+            // Simple approach: sample without replacement, starting near the scaled position.
+            int startIdx = (int) Math.round((double) si / Math.max(1, sources.size() - 1) * (tCount - 1));
+            startIdx = Math.max(0, Math.min(startIdx, tCount - 1));
+
+            List<Integer> chosen = pickNearby(startIdx, numEdges, tCount, rng);
+            for (int ti : chosen) {
+                tree.addEdge(src.label(), targets.get(ti).label());
+                hasIncoming[ti] = true;
+            }
+        }
+
+        // Connectivity sweep: any target with no incoming edge gets assigned to the
+        // closest source by index.
+        for (int ti = 0; ti < tCount; ti++) {
+            if (!hasIncoming[ti]) {
+                int si = (int) Math.round((double) ti / Math.max(1, tCount - 1) * (sources.size() - 1));
+                si = Math.max(0, Math.min(si, sources.size() - 1));
+                tree.addEdge(sources.get(si).label(), targets.get(ti).label());
+            }
+        }
+    }
+
+    /** Rolls a branching factor: 60% → 1, 30% → 2, 10% → 3 (clamped to maxTargets). */
+    private static int rollBranchFactor(Random rng, int maxTargets) {
+        int roll = rng.nextInt(100);
+        int factor = (roll < 60) ? 1 : (roll < 90) ? 2 : 3;
+        return Math.min(factor, maxTargets);
+    }
+
+    /**
+     * Picks {@code n} distinct target indices near {@code start}, spread evenly,
+     * with slight random perturbation. Always returns exactly {@code n} indices
+     * (clamped to range [0, total)).
+     */
+    private static List<Integer> pickNearby(int start, int n, int total, Random rng) {
+        if (n >= total) {
+            List<Integer> all = new ArrayList<>(total);
+            for (int i = 0; i < total; i++) all.add(i);
+            return all;
+        }
+        // Build candidate list ordered by proximity to start.
+        List<Integer> candidates = new ArrayList<>(total);
+        candidates.add(start);
+        for (int delta = 1; candidates.size() < total; delta++) {
+            int left = start - delta;
+            int right = start + delta;
+            if (left >= 0) candidates.add(left);
+            if (right < total) candidates.add(right);
+        }
+        // Add small random perturbation by shuffling bottom half of candidates.
+        int shuffleUpTo = Math.min(candidates.size(), n + 2);
+        for (int i = shuffleUpTo - 1; i > 0; i--) {
+            int j = rng.nextInt(i + 1);
+            int tmp = candidates.get(i);
+            candidates.set(i, candidates.get(j));
+            candidates.set(j, tmp);
+        }
+        return candidates.subList(0, n);
     }
 
     private static StageNode generateNodeContent(NodeType type, String label, JsonNode pools, Random rng) {
@@ -408,6 +518,9 @@ public final class StageGenerator {
     }
 
     private static List<LayerSpec> collectMiddleLayers(JsonNode layout) {
+        // Layout-level edge topology: individual layer can override with "edge_topology",
+        // otherwise falls back to the layout-level "edge_topology" field.
+        String layoutTopology = layout.path("edge_topology").asText("fully_connected");
         List<LayerSpec> out = new ArrayList<>();
         JsonNode middle = layout.path("middle_layers");
         if (middle.isArray()) {
@@ -416,7 +529,10 @@ public final class StageGenerator {
                 int n = layer.path("num_nodes").asInt(2);
                 JsonNode weights = layer.path("node_generation").path("weights");
                 String edgesIn = layer.path("edges_in").asText("");
-                out.add(new LayerSpec(name, n, weights, edgesIn));
+                String topo = layer.has("edge_topology")
+                        ? layer.path("edge_topology").asText(layoutTopology)
+                        : layoutTopology;
+                out.add(new LayerSpec(name, n, weights, edgesIn, topo));
             }
             return out;
         }
@@ -429,7 +545,10 @@ public final class StageGenerator {
             int n = layer.path("num_nodes").asInt(2);
             JsonNode weights = layer.path("node_generation").path("weights");
             String edgesIn = layer.path("edges_in").asText("");
-            out.add(new LayerSpec(name, n, weights, edgesIn));
+            String topo = layer.has("edge_topology")
+                    ? layer.path("edge_topology").asText(layoutTopology)
+                    : layoutTopology;
+            out.add(new LayerSpec(name, n, weights, edgesIn, topo));
         }
         return out;
     }
@@ -445,7 +564,7 @@ public final class StageGenerator {
         return out;
     }
 
-    private record LayerSpec(String name, int numNodes, JsonNode weights, String edgesIn) {
+    private record LayerSpec(String name, int numNodes, JsonNode weights, String edgesIn, String edgeTopology) {
     }
 
     private StageGenerator() {
