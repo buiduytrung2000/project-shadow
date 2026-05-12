@@ -13,7 +13,7 @@
 
 <div class="banner">
   <h1>⚔️ Hệ thống &amp; Cân bằng</h1>
-  <p class="subtitle">14 heroes, 140 skills, 15 enemies, 50 items, 14 traits/diseases, công thức damage</p>
+  <p class="subtitle">14 heroes, 140 skills, 16 enemies (incl. Poison Vine), 50 items, 18 rows traits/diseases (6 disease + 12 trait), công thức damage</p>
 </div>
 
 <h1>1. Heroes (14 lớp)</h1>
@@ -96,11 +96,12 @@ Stress Damage,Rarity,Description (VN)</code></pre>
 <tr><td>enemy_02_tank</td><td>Skeleton Tank</td><td>27</td><td>4-6</td><td>6%</td><td>20%</td><td>75</td><td>Tank</td></tr>
 <tr><td>enemy_03</td><td>Shadow Wisp</td><td>8</td><td>2-5</td><td>15%</td><td>30%</td><td>85</td><td>Base (dual skill)</td></tr>
 <tr><td>enemy_03_tank</td><td>Shadow Wisp Tank</td><td>12</td><td>2-4</td><td>15%</td><td>30%</td><td>85</td><td>Tank</td></tr>
-<tr><td><strong>enemy_b01</strong></td><td>Giant Zombie</td><td>80</td><td>8-14</td><td>5%</td><td>40%</td><td>78</td><td><strong>BOSS Stage 1</strong></td></tr>
-<tr><td><strong>enemy_b02</strong></td><td>The Whispering Shade</td><td>110</td><td>9-15</td><td>10%</td><td>40%</td><td>82</td><td><strong>BOSS Stage 2</strong></td></tr>
-<tr><td><strong>enemy_b03</strong></td><td>The Black Heart</td><td>150</td><td>10-18</td><td>8%</td><td>50%</td><td>85</td><td><strong>BOSS Stage 3 FINAL</strong></td></tr>
-<tr><td>enemy_mb01</td><td>Echo Wraith</td><td>45</td><td>7-12</td><td>12%</td><td>30%</td><td>80</td><td>Miniboss Stage 3</td></tr>
-<tr><td>enemy_mb02</td><td>Plague Bearer</td><td>50</td><td>6-10</td><td>5%</td><td>35%</td><td>78</td><td>Miniboss Stage 3</td></tr>
+<tr><td><strong>enemy_b01</strong></td><td>Giant Zombie</td><td><strong>100</strong></td><td><strong>13-19</strong></td><td>5%</td><td>40%</td><td><strong>90</strong></td><td><strong>BOSS Stage 1</strong> (S10 B1 +20HP/+5dmg, S11 B1 acc 78→90)</td></tr>
+<tr><td><strong>enemy_b02</strong></td><td>The Whispering Shade</td><td><strong>130</strong></td><td><strong>14-20</strong></td><td>10%</td><td>40%</td><td><strong>90</strong></td><td><strong>BOSS Stage 2</strong> (S10 B1 +20HP/+5dmg, S11 B1 acc 82→90)</td></tr>
+<tr><td><strong>enemy_b03</strong></td><td>The Black Heart</td><td><strong>170</strong></td><td><strong>15-23</strong></td><td>8%</td><td>50%</td><td><strong>90</strong></td><td><strong>BOSS Stage 3 FINAL</strong> (S10 B1 +20HP/+5dmg, S11 B1 acc 85→90)</td></tr>
+<tr><td>enemy_mb01</td><td>Echo Wraith</td><td>45</td><td>7-12</td><td>12%</td><td>30%</td><td><strong>85</strong></td><td>Miniboss Stage 3 (S11 B1 acc 80→85)</td></tr>
+<tr><td>enemy_mb02</td><td>Plague Bearer</td><td>50</td><td>6-10</td><td>5%</td><td>35%</td><td><strong>85</strong></td><td>Miniboss Stage 3 (S11 B1 acc 78→85)</td></tr>
+<tr><td><strong>enemy_05</strong></td><td>Poison Vine</td><td>22</td><td>3-5</td><td>5%</td><td>10%</td><td>80</td><td>Base — Sprint 12 B3 add. DoT-archetype (50% chance eff_poison 4×3 turn).</td></tr>
 </tbody>
 </table>
 </div>
@@ -144,29 +145,65 @@ Stress Damage,Rarity,Description (VN)</code></pre>
 
 <hr>
 
-<h1>5. Diseases &amp; Traits (14)</h1>
-<p>Nguồn: <code>assets/data/diseases_traits.csv</code>. Chia 2 nhóm: <strong>6 bệnh</strong> (negative) + <strong>8 tính cách</strong> (4 tốt / 4 xấu). Mỗi hero random 0–2 trait khi tuyển mộ.</p>
+<h1>5. Diseases &amp; Traits (18 rows)</h1>
+<p>Nguồn: <code>assets/data/diseases_traits.csv</code>. Chia 2 nhóm:
+<strong>6 disease</strong> (mắc qua 30% post-combat roll non-boss + events) +
+<strong>12 trait</strong> = <strong>6 Affliction + 6 Virtue</strong>
+(2 Virtue random khi tuyển mộ; Affliction nhận khi stress cross 100 với
+70/30 roll). Bloodthirsty (trait_07) đã reclassified Virtue → Affliction
+ở Sprint 11 B2.</p>
 
+<div class="card info">
+<p><strong>Implementation status:</strong> 3 traits + 1 disease shipped Sprint 11 (Cowardly/Masochist/Bloodthirsty + Cursed). 4 traits + 5 diseases shipped Sprint 12 B1 (Paranoid/Selfish/Fearful/Hopeless + Fever/Blindness/Nightmare/Paranoia/Plague). Tất cả 18 rows hiện đều có runtime effect qua <code>ConditionResolver</code>.</p>
+</div>
+
+<h2>Diseases (6)</h2>
 <div class="table-wrap">
 <table>
-<thead><tr><th>ID</th><th>Loại</th><th>Tên</th><th>Hiệu ứng</th><th>Cách xóa</th></tr></thead>
+<thead><tr><th>ID</th><th>Tên</th><th>Hiệu ứng runtime</th><th>Shipped</th></tr></thead>
 <tbody>
-<tr><td>Fever</td><td>Disease</td><td>Sốt cao</td><td>-15% max HP</td><td>100g tại Caretaker</td></tr>
-<tr><td>Plague</td><td>Disease</td><td>Bệnh dịch</td><td>-2 HP/lượt + lây 10% sang đồng đội</td><td>200g</td></tr>
-<tr><td>Blindness</td><td>Disease</td><td>Mù lòa</td><td>-20 accuracy permanent</td><td>150g</td></tr>
-<tr><td>Nightmare</td><td>Disease</td><td>Ác mộng</td><td>+2 stress/lượt</td><td>200g</td></tr>
-<tr><td>Cursed</td><td>Disease</td><td>Bị nguyền</td><td>-10% mọi chỉ số</td><td>Chỉ Tẩy Trần (Paladin)</td></tr>
-<tr><td>Bloodthirsty</td><td>Disease</td><td>Khát máu</td><td>+10% dmg / -10% SR</td><td>100g (debatable nên giữ?)</td></tr>
-<tr><td>Brave</td><td>Trait+</td><td>Dũng cảm</td><td>-5 stress combat start</td><td>Không xóa</td></tr>
-<tr><td>Confident</td><td>Trait+</td><td>Tự tin</td><td>+5% crit perm</td><td>Không xóa</td></tr>
-<tr><td>Loyal</td><td>Trait+</td><td>Trung thành</td><td>-50% stress khi đồng đội ngã</td><td>Không xóa</td></tr>
-<tr><td>Stoic</td><td>Trait+</td><td>Kiên cường</td><td>+15% stress resist</td><td>Không xóa</td></tr>
-<tr><td>Cowardly</td><td>Trait-</td><td>Hèn nhát</td><td>10% bỏ qua lượt khi HP&lt;50%</td><td>Spirit Cleansing event</td></tr>
-<tr><td>Paranoia</td><td>Trait-</td><td>Hoang tưởng</td><td>+5 stress khi crit từ enemy</td><td>Hamlet Tavern (200g)</td></tr>
-<tr><td>Masochist</td><td>Trait-</td><td>Thích đau</td><td>Tự dmg 5 HP khi enter combat</td><td>Spirit Cleansing</td></tr>
-<tr><td>Vengeful</td><td>Trait-</td><td>Hận thù</td><td>Tự đánh đồng đội khi đồng đội ngã</td><td>Confession event</td></tr>
+<tr><td>dis_01</td><td>Fever</td><td><code>maxHp() × 0.85</code> (floored at 1)</td><td>Sprint 12 B1</td></tr>
+<tr><td>dis_02</td><td>Blindness</td><td><code>effectiveAccuracy() -20</code></td><td>Sprint 12 B1</td></tr>
+<tr><td>dis_03</td><td>Nightmare</td><td>onTurnStart: +2 stress (self)</td><td>Sprint 12 B1</td></tr>
+<tr><td>dis_04</td><td>Paranoia</td><td>15% chance executePlayerSkill action-fail</td><td>Sprint 12 B1</td></tr>
+<tr><td>dis_05</td><td>Plague</td><td><code>maxHp() × 0.75</code> + 10%/turn spread to disease-free ally. Fever×Plague stack = <code>×0.6375</code></td><td>Sprint 12 B1</td></tr>
+<tr><td>dis_06</td><td>Cursed</td><td><code>effectiveDodge() -30</code>, floored at 0</td><td>Sprint 11 B3</td></tr>
 </tbody>
 </table>
+</div>
+
+<h2>Traits — Affliction (6, pool cho stress cross-100 roll)</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>ID</th><th>Tên</th><th>Hiệu ứng runtime</th><th>Shipped</th></tr></thead>
+<tbody>
+<tr><td>trait_02</td><td>Cowardly</td><td>20% skip-turn nếu <code>stress > 50</code> (consumed at action time)</td><td>Sprint 11 B2</td></tr>
+<tr><td>trait_04</td><td>Masochist</td><td>onSelfDamage: +5 stress cho tất cả ally đang sống</td><td>Sprint 11 B2</td></tr>
+<tr><td>trait_07</td><td>Bloodthirsty</td><td>Forced-attack (override skill choice); +5% dmg per kill stack (cap 5)</td><td>Sprint 11 B2 (reclassified Virtue→Affliction)</td></tr>
+<tr><td>trait_a01</td><td>Paranoid</td><td>onTurnStart: +1 stress aura cho tất cả ally đang sống</td><td>Sprint 12 B1</td></tr>
+<tr><td>trait_a02</td><td>Selfish</td><td><code>Hero.heal()</code> override no-op khi has trait</td><td>Sprint 12 B1</td></tr>
+<tr><td>trait_a03</td><td>Fearful</td><td><code>DamageFormula</code> outgoing × 0.80</td><td>Sprint 12 B1</td></tr>
+<tr><td>trait_a04</td><td>Hopeless</td><td><code>effectiveAccuracy() -10</code> (stacks Blindness)</td><td>Sprint 12 B1</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Traits — Virtue (5, pool cho stress cross-100 30% roll + 2-random-at-recruit)</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>ID</th><th>Tên</th><th>Hiệu ứng runtime</th><th>Shipped</th></tr></thead>
+<tbody>
+<tr><td>trait_01</td><td>Confident</td><td>+5% crit perm (data-driven via stat aggregator)</td><td>Data-only</td></tr>
+<tr><td>trait_03</td><td>Loyal</td><td>+10% dmg next attack on ally hit</td><td>Data-only (event hook TBD)</td></tr>
+<tr><td>trait_05</td><td>Brave</td><td>+15% dmg khi <code>stress > 50</code></td><td>Data-only</td></tr>
+<tr><td>trait_06</td><td>Vengeful</td><td>+20% dmg trong 3 turn sau ally death</td><td>Data-only (event hook TBD)</td></tr>
+<tr><td>trait_08</td><td>Stoic</td><td>-25% stress taken (passive)</td><td>Data-only</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card warn">
+<p><strong>Sprint 11 B2 reclassification:</strong> trait_07 Bloodthirsty đã đổi Resolution column Virtue → Affliction. Affliction pool: 7 (6 + Bloodthirsty), Virtue pool: 5 (was 6). 70/30 outer roll giữ nguyên.</p>
 </div>
 
 <hr>

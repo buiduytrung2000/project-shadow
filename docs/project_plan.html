@@ -17,20 +17,24 @@
 </div>
 
 <h1>1. Sprint plan (đang dùng — Java/libGDX)</h1>
-<p>Phương pháp sprint-based, mỗi sprint deliverable rõ ràng + demo. Đang ở <strong>Sprint 9 (Polish)</strong>.</p>
+<p>Phương pháp sprint-based, mỗi sprint deliverable rõ ràng + demo. <strong>Sprints 1-12 complete</strong> — MVP feature-complete. Sprint 13+ post-MVP polish + Stages 2-3 content. Test count: <strong>509 passing ✅</strong>.</p>
 
 <table>
 <thead><tr><th>Sprint</th><th>Tên</th><th>Deliverable chính</th><th>Trạng thái</th></tr></thead>
 <tbody>
-<tr><td><strong>1</strong></td><td>Data layer</td><td>Load tất cả CSV/JSON → POJO/record, unit test FK refs. <code>14 heroes, 140 skills, 134 effects, 50 items, 15 enemies, 23 enemy skills, 11 events, 14 traits, 3 stages — all FK valid ✅</code></td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>1</strong></td><td>Data layer</td><td>Load tất cả CSV/JSON → POJO/record, unit test FK refs. <code>14 heroes, 140 skills, 134 effects, 50 items, 16 enemies (incl. Poison Vine S12), 24 enemy skills, 11 events, 18 traits, 3 stages — all FK valid ✅</code></td><td><span class="badge done">DONE</span></td></tr>
 <tr><td><strong>2</strong></td><td>Domain models + business logic</td><td>Hero/Combat objects, turn order, damage formula. Unit tests.</td><td><span class="badge done">DONE</span></td></tr>
 <tr><td><strong>3</strong></td><td>Effect resolver</td><td>134 effects implementable (data-driven). Demo text-based combat.</td><td><span class="badge done">DONE</span></td></tr>
 <tr><td><strong>4</strong></td><td>Stage generator</td><td><code>StageGenerator.generate(stage_1.json, seed)</code> → cây spec. ASCII print demo.</td><td><span class="badge done">DONE</span></td></tr>
 <tr><td><strong>5</strong></td><td>Rendering &amp; UI cơ bản</td><td>Combat scene 4v4 sprite placeholder, HP bar, stress bar, skill row, click execute.</td><td><span class="badge done">DONE</span></td></tr>
-<tr><td><strong>6</strong></td><td>Save system</td><td>Save/load run state (permadeath), JSON <code>saves/run_*.json</code></td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>6</strong></td><td>Save system</td><td>Save/load run state (permadeath), JSON <code>saves/run_*.json</code>. Sprint 9+ B3 added atomic write + schema versioning (v1→v2 in Sprint 10 B1).</td><td><span class="badge done">DONE</span></td></tr>
 <tr><td><strong>7</strong></td><td>Stage map + run loop</td><td>Full Stage 1 playthrough: tutorial combat → path choice → event/combat → boss → end.</td><td><span class="badge done">DONE</span></td></tr>
-<tr><td><strong>8</strong></td><td>Hamlet + meta progression</td><td>Hub 4 building (Stagecoach, Guild, Survivalist, Caretaker), roster, gold.</td><td><span class="badge done">DONE</span></td></tr>
-<tr><td><strong>9</strong></td><td>Polish (i18n, audio, animation, juice)</td><td>VN+EN, music+SFX, Aseprite import, particle effects, sprite atlas (PixelLab).</td><td><span class="badge wip">IN PROGRESS</span></td></tr>
+<tr><td><strong>8</strong></td><td>Hamlet + meta progression</td><td>Hub 4 building (Stagecoach, Guild, Survivalist, Caretaker), roster, gold. (Upgrade UI + heirloom landed Sprint 10 B2.)</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>9</strong></td><td>Polish (i18n, audio, animation, juice)</td><td>VN+EN, music+SFX, Aseprite import, particle effects, sprite atlas (PixelLab). + 5 rounds of polish (Round 1-2 combat + Round 3-4 UI assets + Round 5 dev workflow).</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>10</strong></td><td>UI + wiring trilogy</td><td>MetaState v2 + boss balance +20HP/+5dmg + random seed + Stagecoach 50g + roster cap (B1); 4 building upgrade UI + cure slots + supplies tax + heirloom drop (B2); event choice mechanics + rest apply + boss-alt-path + CombatRewardPopup (B3). PR #8/#9/#10.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>11</strong></td><td>Playtest fixes + ConditionResolver MVP + boss phase</td><td>Debt model + enemy hit-rate buff + skill tooltip dmg range + action pacing + multi-hit fix (B1); Cowardly/Masochist/Bloodthirsty trait runtime (B2); boss phase logic HP&lt;30%/&lt;60% + baseDodge + Cursed wire + epic boss death (B3). PR #12/#13/#15.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>12</strong></td><td>Conditions expansion + progression + item use + main menu</td><td>4 affliction traits + 5 disease effects + stress event hooks (B1); XP system + 30% post-combat disease + recruit 2 Virtues (B2); item use in combat + Bloodthirsty UI + boss zoom + Poison Vine (B3); main menu + settings + per-action turn order (B4). PR #17/#19/#22/#25.</td><td><span class="badge done">DONE</span></td></tr>
+<tr><td><strong>13+</strong></td><td>Post-MVP polish + Stages 2-3</td><td>UI Round 4 wiring (node icons / status icons / banner), item use Phase 2 (eff_burn / eff_dmg_buff / eff_absorb), Stages 2-3 playable content, descriptionEn EN locale, combo-3 reward, Freesound integration.</td><td><span class="badge wip">PLANNED</span></td></tr>
 </tbody>
 </table>
 
@@ -265,11 +269,17 @@
   <li class="done">Hire cost by rarity (50/80/150g) — <code>HamletService.hireCost()</code></li>
   <li class="done">All upgrade cost constants defined in <code>HamletService</code></li>
   <li class="done">Supplies tax + heirloom helpers (<code>suppliesTax()</code>, <code>heirloomFromBoss()</code>)</li>
-  <li class="wip">MetaState fields cho <code>heirloom</code> + 4 building levels — Sprint 8.5</li>
-  <li class="wip">UI upgrade screens cho 4 building — Sprint 8.5</li>
-  <li class="wip">Cure slot tracking per Hamlet visit — Sprint 8.5</li>
-  <li class="wip">Apply supplies tax in <code>RunSession.startNew()</code> — Sprint 8.5</li>
-  <li class="wip">Boss drops heirloom + apply via <code>HamletService.applyRunOutcome()</code> — Sprint 8.5</li>
+  <li class="done">MetaState fields cho <code>heirloom</code> + 4 building levels — <strong>Sprint 10 B1</strong> (PR #8)</li>
+  <li class="done">UI upgrade screens cho 4 building — <strong>Sprint 10 B2</strong> (PR #9)</li>
+  <li class="done">Cure slot tracking per Hamlet visit (1/2/4 by Lv, cost 30/25/20g) — <strong>Sprint 10 B2</strong></li>
+  <li class="done">Apply supplies tax in <code>RunSession.startNew()</code> (100/200/400g) — <strong>Sprint 10 B2</strong></li>
+  <li class="done">Boss drops heirloom (1/2/4 per stage) via <code>handleCombatWin</code> — <strong>Sprint 10 B2</strong></li>
+  <li class="done">Stagecoach refresh cost 50g — <strong>Sprint 10 B1</strong></li>
+  <li class="done">Roster cap soft-20 + auto-cull on embark — <strong>Sprint 10 B1</strong></li>
+  <li class="done">Debt model (gold âm trên survival paths) — <strong>Sprint 11 B1</strong> (PR #12)</li>
+  <li class="done">XP system + Guild level-up needs gold AND xp — <strong>Sprint 12 B2</strong> (PR #19)</li>
+  <li class="done">Recruit 2 random Virtues at Stagecoach — <strong>Sprint 12 B2</strong></li>
+  <li class="done">30% post-combat disease roll (non-boss) — <strong>Sprint 12 B2</strong></li>
 </ul>
 
 <hr>
