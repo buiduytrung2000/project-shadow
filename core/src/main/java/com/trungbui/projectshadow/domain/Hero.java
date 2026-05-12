@@ -58,6 +58,8 @@ public class Hero implements Combatant {
      *  Consumed (decremented) when player triggers Guild level-up.
      *  Persists across runs via {@link com.trungbui.projectshadow.save.HeroState}. */
     private int currentXp = 0;
+    /** Sprint 13 B1 — absorb shield HP. Blocks incoming damage before HP. Reset per-combat. */
+    private int shieldHp = 0;
 
     public Hero(HeroData data, Position position) {
         this(data, 0, position, new ArrayList<>(data.defaultSkills()), Collections.emptyMap());
@@ -432,5 +434,17 @@ public class Hero implements Combatant {
         int newMax = maxHp();
         if (currentHp > newMax) currentHp = newMax;
         else if (newMax > oldMax) currentHp += (newMax - oldMax);
+    }
+
+    // ───── Sprint 13 B1 — Absorb shield ─────
+
+    @Override
+    public int shieldHp() {
+        return shieldHp;
+    }
+
+    @Override
+    public void setShieldHp(int shield) {
+        this.shieldHp = Math.max(0, shield);
     }
 }

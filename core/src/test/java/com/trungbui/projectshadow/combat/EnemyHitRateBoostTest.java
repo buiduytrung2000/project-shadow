@@ -39,7 +39,7 @@ class EnemyHitRateBoostTest {
                 es.isOffensive(), es.targetType(),
                 es.damageMultiplier(), es.accuracyModifier(), es.cooldown(),
                 es.effectId(), es.effectValue(), null, null,
-                es.stressDamage(), "Common", es.descriptionVn()
+                es.stressDamage(), "Common", es.descriptionVn(), null
         );
     }
 

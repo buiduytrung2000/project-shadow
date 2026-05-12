@@ -357,6 +357,8 @@ public class ProjectShadowGame extends Game {
         cs.setAudio(audio); // must be before setScreen so show() picks it up
         // Sprint 12 B3 — wire run session so Items tab can read inventory.
         cs.setRunSession(runSession);
+        // Sprint 13 B3 — wire stage ID for environmental modifiers.
+        cs.setStageId(runSession.state().stageId());
         // Sprint 10 B3 — supply reward provider for CombatRewardPopup. The popup
         // displays this reward; the actual apply runs in handleCombatWin after
         // onWin fires. Both calls produce identical results (deterministic

@@ -166,6 +166,10 @@ public final class DataLoader {
             String[] row;
             while ((row = csv.readNext()) != null) {
                 if (isBlankRow(row)) continue;
+                // Sprint 13 B2: "Description (EN)" column is optional for backward compat.
+                String descEn = h.containsKey("Description (EN)")
+                        ? nullIfBlank(cell(row, h, "Description (EN)"))
+                        : null;
                 out.add(new SkillData(
                         cell(row, h, "Skill ID"),
                         cell(row, h, "Name (VN)"),
@@ -183,7 +187,8 @@ public final class DataLoader {
                         nullIfBlank(cell(row, h, "Effect Notes")),
                         parseInt(cell(row, h, "Stress Damage")),
                         cell(row, h, "Rarity"),
-                        cell(row, h, "Description (VN)")
+                        cell(row, h, "Description (VN)"),
+                        descEn
                 ));
             }
             return List.copyOf(out);

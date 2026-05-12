@@ -49,11 +49,11 @@ class SkillDataFormatTest {
         SkillData zero = new SkillData(
                 "sk", "Tên", "Name", "Class", "Class",
                 true, "front_enemy", 1.0, 0, /*cooldown*/ 0,
-                null, null, null, null, 0, "Common", "desc");
+                null, null, null, null, 0, "Common", "desc", null);
         SkillData hasCd = new SkillData(
                 "sk", "Tên", "Name", "Class", "Class",
                 true, "front_enemy", 1.0, 0, /*cooldown*/ 2,
-                null, null, null, null, 0, "Common", "desc");
+                null, null, null, null, 0, "Common", "desc", null);
 
         assertThat(zero.formattedDescription()).doesNotContain("CD:");
         assertThat(hasCd.formattedDescription()).contains("CD: 2");
@@ -65,7 +65,7 @@ class SkillDataFormatTest {
                 "sk_w5", "Slash", "Slash", "Warrior", "Warrior",
                 true, "front_enemy", 1.0, 0, 1,
                 /*effectId*/ "eff_bleed", "3 stacks", "3 turns", "notes",
-                0, "Common", "Cause bleed.");
+                0, "Common", "Cause bleed.", null);
         String out = withEffect.formattedDescription();
         assertThat(out).contains("eff_bleed").contains("3 stacks").contains("3 turns");
     }
@@ -87,7 +87,7 @@ class SkillDataFormatTest {
         SkillData skill = new SkillData(
                 "sk", "Tên VN", "Name EN", "Class", "Class",
                 true, "front_enemy", 1.0, 0, 0,
-                null, null, null, null, 0, "Common", "desc");
+                null, null, null, null, 0, "Common", "desc", null);
 
         I18n.setLocale(I18n.VI);
         assertThat(skill.displayName()).isEqualTo("Tên VN");
@@ -101,6 +101,6 @@ class SkillDataFormatTest {
                 "sk_w1", "Đòn Kiếm", "Sword Strike", "Warrior", "Warrior",
                 true, "front_enemy", 1.2, 0, 1,
                 null, null, null, null,
-                0, "Common", descriptionVn);
+                0, "Common", descriptionVn, null);
     }
 }

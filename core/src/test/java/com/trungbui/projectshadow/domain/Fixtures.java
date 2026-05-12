@@ -38,7 +38,7 @@ public final class Fixtures {
                 true, "Front Enemy",
                 dmgMult, accMod, 0,
                 null, null, null, null,
-                stressDmg, "Common", ""
+                stressDmg, "Common", "", null
         );
     }
 }

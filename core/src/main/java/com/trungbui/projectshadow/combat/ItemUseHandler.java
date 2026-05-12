@@ -6,6 +6,8 @@ import com.trungbui.projectshadow.domain.Combatant;
 import com.trungbui.projectshadow.domain.Hero;
 import com.trungbui.projectshadow.run.RunSession;
 
+import java.util.random.RandomGenerator;
+
 /**
  * Sprint 12 B3 — apply a consumable item's effect in combat.
  *
@@ -27,6 +29,12 @@ public final class ItemUseHandler {
             String notes
     ) {}
 
+    /** Sprint 13 B1 — a null-safe singleton RNG used when no combatant RNG is available.
+     *  Items that apply DoT/buff effects use this seeded on the item ID so results are
+     *  deterministic for the same item in isolation. Real combat passes the encounter RNG. */
+    private static RandomGenerator ITEM_RNG = java.util.random.RandomGeneratorFactory
+            .getDefault().create(0x13B1L);
+
     private ItemUseHandler() {}
 
     /**
@@ -36,6 +44,14 @@ public final class ItemUseHandler {
      */
     public static AppliedSummary apply(String itemId, Combatant user, Combatant target,
                                        RunSession session, GameData gd) {
+        return apply(itemId, user, target, session, gd, ITEM_RNG);
+    }
+
+    /**
+     * Sprint 13 B1 — overload that accepts an explicit RNG for deterministic testing.
+     */
+    public static AppliedSummary apply(String itemId, Combatant user, Combatant target,
+                                       RunSession session, GameData gd, RandomGenerator rng) {
         ItemData data = gd.items().get(itemId);
         if (data == null) {
             return new AppliedSummary(itemId, false, 0, 0,
@@ -49,6 +65,9 @@ public final class ItemUseHandler {
         return switch (eff) {
             case "eff_heal" -> applyHeal(data, target);
             case "eff_stress_reduce" -> applyStressReduce(data, session);
+            case "eff_burn" -> applyActiveEffect(data, user, target, gd, rng, "eff_burn");
+            case "eff_dmg_buff" -> applyActiveEffect(data, user, target, gd, rng, "eff_dmg_buff");
+            case "eff_absorb" -> applyAbsorb(data, target);
             default -> new AppliedSummary(itemId, false, 0, 0,
                     "Effect " + eff + " not yet supported (Sprint 13+)");
         };
@@ -84,6 +103,50 @@ public final class ItemUseHandler {
         }
         return new AppliedSummary(data.itemId(), true, 0, totalReduced,
                 "Stress -" + magnitude + " party-wide; total reduced=" + totalReduced);
+    }
+
+    /**
+     * Sprint 13 B1 — apply a DoT or buff effect via {@link com.trungbui.projectshadow.effect.ActiveEffects}.
+     * Reuses the existing per-turn tick infrastructure for {@code eff_burn} (DoT)
+     * and the stat-modifier infrastructure for {@code eff_dmg_buff} (passive buff).
+     * The effect catalog must contain {@code effectId}; if missing, returns a failure summary.
+     */
+    private static AppliedSummary applyActiveEffect(ItemData data, Combatant user,
+                                                    Combatant target, GameData gd,
+                                                    RandomGenerator rng, String effectId) {
+        if (target == null || !target.isAlive()) {
+            return new AppliedSummary(data.itemId(), false, 0, 0,
+                    effectId + ": invalid or dead target");
+        }
+        if (!gd.effects().containsKey(effectId)) {
+            return new AppliedSummary(data.itemId(), false, 0, 0,
+                    effectId + " not in effects catalog");
+        }
+        target.activeEffects().apply(effectId, user, target, rng);
+        return new AppliedSummary(data.itemId(), true, 0, 0,
+                "Applied " + effectId + " to " + target.id());
+    }
+
+    /**
+     * Sprint 13 B1 — apply absorb shield. Parses shield magnitude from
+     * {@code data.effectValue()} (leading integer, e.g. "20 shield HP"). Adds to
+     * the target's current shieldHp so multiple stacked items accumulate.
+     */
+    private static AppliedSummary applyAbsorb(ItemData data, Combatant target) {
+        if (target == null || !target.isAlive()) {
+            return new AppliedSummary(data.itemId(), false, 0, 0,
+                    "eff_absorb: invalid or dead target");
+        }
+        int shieldAmount = Math.abs(parseLeadingInt(data.effectValue()));
+        if (shieldAmount <= 0) {
+            // Fall back to the CSV effect magnitude if effectValue has no number.
+            // eff_absorb modifier_value is "15 to 20" — use the midpoint.
+            shieldAmount = 17;
+        }
+        target.setShieldHp(target.shieldHp() + shieldAmount);
+        return new AppliedSummary(data.itemId(), true, 0, 0,
+                "Applied absorb shield +" + shieldAmount + " to " + target.id()
+                + " (total=" + target.shieldHp() + ")");
     }
 
     /**
