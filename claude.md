@@ -95,6 +95,26 @@ Tất cả docs nằm trong `docs/` (HTML có chung style `docs/style.css`):
 3. Frames rename + copy vào `assets/sprites/raw/<id>_<tag>_<frame>.png`.
 4. `./gradlew core:packAssets` rebuild atlas.
 
+### Khi cần **kiểm tra game balance**
+→ Gõ `/game-balance` trong Claude Code. Agent sẽ đọc toàn bộ CSV và xuất báo cáo:
+- DPS ranking tất cả heroes
+- Survivability ranking
+- Enemy threat ranking theo Variant Type
+- Outlier flags (>1.5 SD so với group mean)
+- Suggested adjustments cụ thể
+
+### Khi cần **download SFX**
+1. Đăng ký API key miễn phí tại https://freesound.org/apiv2/apply/
+2. Lưu key vào `~/.freesound_key` hoặc set `FREESOUND_API_KEY=<key>`
+3. Edit `assets/audio/.sfx-manifest.json` nếu muốn thêm/sửa SFX
+4. Chạy `scripts/fetch_sfx.sh` → OGG files vào `assets/audio/sfx/`
+5. IDs tracking lưu tại `assets/audio/.freesound-ids.json`
+
+### Khi CI/CD fail
+- GitHub Actions chạy tự động mỗi push/PR tại `.github/workflows/ci.yml`
+- Nếu fail: click vào job → "Upload test results" artifact → xem report HTML
+- Local verify: `./gradlew core:test` trước khi push
+
 ---
 
 ## 🏛️ Lịch sử các quyết định thiết kế quan trọng
@@ -334,6 +354,29 @@ Test count: 451 (Round 3 baseline) → **488 (Round 4 baseline)** sau khi
 rebase lên main (PRs upstream giữa Round 3 và Round 4 thêm test). Round 4
 không thêm test — visual-only. Pre-existing `EnemyHitRateTest` flake
 hết flake (RNG seed thay đổi do upstream commit).
+
+### Sprint 9+ Round 5 — AI Agent ecosystem (PR #27, 2026-05-12)
+
+Bổ sung 3 AI agents vào dev workflow để automate CI, balance analysis, và audio sourcing.
+
+- [x] **CI/CD — `.github/workflows/ci.yml`**:
+  - GitHub Actions auto-run `./gradlew core:test --no-daemon` mỗi push + PR → main
+  - Gradle cache (`~/.gradle/caches` + `~/.gradle/wrapper`) → build nhanh hơn lần 2+
+  - Test report HTML upload as artifact, accessible trên GitHub Actions tab
+  - Bảo vệ 488 tests khỏi regression khi merge PR
+- [x] **Game Balance Analyzer — `.claude/commands/game-balance.md`**:
+  - Slash command `/game-balance` → Claude đọc tất cả CSV (heroes/enemies/skills/effects)
+  - Compute: DPS score, survivability, stress output, enemy threat score
+  - Outlier detection: flag bất kỳ metric > mean ± 1.5 SD trong nhóm cùng role/variant
+  - Output: markdown report với 5 sections + suggested adjustments cụ thể
+- [x] **Freesound Audio Agent — `scripts/fetch_sfx.sh` + `assets/audio/.sfx-manifest.json`**:
+  - 15 SFX entries định nghĩa trong manifest (attack/hurt/death/stress/affliction/ui/reward)
+  - Script search Freesound.org API v2 (CC0 + Attribution, sort by rating), download OGG preview
+  - Skip existing files (idempotent), tracking IDs tại `assets/audio/.freesound-ids.json`
+  - Cần `FREESOUND_API_KEY` (free tier, đăng ký tại freesound.org/apiv2/apply/)
+  - Wiring vào AudioManager deferred (SFX files cần có trước)
+
+Test count: **488** (unchanged — no Java changes this round).
 
 ### Sprint mở rộng (deferred — documented for future sprint)
 - **Reward "combo 3" full feature**: streak bonus (compounding +10% gold,
