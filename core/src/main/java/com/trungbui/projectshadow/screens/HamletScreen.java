@@ -171,6 +171,7 @@ public class HamletScreen implements Screen {
         ChangeListener listener = new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                if (game.audio() != null) game.audio().playSfx("sfx_ui_click");
                 onClick.run();
             }
         };

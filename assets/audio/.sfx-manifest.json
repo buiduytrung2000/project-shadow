@@ -14,6 +14,8 @@
     "sfx_ui_click":      { "query": "ui button click wood",            "min_duration": 0.05, "max_duration": 0.3 },
     "sfx_ui_hover":      { "query": "ui hover soft tick",              "min_duration": 0.05, "max_duration": 0.2 },
     "sfx_level_enter":   { "query": "dungeon ambiance door open",      "min_duration": 1.0, "max_duration": 3.0 },
-    "sfx_reward_gold":   { "query": "coins gold drop collect",         "min_duration": 0.3, "max_duration": 1.5 }
+    "sfx_reward_gold":   { "query": "coins gold drop collect",         "min_duration": 0.3, "max_duration": 1.5 },
+    "sfx_heal":          { "query": "heal magic sparkle restore",      "min_duration": 0.3, "max_duration": 1.5 },
+    "sfx_miss":          { "query": "whoosh air swipe miss",           "min_duration": 0.1, "max_duration": 0.5 }
   }
 }
