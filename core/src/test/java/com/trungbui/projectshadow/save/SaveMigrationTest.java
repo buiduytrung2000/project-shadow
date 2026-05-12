@@ -24,7 +24,7 @@ class SaveMigrationTest {
     void loadRun_currentVersion_succeeds() throws Exception {
         String json = """
                 {
-                  "saveVersion": 1,
+                  "saveVersion": 2,
                   "runId": "abc-123",
                   "stageId": "stage_1",
                   "stageSeed": 42,
@@ -35,17 +35,21 @@ class SaveMigrationTest {
                   "inventory": [],
                   "createdAt": "2026-05-11T00:00:00Z",
                   "lastSavedAt": "2026-05-11T00:00:00Z",
-                  "archived": false
+                  "archived": false,
+                  "consecutiveNodesCleared": 0,
+                  "enemiesKilled": 0,
+                  "heirloomEarned": 0
                 }
                 """;
         RunState s = SaveMigration.loadRun(mapper, json);
-        assertThat(s.saveVersion()).isEqualTo(1);
+        assertThat(s.saveVersion()).isEqualTo(2);
         assertThat(s.runId()).isEqualTo("abc-123");
     }
 
     @Test
-    void loadRun_legacyMissingVersion_loadsAsVersion1() throws Exception {
+    void loadRun_legacyMissingVersion_migratesAndBackFillsNewFields() throws Exception {
         // Pre-B3 saves had no saveVersion field at all. Must still load successfully.
+        // Sprint 13 B2 migration bumps to CURRENT_RUN_VERSION (=2).
         String json = """
                 {
                   "runId": "legacy-001",
@@ -62,8 +66,11 @@ class SaveMigrationTest {
                 }
                 """;
         RunState s = SaveMigration.loadRun(mapper, json);
-        // Compact constructor normalizes saveVersion=0 → 1.
-        assertThat(s.saveVersion()).isEqualTo(1);
+        // v1→v2 migration: saveVersion bumped, new fields default to 0.
+        assertThat(s.saveVersion()).isEqualTo(SaveMigration.CURRENT_RUN_VERSION);
+        assertThat(s.consecutiveNodesCleared()).isZero();
+        assertThat(s.enemiesKilled()).isZero();
+        assertThat(s.heirloomEarned()).isZero();
     }
 
     @Test

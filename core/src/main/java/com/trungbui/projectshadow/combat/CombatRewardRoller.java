@@ -45,12 +45,31 @@ public final class CombatRewardRoller {
     private CombatRewardRoller() {
     }
 
+    /**
+     * Compute the gold multiplier for a combo streak.
+     * {@code min(1.0 + 0.1 × streak, 1.5)}. Streak 0 → 1.0×; streak 5+ → 1.5×.
+     */
+    public static double streakMultiplier(int streak) {
+        return Math.min(1.0 + 0.1 * Math.max(0, streak), 1.5);
+    }
+
     public static CombatReward roll(
             StageNode node,
             List<String> defeatedEnemyIds,
             List<Hero> aliveHeroes,
             GameData gd,
             RandomGenerator rng
+    ) {
+        return roll(node, defeatedEnemyIds, aliveHeroes, gd, rng, 0);
+    }
+
+    public static CombatReward roll(
+            StageNode node,
+            List<String> defeatedEnemyIds,
+            List<Hero> aliveHeroes,
+            GameData gd,
+            RandomGenerator rng,
+            int streak
     ) {
         int gold = 0;
         List<String> items = new ArrayList<>();
@@ -93,6 +112,11 @@ public final class CombatRewardRoller {
             for (DropEntry d : br.drops()) {
                 resolveDropToItem(d, items, gd, rng);
             }
+        }
+
+        // Sprint 13 B2 — apply combo-streak gold multiplier.
+        if (streak > 0) {
+            gold = (int) Math.round(gold * streakMultiplier(streak));
         }
 
         // Stress relief: pick a random alive hero

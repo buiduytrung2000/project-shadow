@@ -153,10 +153,20 @@ public class RunSession {
     /**
      * Marks the given node as just-resolved, syncs party HP/stress/etc. into the
      * snapshot, persists to disk. Returns the save file path.
+     *
+     * <p>Sprint 13 B2 — updates the combo streak: rest nodes reset it to 0;
+     * all other node types increment it by 1.</p>
      */
     public Path completeNode(String label) throws IOException {
         if (label == null || stageTree.getNode(label).isEmpty()) {
             throw new IllegalArgumentException("Unknown node label: " + label);
+        }
+        // Sprint 13 B2 — update streak based on node type.
+        var node = stageTree.getNode(label).get();
+        if (node.type() == NodeType.REST) {
+            state = state.withStreakReset();
+        } else {
+            state = state.withStreakIncrement();
         }
         state = state.withCurrentNode(label).withParty(party);
         return saveManager.save(state);
@@ -188,6 +198,17 @@ public class RunSession {
 
     public boolean isPartyDead() {
         return party.stream().allMatch(h -> h.currentHp() <= 0);
+    }
+
+    /** Sprint 13 B2 — increment the enemies-killed counter by {@code count}.
+     *  Call when combat enemies die (the caller knows the count). */
+    public void recordEnemiesKilled(int count) {
+        if (count > 0) state = state.withEnemiesKilledDelta(count);
+    }
+
+    /** Sprint 13 B2 — record heirloom earned (boss drop). */
+    public void recordHeirloomEarned(int amount) {
+        if (amount > 0) state = state.withHeirloomEarnedDelta(amount);
     }
 
     public boolean isOnBossNode() {

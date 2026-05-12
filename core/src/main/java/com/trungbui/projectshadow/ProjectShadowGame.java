@@ -29,6 +29,9 @@ import com.trungbui.projectshadow.screens.SplashScreen;
 import com.trungbui.projectshadow.screens.StagecoachScreen;
 import com.trungbui.projectshadow.screens.StageMapScreen;
 import com.trungbui.projectshadow.screens.SurvivalistScreen;
+import com.trungbui.projectshadow.combat.RewardCardSampler;
+import com.trungbui.projectshadow.screens.RewardCardPickerPopup;
+import com.trungbui.projectshadow.screens.RunSummaryScreen;
 import com.trungbui.projectshadow.screens.VictoryScreen;
 import com.trungbui.projectshadow.stage.BossNode;
 import com.trungbui.projectshadow.stage.CombatNode;
@@ -273,10 +276,10 @@ public class ProjectShadowGame extends Game {
     public void enterNode(StageNode node) {
         Screen prev = getScreen();
         switch (node) {
-            case CombatNode c -> startCombat(c.label(), c.enemies());
-            case EliteNode e -> startCombat(e.label(), e.enemies());
-            case MinibossNode mb -> startCombat(mb.label(), List.of(mb.minibossId()));
-            case BossNode boss -> startCombat(boss.label(), List.of(boss.bossId()));
+            case CombatNode c -> startCombat(c.label(), c.enemies(), false);
+            case EliteNode e -> startCombat(e.label(), e.enemies(), true);
+            case MinibossNode mb -> startCombat(mb.label(), List.of(mb.minibossId()), true);
+            case BossNode boss -> startCombat(boss.label(), List.of(boss.bossId()), true);
             default -> setScreen(new NodeInfoScreen(this, node));
         }
         if (prev != null && prev != getScreen()) prev.dispose();
@@ -348,7 +351,7 @@ public class ProjectShadowGame extends Game {
      * a double-dispose crash on the {@link StageMapScreen}'s internal {@code SpriteBatch}
      * ({@code "buffer not allocated with newUnsafeByteBuffer or already disposed"}).</p>
      */
-    private void startCombat(String nodeLabel, List<String> enemyIds) {
+    private void startCombat(String nodeLabel, List<String> enemyIds, boolean showCardPicker) {
         CombatEncounter encounter = CombatScenario.buildWithHeroes(
                 gameData, runSession.party(), enemyIds);
         Runnable onWin = () -> handleCombatWin(nodeLabel);
@@ -359,14 +362,31 @@ public class ProjectShadowGame extends Game {
         cs.setRunSession(runSession);
         // Sprint 13 B3 — wire stage ID for environmental modifiers.
         cs.setStageId(runSession.state().stageId());
-        // Sprint 10 B3 — supply reward provider for CombatRewardPopup. The popup
-        // displays this reward; the actual apply runs in handleCombatWin after
-        // onWin fires. Both calls produce identical results (deterministic
-        // RNG seeding from Sprint 9+ B2), so the display can't drift from reality.
-        cs.setRewardProvider(() -> {
-            StageNode resolvedNode = runSession.stageTree().getNode(nodeLabel).orElse(null);
-            return rollRewardForNode(resolvedNode);
-        });
+
+        if (showCardPicker) {
+            // Sprint 13 B2 — Elite / Miniboss / Boss: offer 3 rarity-weighted item cards.
+            // Seeded separately from the gold reward so the two rolls are independent.
+            long cardSeed = runSession.state().stageSeed() ^ nodeLabel.hashCode() ^ 0xC0DEL;
+            cs.setCardPickerProvider(
+                    () -> RewardCardSampler.sample3(
+                            gameData.items().values(), new java.util.Random(cardSeed)),
+                    pickedItem -> {
+                        if (pickedItem != null) {
+                            // Add the chosen item to the run inventory before handleCombatWin runs.
+                            runSession.setStateForItemUse(
+                                    runSession.state().withInventoryAdd(pickedItem.itemId()));
+                        }
+                    });
+        } else {
+            // Sprint 10 B3 — supply reward provider for CombatRewardPopup. The popup
+            // displays this reward; the actual apply runs in handleCombatWin after
+            // onWin fires. Both calls produce identical results (deterministic
+            // RNG seeding from Sprint 9+ B2), so the display can't drift from reality.
+            cs.setRewardProvider(() -> {
+                StageNode resolvedNode = runSession.stageTree().getNode(nodeLabel).orElse(null);
+                return rollRewardForNode(resolvedNode);
+            });
+        }
         setScreen(cs);
         // dispose is handled by enterNode() — single ownership
     }
@@ -381,6 +401,18 @@ public class ProjectShadowGame extends Game {
         CombatReward reward = rollRewardForNode(resolvedNode);
         runSession.applyCombatReward(reward);
 
+        // Sprint 13 B2 — record enemies killed in this combat.
+        if (resolvedNode != null) {
+            int defeatedCount = switch (resolvedNode) {
+                case CombatNode c -> c.enemies().size();
+                case EliteNode e -> e.enemies().size();
+                case MinibossNode mb -> 1;
+                case BossNode b -> 1;
+                default -> 0;
+            };
+            if (defeatedCount > 0) runSession.recordEnemiesKilled(defeatedCount);
+        }
+
         // Sprint 10 B2 — boss kill grants Heirloom currency into meta (was reserved
         // Sprint 8.5 followup; now wired). 1/2/4 per Stage 1/2/3 boss.
         if (resolvedNode instanceof BossNode) {
@@ -388,6 +420,8 @@ public class ProjectShadowGame extends Game {
             int heirloomDrop = HamletService.heirloomFromBoss(stageAct);
             if (heirloomDrop > 0) {
                 applyMeta(meta.withHeirloomDelta(heirloomDrop));
+                // Sprint 13 B2 — also record heirloom earned in run state for summary.
+                runSession.recordHeirloomEarned(heirloomDrop);
             }
             // Sprint 12 B2 — end-of-stage XP bonus. Each alive hero earns
             // +END_OF_STAGE_XP (default 50) on boss kill. Dead heroes miss it.
@@ -408,11 +442,12 @@ public class ProjectShadowGame extends Game {
         } catch (IOException e) {
             throw new RuntimeException("Failed to save run after combat at " + nodeLabel, e);
         }
-        // TODO Sprint 10 B3: show CombatRewardPopup with `reward` before transitioning. For
-        // now the reward is silently applied — players see gold counter change next screen.
         if (runSession.isOnBossNode()) {
             applyOutcomeAndArchive(true);
-            setScreen(new VictoryScreen(this));
+            // Sprint 13 B2 — route through RunSummaryScreen before returning to Hamlet.
+            var summaryState = runSession.state();
+            var summaryParty = new ArrayList<>(runSession.party());
+            setScreen(new RunSummaryScreen(this, summaryState, summaryParty, true));
         } else {
             setScreen(new StageMapScreen(this));
         }
@@ -439,7 +474,8 @@ public class ProjectShadowGame extends Game {
     /** Compute the reward for a freshly-defeated combat node. Returns empty if node is null.
      *  Sprint 9+ B2: seeds the RNG from {@code stageSeed ^ nodeLabel.hashCode()} so the
      *  same (run, node) always rolls the same reward — fixes the bug where a crash
-     *  mid-combat could produce different rewards on replay. */
+     *  mid-combat could produce different rewards on replay.
+     *  Sprint 13 B2: passes the current combo streak for gold multiplier. */
     private CombatReward rollRewardForNode(StageNode node) {
         if (node == null) return CombatReward.empty();
         // Defeated enemy IDs (works for Combat/Elite/Miniboss/Boss nodes)
@@ -454,7 +490,8 @@ public class ProjectShadowGame extends Game {
         List<com.trungbui.projectshadow.domain.Hero> alive = runSession.party().stream()
                 .filter(h -> h.currentHp() > 0).toList();
         long seed = runSession.state().stageSeed() ^ node.label().hashCode();
-        return CombatRewardRoller.roll(node, defeated, alive, gameData, new java.util.Random(seed));
+        int streak = runSession.state().consecutiveNodesCleared();
+        return CombatRewardRoller.roll(node, defeated, alive, gameData, new java.util.Random(seed), streak);
     }
 
     private void handleCombatLoss(String nodeLabel) {
@@ -465,7 +502,10 @@ public class ProjectShadowGame extends Game {
             throw new RuntimeException("Failed to save run after defeat at " + nodeLabel, e);
         }
         applyOutcomeAndArchive(false);
-        setScreen(new GameOverScreen(this));
+        // Sprint 13 B2 — route through RunSummaryScreen before Hamlet.
+        var summaryState = runSession.state();
+        var summaryParty = new ArrayList<>(runSession.party());
+        setScreen(new RunSummaryScreen(this, summaryState, summaryParty, false));
         if (prev != null && prev != getScreen()) prev.dispose();
     }
 
