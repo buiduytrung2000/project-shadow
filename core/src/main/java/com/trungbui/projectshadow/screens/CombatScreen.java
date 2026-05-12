@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class CombatScreen implements Screen {
 
@@ -67,6 +68,13 @@ public class CombatScreen implements Screen {
     /** Sprint 10 B3 — supplies the reward to show in CombatRewardPopup at end of
      *  a victorious combat. Null in standalone mode (no popup shown). */
     private java.util.function.Supplier<com.trungbui.projectshadow.combat.CombatReward> rewardProvider;
+
+    /** Sprint 13 B2 — supplies the 3 item cards for the RewardCardPickerPopup shown
+     *  after Elite / Miniboss / Boss victories. Null = use CombatRewardPopup instead. */
+    private java.util.function.Supplier<List<com.trungbui.projectshadow.data.model.ItemData>> cardPickerSupplier;
+    /** Sprint 13 B2 — invoked with the item the player chooses in RewardCardPickerPopup.
+     *  Fires before the onWin transition (null item = empty pool, player dismissed). */
+    private Consumer<com.trungbui.projectshadow.data.model.ItemData> cardPickerOnPick;
 
     private List<CombatantView> heroViews = List.of();
     private List<CombatantView> enemyViews = List.of();
@@ -507,6 +515,19 @@ public class CombatScreen implements Screen {
         this.rewardProvider = p;
     }
 
+    /** Sprint 13 B2 — wire the reward card picker for Elite / Miniboss / Boss wins.
+     *  When set, {@link RewardCardPickerPopup} replaces {@link CombatRewardPopup} at
+     *  victory. The player must pick one card before the transition fires.
+     *
+     * @param supplier produces the list of up to 3 items to offer; called once at end
+     * @param onPick   receives the chosen item (or null if pool was empty) before onWin */
+    public void setCardPickerProvider(
+            java.util.function.Supplier<List<com.trungbui.projectshadow.data.model.ItemData>> supplier,
+            Consumer<com.trungbui.projectshadow.data.model.ItemData> onPick) {
+        this.cardPickerSupplier = supplier;
+        this.cardPickerOnPick = onPick;
+    }
+
     /** Sprint 12 B3 — attach the run session so the Items tab can read the
      *  inventory and {@link CombatController#useItem} can consume it. */
     public void setRunSession(com.trungbui.projectshadow.run.RunSession runSession) {
@@ -528,6 +549,27 @@ public class CombatScreen implements Screen {
         if (onWin == null && onLose == null) return; // standalone mode — no callback wiring
         skillTable.clear();
         skillButtons.clear();
+
+        // Sprint 13 B2 — Elite / Miniboss / Boss: show reward card picker.
+        // Player must pick one item before the transition fires. Takes priority over
+        // CombatRewardPopup when wired (card picker nodes still show gold via the
+        // existing reward path in handleCombatWin; the picker is the item bonus only).
+        if (winner == CombatEncounter.Side.HEROES && cardPickerSupplier != null) {
+            List<com.trungbui.projectshadow.data.model.ItemData> cards = cardPickerSupplier.get();
+            Consumer<com.trungbui.projectshadow.data.model.ItemData> pick = item -> {
+                if (cardPickerOnPick != null) cardPickerOnPick.accept(item);
+                if (!transitioned) {
+                    transitioned = true;
+                    onWin.run();
+                }
+            };
+            RewardCardPickerPopup popup = new RewardCardPickerPopup(skin, cards == null ? List.of() : cards, pick);
+            popup.setPosition(
+                    (CombatRenderer.VIRTUAL_WIDTH - popup.getWidth()) / 2f,
+                    (CombatRenderer.VIRTUAL_HEIGHT - popup.getHeight()) / 2f);
+            uiStage.addActor(popup);
+            return; // popup owns the transition trigger; skip legacy button.
+        }
 
         // Sprint 10 B3 — show reward popup on victory if a provider is wired.
         // Popup auto-dismisses after 3s and runs the onWin transition; manual

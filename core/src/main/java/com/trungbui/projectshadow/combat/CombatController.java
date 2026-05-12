@@ -432,6 +432,10 @@ public class CombatController {
             result = resolveOffensiveHits(attacker, target, skill, hitCount);
             if (result.hit()) {
                 target.takeHpDamage(result.hpDamage());
+                // Sprint 13 B2 — accumulate damage dealt for MVP hero tracking.
+                if (attacker instanceof Hero heroAttacker && result.hpDamage() > 0) {
+                    heroAttacker.addRunDamage(result.hpDamage());
+                }
                 if (result.stressDamage() > 0 && target instanceof Hero h) {
                     boolean wasAlive = h.isAlive();
                     h.takeStressDamage(result.stressDamage());

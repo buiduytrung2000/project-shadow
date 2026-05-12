@@ -62,7 +62,8 @@ class SaveManagerPathGuardTest {
         RunState bad = new RunState(
                 1, "../escape", "stage_1", 0L, null,
                 List.of(), List.of(), 0, List.of(),
-                java.time.Instant.now(), java.time.Instant.now(), false);
+                java.time.Instant.now(), java.time.Instant.now(), false,
+                0, 0, 0);
         assertThatThrownBy(() -> mgr.save(bad))
                 .isInstanceOf(IllegalArgumentException.class);
     }

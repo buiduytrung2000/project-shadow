@@ -25,13 +25,23 @@ public record RunState(
         List<String> inventory,
         Instant createdAt,
         Instant lastSavedAt,
-        boolean archived
+        boolean archived,
+        /** Sprint 13 B2 — combo streak: counts consecutive non-rest nodes cleared.
+         *  Rest node → reset 0. Used for gold multiplier {@code min(1+0.1×streak, 1.5)}. */
+        int consecutiveNodesCleared,
+        /** Sprint 13 B2 — total enemies killed this run (for Run Summary Screen). */
+        int enemiesKilled,
+        /** Sprint 13 B2 — total heirloom earned this run (for Run Summary Screen). */
+        int heirloomEarned
 ) {
     public RunState {
         if (saveVersion < 1) saveVersion = 1; // Backward-compat: pre-B3 saves had no version field.
         visitedNodes = visitedNodes == null ? List.of() : List.copyOf(visitedNodes);
         party = party == null ? List.of() : List.copyOf(party);
         inventory = inventory == null ? List.of() : List.copyOf(inventory);
+        if (consecutiveNodesCleared < 0) consecutiveNodesCleared = 0;
+        if (enemiesKilled < 0) enemiesKilled = 0;
+        if (heirloomEarned < 0) heirloomEarned = 0;
     }
 
     public static RunState newRun(String stageId, long stageSeed, List<Hero> heroes) {
@@ -49,7 +59,10 @@ public record RunState(
                 List.of(),
                 now,
                 now,
-                false
+                false,
+                0,
+                0,
+                0
         );
     }
 
@@ -61,7 +74,8 @@ public record RunState(
         return new RunState(
                 saveVersion, runId, stageId, stageSeed, nodeLabel,
                 newVisited, party, gold, inventory,
-                createdAt, Instant.now(), archived
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned
         );
     }
 
@@ -70,7 +84,8 @@ public record RunState(
         return new RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, newParty, gold, inventory,
-                createdAt, Instant.now(), archived
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned
         );
     }
 
@@ -78,7 +93,8 @@ public record RunState(
         return new RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, newGold, inventory,
-                createdAt, Instant.now(), archived
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned
         );
     }
 
@@ -86,7 +102,48 @@ public record RunState(
         return new RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, newInventory,
-                createdAt, Instant.now(), archived
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned
+        );
+    }
+
+    /** Increment the combo-streak counter (non-rest node cleared). */
+    public RunState withStreakIncrement() {
+        return new RunState(
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
+                visitedNodes, party, gold, inventory,
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared + 1, enemiesKilled, heirloomEarned
+        );
+    }
+
+    /** Reset the combo-streak counter to 0 (rest node entered). */
+    public RunState withStreakReset() {
+        return new RunState(
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
+                visitedNodes, party, gold, inventory,
+                createdAt, Instant.now(), archived,
+                0, enemiesKilled, heirloomEarned
+        );
+    }
+
+    /** Increment enemies-killed accumulator by {@code delta}. */
+    public RunState withEnemiesKilledDelta(int delta) {
+        return new RunState(
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
+                visitedNodes, party, gold, inventory,
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared, enemiesKilled + Math.max(0, delta), heirloomEarned
+        );
+    }
+
+    /** Increment heirloom-earned accumulator by {@code delta}. */
+    public RunState withHeirloomEarnedDelta(int delta) {
+        return new RunState(
+                saveVersion, runId, stageId, stageSeed, currentNodeLabel,
+                visitedNodes, party, gold, inventory,
+                createdAt, Instant.now(), archived,
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned + Math.max(0, delta)
         );
     }
 
@@ -118,7 +175,8 @@ public record RunState(
         return new RunState(
                 saveVersion, runId, stageId, stageSeed, currentNodeLabel,
                 visitedNodes, party, gold, inventory,
-                createdAt, Instant.now(), true
+                createdAt, Instant.now(), true,
+                consecutiveNodesCleared, enemiesKilled, heirloomEarned
         );
     }
 

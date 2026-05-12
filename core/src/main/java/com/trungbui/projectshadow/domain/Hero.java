@@ -60,6 +60,9 @@ public class Hero implements Combatant {
     private int currentXp = 0;
     /** Sprint 13 B1 — absorb shield HP. Blocks incoming damage before HP. Reset per-combat. */
     private int shieldHp = 0;
+    /** Sprint 13 B2 — total damage dealt this run (for Run Summary MVP calculation).
+     *  Starts at 0 on fresh hero construction; not persisted in HeroState (resets on resume). */
+    private int currentRunDamage = 0;
 
     public Hero(HeroData data, Position position) {
         this(data, 0, position, new ArrayList<>(data.defaultSkills()), Collections.emptyMap());
@@ -446,5 +449,16 @@ public class Hero implements Combatant {
     @Override
     public void setShieldHp(int shield) {
         this.shieldHp = Math.max(0, shield);
+    }
+
+    // ───── Sprint 13 B2 — Run damage accumulator ─────
+
+    public int currentRunDamage() {
+        return currentRunDamage;
+    }
+
+    /** Accumulate damage dealt during this run (for MVP hero calculation). */
+    public void addRunDamage(int amount) {
+        if (amount > 0) currentRunDamage += amount;
     }
 }
