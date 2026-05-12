@@ -44,6 +44,7 @@ public class GameOverScreen implements Screen {
         this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = bodyFont;
         skin.get(TextButton.TextButtonStyle.class).font = bodyFont;
+        SkinLoader.overrideFont(skin, bodyFont);
         this.uiStage = new Stage(viewport);
 
         Table root = new Table();

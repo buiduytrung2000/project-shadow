@@ -77,6 +77,7 @@ public class NodeInfoScreen implements Screen {
         this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = vnFont;
         skin.get(TextButton.TextButtonStyle.class).font = vnFont;
+        SkinLoader.overrideFont(skin, vnFont);
         this.uiStage = new Stage(viewport);
         this.feedbackLabel = new Label("", skin);
         this.feedbackLabel.setColor(Color.LIGHT_GRAY);

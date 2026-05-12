@@ -24,7 +24,7 @@ class SaveMigrationTest {
     void loadRun_currentVersion_succeeds() throws Exception {
         String json = """
                 {
-                  "saveVersion": 2,
+                  "saveVersion": 3,
                   "runId": "abc-123",
                   "stageId": "stage_1",
                   "stageSeed": 42,
@@ -38,11 +38,12 @@ class SaveMigrationTest {
                   "archived": false,
                   "consecutiveNodesCleared": 0,
                   "enemiesKilled": 0,
-                  "heirloomEarned": 0
+                  "heirloomEarned": 0,
+                  "heroDamageDealt": {}
                 }
                 """;
         RunState s = SaveMigration.loadRun(mapper, json);
-        assertThat(s.saveVersion()).isEqualTo(2);
+        assertThat(s.saveVersion()).isEqualTo(SaveMigration.CURRENT_RUN_VERSION);
         assertThat(s.runId()).isEqualTo("abc-123");
     }
 

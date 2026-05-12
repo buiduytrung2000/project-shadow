@@ -432,9 +432,14 @@ public class CombatController {
             result = resolveOffensiveHits(attacker, target, skill, hitCount);
             if (result.hit()) {
                 target.takeHpDamage(result.hpDamage());
-                // Sprint 13 B2 — accumulate damage dealt for MVP hero tracking.
+                // Fix E (post-Sprint-13) — accumulate damage in RunState (persisted, survives
+                // save/resume). Also keep Hero.addRunDamage() for backward compat with any
+                // callers that still read Hero.currentRunDamage() until those are updated.
                 if (attacker instanceof Hero heroAttacker && result.hpDamage() > 0) {
                     heroAttacker.addRunDamage(result.hpDamage());
+                    if (runSession != null) {
+                        runSession.recordHeroDamage(heroAttacker.id(), result.hpDamage());
+                    }
                 }
                 if (result.stressDamage() > 0 && target instanceof Hero h) {
                     boolean wasAlive = h.isAlive();

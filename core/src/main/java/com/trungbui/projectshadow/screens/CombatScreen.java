@@ -147,6 +147,7 @@ public class CombatScreen implements Screen {
         this.skin = SkinLoader.load();
         skin.get(Label.LabelStyle.class).font = vnFont;
         skin.get(TextButton.TextButtonStyle.class).font = vnFont;
+        SkinLoader.overrideFont(skin, vnFont);
         this.uiStage = new Stage(viewport, batch);
         this.renderer = new CombatRenderer();
 
@@ -492,27 +493,43 @@ public class CombatScreen implements Screen {
         skillTable.add(back).pad(8).width(180).height(60);
     }
 
-    /** Sprint 12 B3 — handle a click on a consumable item button. Heal items
-     *  enter target-pick mode; non-target items fire immediately. */
+    /** Sprint 12 B3 + Fix F — handle a click on a consumable item button.
+     *  Heal, dmg_buff, absorb items enter target-pick mode (ally target).
+     *  Burn items enter target-pick mode (enemy target).
+     *  Stress-reduce and other no-target items fire immediately. */
     private void onItemButtonClicked(String itemId) {
         if (controller.isAwaitingNonPlayerProcess()) return;
         var it = gameData.items().get(itemId);
         if (it == null) return;
-        // Heal items need a target hero pick.
-        if ("eff_heal".equals(it.effectId())) {
-            pendingItemId = itemId;
-            uiState = UiState.AWAITING_TARGET;
-            highlightedTargets.clear();
-            for (Hero h : controller.encounter().heroes()) {
-                if (h.isAlive()) highlightedTargets.add(h);
+        String effId = it.effectId();
+        switch (effId != null ? effId : "") {
+            case "eff_heal", "eff_dmg_buff", "eff_absorb" -> {
+                // Target: alive heroes
+                pendingItemId = itemId;
+                uiState = UiState.AWAITING_TARGET;
+                highlightedTargets.clear();
+                for (Hero h : controller.encounter().heroes()) {
+                    if (h.isAlive()) highlightedTargets.add(h);
+                }
+                statusLabel.setText(I18n.t("combat.items.pickTarget", it.nameVn()));
             }
-            statusLabel.setText(I18n.t("combat.items.pickTarget", it.nameVn()));
-            return;
+            case "eff_burn" -> {
+                // Target: alive enemies
+                pendingItemId = itemId;
+                uiState = UiState.AWAITING_TARGET;
+                highlightedTargets.clear();
+                for (com.trungbui.projectshadow.domain.Enemy e : controller.encounter().enemies()) {
+                    if (e.isAlive()) highlightedTargets.add(e);
+                }
+                statusLabel.setText(I18n.t("combat.items.pickTarget", it.nameVn()));
+            }
+            default -> {
+                // Stress-reduce (party-wide) and other no-target items fire immediately.
+                controller.useItem(itemId, null);
+                inItemMode = false;
+                pendingItemId = null;
+            }
         }
-        // Stress-reduce (party-wide) and any future no-target items fire immediately.
-        controller.useItem(itemId, null);
-        inItemMode = false;
-        pendingItemId = null;
     }
 
     private void onSkillButtonClicked(int skillIndex) {

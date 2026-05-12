@@ -63,7 +63,7 @@ class SaveManagerPathGuardTest {
                 1, "../escape", "stage_1", 0L, null,
                 List.of(), List.of(), 0, List.of(),
                 java.time.Instant.now(), java.time.Instant.now(), false,
-                0, 0, 0);
+                0, 0, 0, java.util.Map.of());
         assertThatThrownBy(() -> mgr.save(bad))
                 .isInstanceOf(IllegalArgumentException.class);
     }

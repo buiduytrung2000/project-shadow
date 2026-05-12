@@ -13,6 +13,7 @@ data/skills.csv
 data/stages/stage_1.json
 data/stages/stage_2.json
 data/stages/stage_3.json
+fonts/BeVietnamPro-Bold.ttf
 fonts/BeVietnamPro-Regular.ttf
 fonts/README.md
 sprites/README.md

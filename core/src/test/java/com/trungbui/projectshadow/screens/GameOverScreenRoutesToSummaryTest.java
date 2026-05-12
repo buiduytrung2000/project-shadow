@@ -28,7 +28,7 @@ class GameOverScreenRoutesToSummaryTest {
                 SaveMigration.CURRENT_RUN_VERSION, "run-defeat", "stage_1", 42L,
                 "L1.A", List.of("L1.A"), List.of(), 80, List.of(),
                 Instant.now(), Instant.now(), true,
-                2, 5, 0
+                2, 5, 0, java.util.Map.of()
         );
     }
 
@@ -37,7 +37,7 @@ class GameOverScreenRoutesToSummaryTest {
                 SaveMigration.CURRENT_RUN_VERSION, "run-victory", "stage_1", 42L,
                 "boss", List.of("L1.A", "L2.A", "boss"), List.of(), 500, List.of(),
                 Instant.now(), Instant.now(), false,
-                3, 8, 1
+                3, 8, 1, java.util.Map.of()
         );
     }
 

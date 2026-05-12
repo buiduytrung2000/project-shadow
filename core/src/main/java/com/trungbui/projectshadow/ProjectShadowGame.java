@@ -178,6 +178,24 @@ public class ProjectShadowGame extends Game {
         if (prev != null && prev != getScreen()) prev.dispose();
     }
 
+    /**
+     * "Bắt đầu mới" — archives any active run (permadeath: saves kept, not deleted),
+     * clears the in-memory run session, then opens Hamlet with an empty run slot so
+     * HamletScreen does not auto-resume. Distinct from {@link #returnToHamlet()} which
+     * preserves active saves.
+     */
+    public void startFreshGame() {
+        try {
+            saveManager.archiveActiveRun();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to archive active run on new-game", e);
+        }
+        Screen prev = getScreen();
+        runSession = null;
+        setScreen(new HamletScreen(this));
+        if (prev != null && prev != getScreen()) prev.dispose();
+    }
+
     public void openStagecoach() {
         Screen prev = getScreen();
         setScreen(new StagecoachScreen(this));

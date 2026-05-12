@@ -50,7 +50,7 @@ class RunStateSaveMigrationV1ToV2Test {
     }
 
     @Test
-    void v1JsonRoundTrip_writesV2OnNextSave() throws Exception {
+    void v1JsonRoundTrip_writesCurrentVersionOnNextSave() throws Exception {
         String v1Json = """
                 {
                   "saveVersion": 1,
@@ -70,14 +70,15 @@ class RunStateSaveMigrationV1ToV2Test {
         RunState loaded = SaveMigration.loadRun(mapper, v1Json);
         String serialized = mapper.writeValueAsString(loaded);
 
-        assertThat(serialized).contains("\"saveVersion\" : 2");
+        assertThat(serialized).contains("\"saveVersion\" : " + SaveMigration.CURRENT_RUN_VERSION);
         assertThat(serialized).contains("consecutiveNodesCleared");
         assertThat(serialized).contains("enemiesKilled");
         assertThat(serialized).contains("heirloomEarned");
+        assertThat(serialized).contains("heroDamageDealt");
 
-        // Reload from v2 — clean round-trip.
+        // Reload from current version — clean round-trip.
         RunState reloaded = SaveMigration.loadRun(mapper, serialized);
-        assertThat(reloaded.saveVersion()).isEqualTo(2);
+        assertThat(reloaded.saveVersion()).isEqualTo(SaveMigration.CURRENT_RUN_VERSION);
         assertThat(reloaded.gold()).isEqualTo(50);
     }
 

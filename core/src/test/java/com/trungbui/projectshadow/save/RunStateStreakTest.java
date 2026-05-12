@@ -22,7 +22,7 @@ class RunStateStreakTest {
                 SaveMigration.CURRENT_RUN_VERSION, "run-test", "stage_1", 42L,
                 null, List.of(), List.of(), 0, List.of(),
                 Instant.now(), Instant.now(), false,
-                0, 0, 0
+                0, 0, 0, java.util.Map.of()
         );
     }
 

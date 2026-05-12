@@ -206,6 +206,16 @@ public class RunSession {
         if (count > 0) state = state.withEnemiesKilledDelta(count);
     }
 
+    /**
+     * Fix E (post-Sprint-13) — accumulate damage dealt by a hero into the persisted
+     * {@code heroDamageDealt} map. Called from {@code CombatController} each time a
+     * hero lands a hit. Non-persisting (volatile during combat; persisted on
+     * {@link #completeNode(String)}).
+     */
+    public void recordHeroDamage(String heroId, int dmg) {
+        if (heroId != null && dmg > 0) state = state.withHeroDamageDealt(heroId, dmg);
+    }
+
     /** Sprint 13 B2 — record heirloom earned (boss drop). */
     public void recordHeirloomEarned(int amount) {
         if (amount > 0) state = state.withHeirloomEarnedDelta(amount);
