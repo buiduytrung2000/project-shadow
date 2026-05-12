@@ -66,6 +66,8 @@ secrets/
 .claude/*
 !.claude/commands/
 !.claude/commands/**
+!.claude/agents/
+!.claude/agents/**
 # ─── PixelLab MCP working files (regeneratable from script + UUIDs) ───
 assets/sprites/pixellab_zips/
 assets/sprites/raw_pixellab/
